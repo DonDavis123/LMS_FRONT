@@ -1,45 +1,74 @@
-export const MEETING_VENUES = ["In-office", "Client location", "Online"] as const;
-export type MeetingVenue = (typeof MEETING_VENUES)[number];
-export const MEETING_REPEAT_TYPES = ["None", "Daily", "Weekly", "Monthly", "Yearly"] as const;
-export type MeetingRepeatType = (typeof MEETING_REPEAT_TYPES)[number];
-
-export type MeetingParticipantType = "user" | "lead" | "contact" | "email";
+export type MeetingRelatedRecordType = "LEAD" | "CONTACT";
+export type MeetingParticipantType = "user" | "lead" | "contact";
 
 export interface MeetingParticipant {
   id: string;
   name: string;
-  email?: string | null;
-  /**
-   * Identifies the source record so User/Lead/Contact IDs are never
-   * treated as interchangeable participant identities.
-   *
-   * Optional for backwards compatibility with meetings saved before
-   * participant types were introduced. Legacy participants are normalized
-   * as users when loaded by MeetingForm.
-   */
-  type?: MeetingParticipantType;
+  type: MeetingParticipantType;
+}
+
+export interface MeetingRelatedRecord {
+  id: string;
+  type: MeetingRelatedRecordType;
+  name: string;
+}
+
+export interface MeetingListItem {
+  id: string;
+  title: string;
+  start_at: string;
+  end_at: string;
+  related_to_type: MeetingRelatedRecordType | null;
+  related_to_names: string[];
+  contact_names: string[];
+  host_id: string;
+  host_name: string;
 }
 
 export interface Meeting {
-  id: string; title: string; owner_id: string; owner_name?: string | null;
-  meeting_venue?: MeetingVenue; location: string | null;
-  from_datetime: string; to_datetime: string | null; all_day: boolean;
-  participants?: MeetingParticipant[]; repeat_type?: MeetingRepeatType;
+  id: string;
+  title: string;
   description: string | null;
-  lead_id: string | null; lead_name?: string | null;
-  contact_id: string | null; contact_name?: string | null;
-  account_id: string | null; account_name?: string | null;
-  created_at: string; updated_at: string;
+  location: string | null;
+  is_all_day: boolean;
+  start_at: string;
+  end_at: string;
+  host_id: string;
+  host_name: string;
+  created_by_id: string;
+  created_by_name: string;
+  created_at: string;
+  updated_at: string;
+  related_to: MeetingRelatedRecord[];
+  participants: MeetingParticipant[];
+}
+
+export interface MeetingParticipantPayload {
+  leads?: string[];
+  contacts?: string[];
+  users?: string[];
+}
+
+export interface RelatedToPayload {
+  type: MeetingRelatedRecordType;
+  ids: string[];
 }
 
 export interface CreateMeetingPayload {
-  title: string; owner_id: string; owner_name?: string | null;
-  meeting_venue?: MeetingVenue; location?: string | null;
-  from_datetime: string; to_datetime?: string | null; all_day?: boolean;
-  participants?: MeetingParticipant[]; repeat_type?: MeetingRepeatType;
+  title: string;
   description?: string | null;
-  lead_id?: string | null; lead_name?: string | null;
-  contact_id?: string | null; contact_name?: string | null;
-  account_id?: string | null; account_name?: string | null;
+  location?: string | null;
+  is_all_day?: boolean;
+  start_at: string;
+  end_at: string;
+  host_id: string;
+  related_to?: RelatedToPayload | null;
+  participants?: MeetingParticipantPayload;
 }
+
 export type UpdateMeetingPayload = Partial<CreateMeetingPayload>;
+
+export interface MeetingWriteResponse {
+  id: string;
+  message: string;
+}

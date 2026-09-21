@@ -1,24 +1,19 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from "react";
-import { Calendar, Check, ChevronDown, Pencil, Plus, Search, X } from "lucide-react";
+import { Calendar, Check, ChevronDown, Plus, Search, X } from "lucide-react";
 import { userService } from "@/features/users/services/userService";
 import type { LeadOwnerOption } from "@/features/auth/types/auth.types";
 import { authService } from "@/features/auth/services/authService";
 import { LeadService } from "@/features/leads/services/LeadService";
 import { ContactService } from "@/features/contacts/services/ContactService";
-import { AccountService } from "@/features/accounts/services/AccountService";
 import Spinner from "@/shared/components/Spinner";
 import Time12hPicker from "@/shared/components/Time12hPicker";
 import {
-  MEETING_REPEAT_TYPES,
-  MEETING_VENUES,
   type Meeting,
   type MeetingParticipant,
   type MeetingParticipantType,
   type CreateMeetingPayload,
-  type MeetingRepeatType,
-  type MeetingVenue,
 } from "@/features/meetings/types/meeting.types";
 
 interface Props {
@@ -34,8 +29,8 @@ interface RelatedRecord {
   sublabel?: string;
 }
 
-type RelatedType = "" | "lead" | "contact" | "account";
-type ParticipantCategory = Exclude<MeetingParticipantType, "email">;
+type RelatedType = "" | "lead" | "contact";
+type ParticipantCategory = MeetingParticipantType;
 
 interface ParticipantCandidate {
   id: string;
@@ -48,7 +43,6 @@ interface FormState {
   title: string;
   owner_id: string;
   ownerLabel: string;
-  meeting_venue: MeetingVenue;
   location: string;
   all_day: boolean;
   from_date: string;
@@ -59,7 +53,6 @@ interface FormState {
   relatedType: RelatedType;
   relatedId: string;
   relatedLabel: string;
-  repeat_type: MeetingRepeatType;
   description: string;
 }
 
@@ -83,7 +76,6 @@ function emptyForm(): FormState {
     title: "New Meeting",
     owner_id: "",
     ownerLabel: "",
-    meeting_venue: "Client location",
     location: "",
     all_day: false,
     from_date: date,
@@ -94,43 +86,35 @@ function emptyForm(): FormState {
     relatedType: "",
     relatedId: "",
     relatedLabel: "",
-    repeat_type: "None",
     description: "",
   };
 }
 
 function fromMeeting(m: Meeting): FormState {
-  const [fd, ft] = splitDateTime(m.from_datetime);
-  const [td, tt] = splitDateTime(m.to_datetime);
-  const relatedType: RelatedType = m.lead_id
-    ? "lead"
-    : m.contact_id
-      ? "contact"
-      : m.account_id
-        ? "account"
+  const [fd, ft] = splitDateTime(m.start_at);
+  const [td, tt] = splitDateTime(m.end_at);
+  const firstRelated = m.related_to[0];
+  const relatedType: RelatedType =
+    firstRelated?.type === "LEAD"
+      ? "lead"
+      : firstRelated?.type === "CONTACT"
+        ? "contact"
         : "";
 
   return {
     title: m.title ?? "",
     owner_id: m.owner_id ?? "",
-    ownerLabel: m.owner_name ?? "",
-    meeting_venue: m.meeting_venue ?? "Client location",
+    ownerLabel: m.host_name ?? "",
     location: m.location ?? "",
     all_day: m.all_day ?? false,
     from_date: fd,
     from_time: ft,
     to_date: td || fd,
     to_time: tt,
-    participants: (m.participants ?? []).map((participant) => ({
-      ...participant,
-      // Meetings created before participant types were introduced stored
-      // user participants without a type.
-      type: participant.type ?? "user",
-    })),
+    participants: m.participants ?? [],
     relatedType,
-    relatedId: m.lead_id ?? m.contact_id ?? m.account_id ?? "",
-    relatedLabel: m.lead_name ?? m.contact_name ?? m.account_name ?? "",
-    repeat_type: m.repeat_type ?? "None",
+    relatedId: firstRelated?.id ?? "",
+    relatedLabel: firstRelated?.name ?? "",
     description: m.description ?? "",
   };
 }
@@ -146,26 +130,14 @@ export default function MeetingForm({ mode, initialMeeting, onSubmit, onCancel }
   const [participantUsers, setParticipantUsers] = useState<ParticipantCandidate[]>([]);
   const [leadOptions, setLeadOptions] = useState<RelatedRecord[]>([]);
   const [contactOptions, setContactOptions] = useState<RelatedRecord[]>([]);
-  const [accountOptions, setAccountOptions] = useState<RelatedRecord[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [showParticipants, setShowParticipants] = useState(false);
   const [participantSearch, setParticipantSearch] = useState("");
   const [participantCategory, setParticipantCategory] = useState<ParticipantCategory>("user");
   const [participantTab, setParticipantTab] = useState<"all" | "selected">("all");
-  const [inviteEmails, setInviteEmails] = useState("");
   const [showMore, setShowMore] = useState(false);
-  const [showVenueMenu, setShowVenueMenu] = useState(false);
   const [showRelatedMenu, setShowRelatedMenu] = useState(false);
-  const [showRepeat, setShowRepeat] = useState(false);
-  const [repeatDraft, setRepeatDraft] = useState({
-    all_day: false,
-    from_date: "",
-    from_time: "",
-    to_date: "",
-    to_time: "",
-    repeat_type: "None" as MeetingRepeatType,
-  });
 
   useEffect(() => {
     let cancelled = false;
@@ -174,8 +146,7 @@ export default function MeetingForm({ mode, initialMeeting, onSubmit, onCancel }
       userService.getUsers().catch(() => []),
       LeadService.getLeads().catch(() => []),
       ContactService.getContacts().catch(() => []),
-      AccountService.getAccounts().catch(() => []),
-    ]).then(([ownerRows, users, leads, contacts, accounts]) => {
+    ]).then(([ownerRows, users, leads, contacts]) => {
       if (cancelled) return;
       setOwners(ownerRows);
       setParticipantUsers(
@@ -198,13 +169,6 @@ export default function MeetingForm({ mode, initialMeeting, onSubmit, onCancel }
           id: row.id,
           label: row.name || "Unnamed Contact",
           sublabel: row.email || row.account_name || undefined,
-        })),
-      );
-      setAccountOptions(
-        accounts.map((row) => ({
-          id: row.id,
-          label: row.account_name || "Unnamed Account",
-          sublabel: row.website || row.phone || undefined,
         })),
       );
     });
@@ -278,9 +242,7 @@ export default function MeetingForm({ mode, initialMeeting, onSubmit, onCancel }
       ? leadOptions
       : form.relatedType === "contact"
         ? contactOptions
-        : form.relatedType === "account"
-          ? accountOptions
-          : [];
+        : [];
 
   function update<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((current) => ({ ...current, [key]: value }));
@@ -336,52 +298,7 @@ export default function MeetingForm({ mode, initialMeeting, onSubmit, onCancel }
     }));
   }
 
-  function openRepeat() {
-    setRepeatDraft({
-      all_day: form.all_day,
-      from_date: form.from_date,
-      from_time: form.from_time,
-      to_date: form.to_date,
-      to_time: form.to_time,
-      repeat_type: form.repeat_type,
-    });
-    setShowRepeat(true);
-  }
 
-  function saveRepeat() {
-    setForm((current) => ({
-      ...current,
-      all_day: repeatDraft.all_day,
-      from_date: repeatDraft.from_date,
-      from_time: repeatDraft.from_time,
-      to_date: repeatDraft.to_date,
-      to_time: repeatDraft.to_time,
-      repeat_type: repeatDraft.repeat_type,
-    }));
-    setShowRepeat(false);
-  }
-
-  function addInviteEmails() {
-    const emails = inviteEmails
-      .split(/[;,\s]+/)
-      .map((email) => email.trim().toLowerCase())
-      .filter(Boolean);
-
-    if (!emails.length) return;
-
-    setForm((current) => {
-      const additions = emails
-        .filter((email) => !current.participants.some((p) => p.email?.toLowerCase() === email))
-        .map((email) => ({
-          id: `email:${email}`,
-          name: email,
-          email,
-          type: "email" as const,
-        }));
-      return { ...current, participants: [...current.participants, ...additions] };
-    });
-    setInviteEmails("");
-  }
 
   async function submit(e: FormEvent) {
     e.preventDefault();
@@ -400,26 +317,46 @@ export default function MeetingForm({ mode, initialMeeting, onSubmit, onCancel }
         ? new Date(`${form.to_date}T${form.all_day ? "00:00" : form.to_time || form.from_time}`)
         : null;
 
+      if (!Number.isFinite(from.getTime()) || !to || !Number.isFinite(to.getTime())) {
+        setError("Please provide valid start and end date/time values.");
+        setSaving(false);
+        return;
+      }
+
+      if (to < from) {
+        setError("End time cannot be earlier than start time.");
+        setSaving(false);
+        return;
+      }
+
+      const participantPayload = {
+        users: form.participants
+          .filter((participant) => participant.type === "user")
+          .map((participant) => participant.id),
+        leads: form.participants
+          .filter((participant) => participant.type === "lead")
+          .map((participant) => participant.id),
+        contacts: form.participants
+          .filter((participant) => participant.type === "contact")
+          .map((participant) => participant.id),
+      };
+
       await onSubmit({
         title: form.title.trim(),
-        owner_id: form.owner_id,
-        owner_name: form.ownerLabel || null,
-        meeting_venue: form.meeting_venue,
+        host_id: form.owner_id,
         location: form.location.trim() || null,
-        from_datetime: from.toISOString(),
-        to_datetime: to?.toISOString() ?? null,
-        all_day: form.all_day,
-        participants: form.participants,
-        repeat_type: form.repeat_type,
+        start_at: from.toISOString(),
+        end_at: to.toISOString(),
+        is_all_day: form.all_day,
         description: form.description.trim() || null,
-        lead_id: form.relatedType === "lead" ? form.relatedId || null : null,
-        lead_name: form.relatedType === "lead" ? form.relatedLabel || null : null,
-        contact_id: form.relatedType === "contact" ? form.relatedId || null : null,
-        contact_name: form.relatedType === "contact" ? form.relatedLabel || null : null,
-        account_id:
-          form.relatedType === "account" ? form.relatedId || null : null,
-        account_name:
-          form.relatedType === "account" ? form.relatedLabel || null : null,
+        related_to:
+          form.relatedType && form.relatedId
+            ? {
+                type: form.relatedType === "lead" ? "LEAD" : "CONTACT",
+                ids: [form.relatedId],
+              }
+            : null,
+        participants: participantPayload,
       });
     } catch {
       setError("Couldn't save this meeting. Check the fields and try again.");
@@ -449,36 +386,6 @@ export default function MeetingForm({ mode, initialMeeting, onSubmit, onCancel }
           />
         </ZohoRow>
 
-        <ZohoRow label="Meeting Venue">
-          <div className="relative">
-            <button
-              type="button"
-              onClick={() => setShowVenueMenu((v) => !v)}
-              className="flex w-full items-center justify-between border-0 border-b border-line bg-transparent py-2 text-left text-sm text-fg outline-none"
-            >
-              <span>{form.meeting_venue}</span>
-              <ChevronDown size={14} className="text-ink-soft" />
-            </button>
-            {showVenueMenu && (
-              <div className="absolute left-0 top-full z-30 mt-1 w-48 overflow-hidden rounded-md border border-line bg-surface shadow-xl">
-                {MEETING_VENUES.map((venue) => (
-                  <button
-                    type="button"
-                    key={venue}
-                    onClick={() => {
-                      update("meeting_venue", venue);
-                      setShowVenueMenu(false);
-                    }}
-                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-paper"
-                  >
-                    <span className="w-3 text-slate">{form.meeting_venue === venue ? "✓" : ""}</span>
-                    {venue}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        </ZohoRow>
 
         <ZohoRow label="Location">
           <input
@@ -534,7 +441,7 @@ export default function MeetingForm({ mode, initialMeeting, onSubmit, onCancel }
               {form.participants.length ? (
                 form.participants.map((p) => (
                   <span
-                    key={p.id}
+                    key={participantIdentity(p)}
                     className="inline-flex items-center gap-1 rounded-full bg-slate-light px-2 py-1 text-xs text-slate"
                   >
                     {p.name}
@@ -569,9 +476,7 @@ export default function MeetingForm({ mode, initialMeeting, onSubmit, onCancel }
                   ? "Lead"
                   : form.relatedType === "contact"
                     ? "Contact"
-                    : form.relatedType === "account"
-                      ? "Others"
-                      : "None"}
+                    : "None"}
               </span>
               <ChevronDown size={14} className="text-ink-soft" />
             </button>
@@ -582,7 +487,6 @@ export default function MeetingForm({ mode, initialMeeting, onSubmit, onCancel }
                   ["", "None"],
                   ["lead", "Lead"],
                   ["contact", "Contact"],
-                  ["account", "Others"],
                 ] as const).map(([value, label]) => (
                   <button
                     type="button"
@@ -609,24 +513,12 @@ export default function MeetingForm({ mode, initialMeeting, onSubmit, onCancel }
                   update("relatedId", id);
                   update("relatedLabel", label);
                 }}
-                placeholder={`Search ${form.relatedType === "account" ? "account" : form.relatedType}…`}
+                placeholder={`Search ${form.relatedType}…`}
               />
             </div>
           )}
         </ZohoRow>
 
-        <ZohoRow label="Repeat">
-          <button
-            type="button"
-            onClick={openRepeat}
-            className="group flex w-full items-center justify-between py-2 text-left text-sm"
-          >
-            <span className={form.repeat_type === "None" ? "text-ink-soft" : "text-fg"}>
-              {form.repeat_type}
-            </span>
-            <Pencil size={13} className="text-indigo-400 opacity-0 transition group-hover:opacity-100" />
-          </button>
-        </ZohoRow>
 
         <button
           type="button"
@@ -747,32 +639,11 @@ export default function MeetingForm({ mode, initialMeeting, onSubmit, onCancel }
             )}
           </div>
 
-          <div className="mt-5">
-            <p className="mb-2 text-xs font-semibold text-fg">
-              Invite by Email Address
-              <span className="ml-1 font-normal text-ink-soft">: Use commas to separate email addresses.</span>
-            </p>
-            <input
-              value={inviteEmails}
-              onChange={(e) => setInviteEmails(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  addInviteEmails();
-                }
-              }}
-              placeholder="Add Emails"
-              className="w-full rounded-none border border-line bg-transparent px-2 py-2 text-sm outline-none focus:border-slate"
-            />
-          </div>
 
           <div className="mt-5 flex justify-end">
             <button
               type="button"
-              onClick={() => {
-                addInviteEmails();
-                setShowParticipants(false);
-              }}
+              onClick={() => setShowParticipants(false)}
               className="rounded-md bg-indigo-500 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-400"
             >
               Done
@@ -781,58 +652,6 @@ export default function MeetingForm({ mode, initialMeeting, onSubmit, onCancel }
         </OverlayPanel>
       )}
 
-      {showRepeat && (
-        <OverlayPanel title="Repeat" onClose={() => setShowRepeat(false)}>
-          <RepeatField label="All day">
-            <input
-              type="checkbox"
-              checked={repeatDraft.all_day}
-              onChange={(e) => setRepeatDraft((d) => ({ ...d, all_day: e.target.checked }))}
-              className="h-3.5 w-3.5 rounded border-line accent-indigo-500"
-            />
-          </RepeatField>
-          <DateLine
-            label="From"
-            date={repeatDraft.from_date}
-            time={repeatDraft.from_time}
-            allDay={repeatDraft.all_day}
-            onDate={(v) => setRepeatDraft((d) => ({ ...d, from_date: v }))}
-            onTime={(v) => setRepeatDraft((d) => ({ ...d, from_time: v }))}
-          />
-          <DateLine
-            label="To"
-            date={repeatDraft.to_date}
-            time={repeatDraft.to_time}
-            allDay={repeatDraft.all_day}
-            onDate={(v) => setRepeatDraft((d) => ({ ...d, to_date: v }))}
-            onTime={(v) => setRepeatDraft((d) => ({ ...d, to_time: v }))}
-          />
-          <RepeatField label="Repeat type">
-            <div className="relative w-full">
-              <select
-                value={repeatDraft.repeat_type}
-                onChange={(e) =>
-                  setRepeatDraft((d) => ({ ...d, repeat_type: e.target.value as MeetingRepeatType }))
-                }
-                className={fieldClass}
-              >
-                {MEETING_REPEAT_TYPES.map((value) => (
-                  <option key={value}>{value}</option>
-                ))}
-              </select>
-            </div>
-          </RepeatField>
-          <div className="mt-8 flex justify-end">
-            <button
-              type="button"
-              onClick={saveRepeat}
-              className="rounded-md bg-indigo-500 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-400"
-            >
-              Done
-            </button>
-          </div>
-        </OverlayPanel>
-      )}
     </form>
   );
 }
@@ -846,14 +665,6 @@ function ZohoRow({ label, children }: { label: string; children: ReactNode }) {
   );
 }
 
-function RepeatField({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <div className="grid grid-cols-[125px_1fr] items-center gap-4 border-b border-line/80 py-1.5">
-      <label className="text-sm text-ink-soft">{label}</label>
-      <div>{children}</div>
-    </div>
-  );
-}
 
 function DateLine({
   label,
