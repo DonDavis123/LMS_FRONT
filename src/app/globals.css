@@ -1,0 +1,272 @@
+@import "tailwindcss";
+
+/* Enables class-based dark mode: add/remove `.dark` on <html> to switch
+   themes, instead of only following the OS-level color-scheme. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  /* Brand accents — constant across both themes */
+  --color-ink: #12213a;
+  --color-ink-2: #1b2e4d;
+  --color-slate: #4c6785;
+  --color-amber: #e2a33b;
+  --color-amber-dark: #c98826;
+  --color-danger: #c1462f;
+  --color-success: #2f8f5b;
+
+  /* Theme-aware surfaces — overridden inside .dark below */
+  --color-paper: #f6f7f9;
+  --color-surface: #ffffff;
+  --color-line: #e3e7ed;
+  --color-fg: #12213a;
+  --color-ink-soft: #5b6472;
+  --color-slate-light: #dce6f0;
+  --color-danger-soft: #fbe9e5;
+  --color-success-soft: #e7f4ed;
+
+  --font-sans: var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-newsreader), ui-serif, Georgia, serif;
+}
+
+.dark {
+  --color-paper: #12141a;
+  --color-surface: #1a1d26;
+  --color-line: #2b2f3a;
+  --color-fg: #eef1f6;
+  --color-ink-soft: #9aa1b1;
+  --color-slate-light: #080c17;
+  --color-danger-soft: #3a201c;
+  --color-success-soft: #163524;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+html {
+  color-scheme: light;
+}
+
+html.dark {
+  color-scheme: dark;
+}
+
+body {
+  background-color: var(--color-paper);
+  color: var(--color-fg);
+  font-family: var(--font-sans);
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+* {
+  border-color: var(--color-line);
+}
+
+::selection {
+  background-color: var(--color-amber);
+  color: var(--color-ink);
+}
+
+/* Respect reduced-motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* --- Small, purposeful motion, used sparingly --- */
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-fade-in-up {
+  animation: fade-in-up 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.animate-fade-in {
+  animation: fade-in 0.5s ease-out both;
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+.animate-toast-in {
+  animation: toast-in 0.25s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes menu-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+.animate-menu-in {
+  animation: menu-in 0.12s ease-out both;
+  transform-origin: top left;
+}
+
+/* Skeleton loading shimmer — replaces flat animate-pulse blocks */
+@keyframes shimmer {
+  from {
+    background-position: -200% 0;
+  }
+  to {
+    background-position: 200% 0;
+  }
+}
+.animate-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--color-paper) 25%,
+    var(--color-line) 50%,
+    var(--color-paper) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.6s ease-in-out infinite;
+}
+
+/* Row insert — a brief highlight wash for a just-created record */
+@keyframes row-highlight {
+  0% {
+    background-color: var(--color-amber);
+    opacity: 0.25;
+  }
+  100% {
+    background-color: transparent;
+    opacity: 1;
+  }
+}
+.animate-row-highlight {
+  animation: row-highlight 1.8s ease-out;
+}
+
+/* Row remove — fade + collapse before the row actually leaves the DOM */
+@keyframes row-remove {
+  from {
+    opacity: 1;
+    transform: scaleY(1);
+  }
+  to {
+    opacity: 0;
+    transform: scaleY(0.9);
+  }
+}
+.animate-row-remove {
+  animation: row-remove 0.2s ease-in both;
+  transform-origin: top;
+}
+
+/* Status pipeline — a quick pulse on the stage you just clicked, while
+   the update is saving */
+@keyframes stage-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(0.96);
+  }
+}
+.animate-stage-pulse {
+  animation: stage-pulse 0.5s ease-in-out infinite;
+}
+
+/* Empty states — gentle settle-in rather than appearing instantly */
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+.animate-scale-in {
+  animation: scale-in 0.3s ease-out both;
+}
+
+/* Shake — draws the eye to a validation error without being alarming */
+@keyframes shake {
+  10%,
+  90% {
+    transform: translateX(-1px);
+  }
+  20%,
+  80% {
+    transform: translateX(2px);
+  }
+  30%,
+  50%,
+  70% {
+    transform: translateX(-4px);
+  }
+  40%,
+  60% {
+    transform: translateX(4px);
+  }
+}
+.animate-shake {
+  animation: shake 0.4s ease-in-out;
+}
+
+/* Pop — a quick, small entrance for icons (e.g. a toast's checkmark) */
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+.animate-pop-in {
+  animation: pop-in 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+/*
+ * Smooth theme switch — elements that don't already declare their own
+ * `transition` utility (which takes precedence via specificity) get a
+ * gentle color cross-fade instead of the light/dark toggle applying
+ * instantly. Kept to color-related properties only, so it never fights
+ * with hover/press transforms elsewhere.
+ */
+*,
+*::before,
+*::after {
+  transition-property: background-color, border-color, color, fill, stroke;
+  transition-timing-function: ease;
+  transition-duration: 0.25s;
+}
