@@ -1,3 +1,5 @@
+import type { PaginatedResponse } from "@/shared/types/pagination";
+import { toListQueryParams, type ListQueryParams } from "@/shared/utils/listQuery";
 import { apiClient } from "@/infrastructure/api/client";
 import type {
   CreateContactPayload,
@@ -6,30 +8,18 @@ import type {
 } from "@/features/contacts/types/contact.types";
 
 export const ContactService = {
-  async getContacts(): Promise<Contact[]> {
-    type PaginatedResponse = {
-      results: Contact[];
-      pagination?: {
-        page: number;
-        page_size: number;
-        total: number;
-        total_pages: number;
-      };
-    };
-
-    const { data } = await apiClient.get<
-      Contact[] | PaginatedResponse
-    >("/contacts/", {
-      params: {
-        page: 1,
-        page_size: 50,
-      },
+  async getContactsPage(params: ListQueryParams = {}): Promise<PaginatedResponse<Contact>> {
+    const { data } = await apiClient.get<PaginatedResponse<Contact>>("/contacts/", {
+      params: toListQueryParams(params),
     });
+    return data;
+  },
 
-    // The backend now returns { results, pagination }.
-    // Keep the service API as an array so existing pages/components
-    // remain compatible.
-    return Array.isArray(data) ? data : data.results;
+  // Compatibility method for existing pickers/forms that need a plain array.
+  // List pages must use getContactsPage() so pagination metadata is preserved.
+  async getContacts(): Promise<Contact[]> {
+    const data = await this.getContactsPage({ page: 1, page_size: 50 });
+    return data.results;
   },
 
   async getContact(id: string): Promise<Contact> {

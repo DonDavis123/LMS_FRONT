@@ -1,28 +1,49 @@
 "use client";
 
-import { Suspense } from "react";
-
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { CheckCircle2 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import LeadList from "@/features/leads/components/LeadList";
 import { LeadService } from "@/features/leads/services/LeadService";
 import type { Lead } from "@/features/leads/types/lead.types";
+import type { FilterCondition } from "@/shared/components/FilterBar";
+import type { PaginationMeta } from "@/shared/types/pagination";
+
+const DEFAULT_PAGE_SIZE = 10;
+const EMPTY_PAGINATION: PaginationMeta = {
+  page: 1,
+  page_size: DEFAULT_PAGE_SIZE,
+  total: 0,
+  total_pages: 0,
+};
 
 function LeadsPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [leads, setLeads] = useState<Lead[]>([]);
+  const [filters, setFilters] = useState<FilterCondition[]>([]);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
+  const [pagination, setPagination] = useState<PaginationMeta>(EMPTY_PAGINATION);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
   const [toast, setToast] = useState<string | null>(null);
   const [highlightId, setHighlightId] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
-    LeadService.getLeads()
+    setIsLoading(true);
+    setError(null);
+
+    LeadService.getLeadsPage({ page, page_size: pageSize, filters })
       .then((data) => {
-        if (!cancelled) setLeads(data);
+        if (cancelled) return;
+        setLeads(data.results);
+        setPagination(data.pagination);
+        if (data.pagination.total_pages > 0 && page > data.pagination.total_pages) {
+          setPage(data.pagination.total_pages);
+        }
       })
       .catch(() => {
         if (!cancelled) setError("Couldn't load leads from the server.");
@@ -30,10 +51,11 @@ function LeadsPageInner() {
       .finally(() => {
         if (!cancelled) setIsLoading(false);
       });
+
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [page, pageSize, filters, refreshKey]);
 
   function showToast(message: string) {
     setToast(message);
@@ -55,6 +77,7 @@ function LeadsPageInner() {
       showToast(message);
       router.replace("/dashboard/leads");
     }
+
     if (createdId && createdId !== "1") {
       setHighlightId(createdId);
       const timer = window.setTimeout(() => setHighlightId(null), 2000);
@@ -70,9 +93,21 @@ function LeadsPageInner() {
         isLoading={isLoading}
         error={error}
         highlightId={highlightId}
-        onLeadDeleted={(id, message) => {
-          setLeads((prev) => prev.filter((l) => l.id !== id));
+        filters={filters}
+        onFiltersChange={(next) => {
+          setFilters(next);
+          setPage(1);
+        }}
+        pageSize={pageSize}
+        pagination={pagination}
+        onPageChange={setPage}
+        onPageSizeChange={(next) => {
+          setPageSize(next);
+          setPage(1);
+        }}
+        onLeadDeleted={(_id, message) => {
           showToast(message);
+          setRefreshKey((value) => value + 1);
         }}
         onLeadUpdated={(updated) => {
           setLeads((prev) => prev.map((lead) => (lead.id === updated.id ? updated : lead)));

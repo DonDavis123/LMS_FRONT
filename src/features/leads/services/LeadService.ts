@@ -1,3 +1,5 @@
+import type { PaginatedResponse } from "@/shared/types/pagination";
+import { toListQueryParams, type ListQueryParams } from "@/shared/utils/listQuery";
 import { apiClient } from "@/infrastructure/api/client";
 import type {
   ConversionCheckResponse,
@@ -8,30 +10,18 @@ import type {
 } from "@/features/leads/types/lead.types";
 
 export const LeadService = {
-  async getLeads(): Promise<Lead[]> {
-    type PaginatedResponse = {
-      results: Lead[];
-      pagination?: {
-        page: number;
-        page_size: number;
-        total: number;
-        total_pages: number;
-      };
-    };
-
-    const { data } = await apiClient.get<
-      Lead[] | PaginatedResponse
-    >("/leads/", {
-      params: {
-        page: 1,
-        page_size: 50,
-      },
+  async getLeadsPage(params: ListQueryParams = {}): Promise<PaginatedResponse<Lead>> {
+    const { data } = await apiClient.get<PaginatedResponse<Lead>>("/leads/", {
+      params: toListQueryParams(params),
     });
+    return data;
+  },
 
-    // The backend now returns { results, pagination }.
-    // Keep the service API as an array so existing pages/components
-    // remain compatible.
-    return Array.isArray(data) ? data : data.results;
+  // Compatibility method for existing pickers/forms that need a plain array.
+  // List pages must use getLeadsPage() so pagination metadata is preserved.
+  async getLeads(): Promise<Lead[]> {
+    const data = await this.getLeadsPage({ page: 1, page_size: 50 });
+    return data.results;
   },
 
   async getLead(id: string): Promise<Lead> {

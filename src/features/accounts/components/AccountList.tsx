@@ -3,44 +3,50 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ACCOUNT_OWNERSHIP_OPTIONS, type Account } from "@/features/accounts/types/account.types";
+import { type Account } from "@/features/accounts/types/account.types";
 import { AccountService } from "@/features/accounts/services/AccountService";
 import { userService } from "@/features/users/services/userService";
 import RecordActionsMenu from "@/shared/components/RecordActionsMenu";
 import BulkDeleteBar from "@/shared/components/BulkDeleteBar";
 import SelectionIndicator from "@/shared/components/SelectionIndicator";
 import FilterBar, { type FilterCondition, type FilterFieldConfig } from "@/shared/components/FilterBar";
-import { applyFilters } from "@/shared/utils/applyFilters";
 import type { LeadOwnerOption } from "@/features/auth/types/auth.types";
 
 import { confirmDelete } from "@/shared/utils/confirmDelete";
 import { useSelectionKeyboard } from "@/shared/hooks/useSelectionKeyboard";
+import ServerPagination from "@/shared/components/ServerPagination";
+import type { PaginationMeta } from "@/shared/types/pagination";
 
 interface AccountListProps {
   accounts: Account[];
   isLoading: boolean;
+  error: string | null;
   highlightId?: string | null;
+  filters: FilterCondition[];
+  onFiltersChange: (filters: FilterCondition[]) => void;
+  pageSize: number;
+  pagination: PaginationMeta;
+  onPageChange: (page: number) => void;
+  onPageSizeChange: (pageSize: number) => void;
   onAccountDeleted: (id: string) => void;
 }
-
-const PAGE_SIZE = 10;
 const ROW_REMOVE_MS = 200;
-
-function toChoices(values: readonly string[]) {
-  return values.map((v) => ({ value: v, label: v }));
-}
 
 export default function AccountList({
   accounts,
   isLoading,
+  error,
   highlightId,
+  filters,
+  onFiltersChange,
+  pageSize,
+  pagination,
+  onPageChange,
+  onPageSizeChange,
   onAccountDeleted,
 }: AccountListProps) {
   const router = useRouter();
-  const [query, setQuery] = useState("");
-  const [filters, setFilters] = useState<FilterCondition[]>([]);
   const [owners, setOwners] = useState<LeadOwnerOption[]>([]);
-  const [page, setPage] = useState(1);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [selectionMode, setSelectionMode] = useState(false);
   const [bulkDeleting, setBulkDeleting] = useState(false);
@@ -56,42 +62,27 @@ export default function AccountList({
       { field: "account_type", label: "Account Type", type: "text" },
       { field: "billing_city", label: "Billing City", type: "text" },
       { field: "billing_country", label: "Billing Country", type: "text" },
-      { field: "ownership", label: "Ownership", type: "choice", choices: toChoices(ACCOUNT_OWNERSHIP_OPTIONS) },
       { field: "annual_revenue", label: "Annual Revenue", type: "number" },
       {
-        field: "account_owner_id",
+        field: "account_owner",
         label: "Account Owner",
         type: "uuid",
         choices: owners.map((o) => ({ value: o.id, label: o.name })),
       },
-      { field: "created_at", label: "Created", type: "datetime" },
     ],
     [owners]
   );
 
-  function getFieldValue(account: Account, field: string): unknown {
-    return (account as unknown as Record<string, unknown>)[field];
-  }
-
-  const filtered = useMemo(() => {
-    const q = query.toLowerCase();
-    const searched = accounts.filter((a) => a.account_name.toLowerCase().includes(q));
-    return applyFilters(searched, filters, getFieldValue);
-  }, [accounts, query, filters]);
-
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const currentPage = Math.min(page, totalPages);
-  const pageStart = (currentPage - 1) * PAGE_SIZE;
-  const pageItems = filtered.slice(pageStart, pageStart + PAGE_SIZE);
+  const pageItems = accounts;
 
   useSelectionKeyboard(selectionMode, selectedIds.size, handleBulkDelete);
 
   function toggleSelectAll() {
     setSelectedIds((current) => {
       const next = new Set(current);
-      const allSelected = filtered.length > 0 && filtered.every((row) => next.has(row.id));
-      if (allSelected) filtered.forEach((row) => next.delete(row.id));
-      else filtered.forEach((row) => next.add(row.id));
+      const allSelected = accounts.length > 0 && accounts.every((row) => next.has(row.id));
+      if (allSelected) accounts.forEach((row) => next.delete(row.id));
+      else accounts.forEach((row) => next.add(row.id));
       return next;
     });
   }
@@ -139,19 +130,10 @@ export default function AccountList({
           <div>
             <h1 className="font-serif text-xl text-fg">Accounts</h1>
             <p className="text-sm text-ink-soft">
-              {filtered.length} total {filtered.length === 1 ? "account" : "accounts"}
+              {pagination.total} total {accounts.length === 1 ? "account" : "accounts"}
             </p>
           </div>
           <div className="flex gap-2">
-            <input
-              value={query}
-              onChange={(e) => {
-                setQuery(e.target.value);
-                setPage(1);
-              }}
-              placeholder="Search accounts…"
-              className="w-full rounded-md border border-line px-3 py-2 text-sm outline-none focus:border-slate focus:ring-2 focus:ring-slate-light sm:w-56"
-            />
             <Link
               href="/dashboard/accounts/new"
               className="whitespace-nowrap rounded-md bg-amber px-4 py-2 text-sm font-semibold text-fg transition hover:bg-amber-dark active:scale-[0.98]"
@@ -164,12 +146,12 @@ export default function AccountList({
         <FilterBar
           fields={fields}
           filters={filters}
-          onChange={(next) => {
-            setFilters(next);
-            setPage(1);
-          }}
+          onChange={onFiltersChange}
         />
       </div>
+      {error && (
+        <p className="border-b border-line bg-danger-soft px-4 py-3 text-sm text-danger">{error}</p>
+      )}
 
       <BulkDeleteBar count={selectedIds.size} onDelete={handleBulkDelete} onClear={() => { setSelectedIds(new Set()); setSelectionMode(false); }} deleting={bulkDeleting} />
 
@@ -182,14 +164,14 @@ export default function AccountList({
       ) : pageItems.length === 0 ? (
         <div className="flex flex-col items-center gap-3 px-4 py-16 text-center animate-scale-in">
           <p className="font-serif text-lg text-fg">
-            {query || filters.length > 0 ? "No accounts match your search or filters" : "No accounts yet"}
+            {filters.length > 0 ? "No accounts match your search or filters" : "No accounts yet"}
           </p>
           <p className="max-w-sm text-sm text-ink-soft">
-            {query || filters.length > 0
+            {filters.length > 0
               ? "Try a different search term, or remove a filter."
               : "Companies you do business with show up here."}
           </p>
-          {!(query || filters.length > 0) && (
+          {!(filters.length > 0) && (
             <Link
               href="/dashboard/accounts/new"
               className="mt-1 rounded-md bg-ink px-4 py-2 text-sm font-semibold text-white transition hover:bg-ink-2 active:scale-[0.98]"
@@ -209,7 +191,7 @@ export default function AccountList({
                       <input
                         type="checkbox"
                         aria-label="Select all"
-                        checked={filtered.length > 0 && filtered.every((row) => selectedIds.has(row.id))}
+                        checked={accounts.length > 0 && accounts.every((row) => selectedIds.has(row.id))}
                         onChange={toggleSelectAll}
                         className="h-4 w-4 rounded border-line accent-slate"
                       />
@@ -285,28 +267,12 @@ export default function AccountList({
             </table>
           </div>
 
-          <div className="flex items-center justify-between border-t border-line px-4 py-3 text-sm text-ink-soft">
-            <span>Total Records {filtered.length}</span>
-            <div className="flex items-center gap-3">
-              <span>
-                {pageStart + 1} to {Math.min(pageStart + PAGE_SIZE, filtered.length)}
-              </span>
-              <button
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={currentPage === 1}
-                className="rounded border border-line px-2 py-1 disabled:opacity-40"
-              >
-                ‹
-              </button>
-              <button
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                disabled={currentPage === totalPages}
-                className="rounded border border-line px-2 py-1 disabled:opacity-40"
-              >
-                ›
-              </button>
-            </div>
-          </div>
+          <ServerPagination
+            pagination={pagination}
+            pageSize={pageSize}
+            onPageChange={onPageChange}
+            onPageSizeChange={onPageSizeChange}
+          />
         </>
       )}
 

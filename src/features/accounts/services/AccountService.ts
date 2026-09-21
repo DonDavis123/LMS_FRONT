@@ -1,3 +1,5 @@
+import type { PaginatedResponse } from "@/shared/types/pagination";
+import { toListQueryParams, type ListQueryParams } from "@/shared/utils/listQuery";
 import { apiClient } from "@/infrastructure/api/client";
 import type {
   CreateAccountPayload,
@@ -6,30 +8,18 @@ import type {
 } from "@/features/accounts/types/account.types";
 
 export const AccountService = {
-  async getAccounts(): Promise<Account[]> {
-    type PaginatedResponse = {
-      results: Account[];
-      pagination?: {
-        page: number;
-        page_size: number;
-        total: number;
-        total_pages: number;
-      };
-    };
-
-    const { data } = await apiClient.get<
-      Account[] | PaginatedResponse
-    >("/accounts/", {
-      params: {
-        page: 1,
-        page_size: 50,
-      },
+  async getAccountsPage(params: ListQueryParams = {}): Promise<PaginatedResponse<Account>> {
+    const { data } = await apiClient.get<PaginatedResponse<Account>>("/accounts/", {
+      params: toListQueryParams(params),
     });
+    return data;
+  },
 
-    // The backend now returns { results, pagination }.
-    // Keep the service API as an array so existing pages/components
-    // remain compatible.
-    return Array.isArray(data) ? data : data.results;
+  // Compatibility method for existing pickers/forms that need a plain array.
+  // List pages must use getAccountsPage() so pagination metadata is preserved.
+  async getAccounts(): Promise<Account[]> {
+    const data = await this.getAccountsPage({ page: 1, page_size: 50 });
+    return data.results;
   },
 
   async getAccount(id: string): Promise<Account> {

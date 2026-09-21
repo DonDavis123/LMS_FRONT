@@ -1,3 +1,5 @@
+import type { PaginatedResponse } from "@/shared/types/pagination";
+import { toListQueryParams, type ListQueryParams } from "@/shared/utils/listQuery";
 import { apiClient } from "@/infrastructure/api/client";
 import type { CreateTaskPayload, Task, UpdateTaskPayload } from "@/features/tasks/types/task.types";
 
@@ -12,30 +14,18 @@ import type { CreateTaskPayload, Task, UpdateTaskPayload } from "@/features/task
  * differs from this guess — same convention as LeadService/ContactService.
  */
 export const TaskService = {
-  async getTasks(): Promise<Task[]> {
-    type PaginatedResponse = {
-      results: Task[];
-      pagination?: {
-        page: number;
-        page_size: number;
-        total: number;
-        total_pages: number;
-      };
-    };
-
-    const { data } = await apiClient.get<
-      Task[] | PaginatedResponse
-    >("/tasks/", {
-      params: {
-        page: 1,
-        page_size: 50,
-      },
+  async getTasksPage(params: ListQueryParams = {}): Promise<PaginatedResponse<Task>> {
+    const { data } = await apiClient.get<PaginatedResponse<Task>>("/tasks/", {
+      params: toListQueryParams(params),
     });
+    return data;
+  },
 
-    // The backend now returns { results, pagination }.
-    // Keep the service API as an array so existing pages/components
-    // remain compatible.
-    return Array.isArray(data) ? data : data.results;
+  // Compatibility method for existing pickers/forms that need a plain array.
+  // List pages must use getTasksPage() so pagination metadata is preserved.
+  async getTasks(): Promise<Task[]> {
+    const data = await this.getTasksPage({ page: 1, page_size: 50 });
+    return data.results;
   },
 
   async getTask(id: string): Promise<Task> {

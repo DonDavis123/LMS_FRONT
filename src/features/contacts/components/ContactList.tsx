@@ -10,33 +10,43 @@ import RecordActionsMenu from "@/shared/components/RecordActionsMenu";
 import BulkDeleteBar from "@/shared/components/BulkDeleteBar";
 import SelectionIndicator from "@/shared/components/SelectionIndicator";
 import FilterBar, { type FilterCondition, type FilterFieldConfig } from "@/shared/components/FilterBar";
-import { applyFilters } from "@/shared/utils/applyFilters";
 import type { LeadOwnerOption } from "@/features/auth/types/auth.types";
 
 import { confirmDelete } from "@/shared/utils/confirmDelete";
 import { useSelectionKeyboard } from "@/shared/hooks/useSelectionKeyboard";
+import ServerPagination from "@/shared/components/ServerPagination";
+import type { PaginationMeta } from "@/shared/types/pagination";
 
 interface ContactListProps {
   contacts: Contact[];
   isLoading: boolean;
+  error: string | null;
   highlightId?: string | null;
+  filters: FilterCondition[];
+  onFiltersChange: (filters: FilterCondition[]) => void;
+  pageSize: number;
+  pagination: PaginationMeta;
+  onPageChange: (page: number) => void;
+  onPageSizeChange: (pageSize: number) => void;
   onContactDeleted: (id: string) => void;
 }
-
-const PAGE_SIZE = 10;
 const ROW_REMOVE_MS = 200;
 
 export default function ContactList({
   contacts,
   isLoading,
+  error,
   highlightId,
+  filters,
+  onFiltersChange,
+  pageSize,
+  pagination,
+  onPageChange,
+  onPageSizeChange,
   onContactDeleted,
 }: ContactListProps) {
   const router = useRouter();
-  const [query, setQuery] = useState("");
-  const [filters, setFilters] = useState<FilterCondition[]>([]);
   const [owners, setOwners] = useState<LeadOwnerOption[]>([]);
-  const [page, setPage] = useState(1);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [selectionMode, setSelectionMode] = useState(false);
   const [bulkDeleting, setBulkDeleting] = useState(false);
@@ -66,29 +76,16 @@ export default function ContactList({
     [owners]
   );
 
-  function getFieldValue(contact: Contact, field: string): unknown {
-    return (contact as unknown as Record<string, unknown>)[field];
-  }
-
-  const filtered = useMemo(() => {
-    const q = query.toLowerCase();
-    const searched = contacts.filter((c) => `${c.name} ${c.email ?? ""}`.toLowerCase().includes(q));
-    return applyFilters(searched, filters, getFieldValue);
-  }, [contacts, query, filters]);
-
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const currentPage = Math.min(page, totalPages);
-  const pageStart = (currentPage - 1) * PAGE_SIZE;
-  const pageItems = filtered.slice(pageStart, pageStart + PAGE_SIZE);
+  const pageItems = contacts;
 
   useSelectionKeyboard(selectionMode, selectedIds.size, handleBulkDelete);
 
   function toggleSelectAll() {
     setSelectedIds((current) => {
       const next = new Set(current);
-      const allSelected = filtered.length > 0 && filtered.every((row) => next.has(row.id));
-      if (allSelected) filtered.forEach((row) => next.delete(row.id));
-      else filtered.forEach((row) => next.add(row.id));
+      const allSelected = contacts.length > 0 && contacts.every((row) => next.has(row.id));
+      if (allSelected) contacts.forEach((row) => next.delete(row.id));
+      else contacts.forEach((row) => next.add(row.id));
       return next;
     });
   }
@@ -136,19 +133,10 @@ export default function ContactList({
           <div>
             <h1 className="font-serif text-xl text-fg">Contacts</h1>
             <p className="text-sm text-ink-soft">
-              {filtered.length} total {filtered.length === 1 ? "contact" : "contacts"}
+              {pagination.total} total {contacts.length === 1 ? "contact" : "contacts"}
             </p>
           </div>
           <div className="flex gap-2">
-            <input
-              value={query}
-              onChange={(e) => {
-                setQuery(e.target.value);
-                setPage(1);
-              }}
-              placeholder="Search contacts…"
-              className="w-full rounded-md border border-line px-3 py-2 text-sm outline-none focus:border-slate focus:ring-2 focus:ring-slate-light sm:w-56"
-            />
             <Link
               href="/dashboard/contacts/new"
               className="whitespace-nowrap rounded-md bg-amber px-4 py-2 text-sm font-semibold text-fg transition hover:bg-amber-dark active:scale-[0.98]"
@@ -161,12 +149,12 @@ export default function ContactList({
         <FilterBar
           fields={fields}
           filters={filters}
-          onChange={(next) => {
-            setFilters(next);
-            setPage(1);
-          }}
+          onChange={onFiltersChange}
         />
       </div>
+      {error && (
+        <p className="border-b border-line bg-danger-soft px-4 py-3 text-sm text-danger">{error}</p>
+      )}
 
       <BulkDeleteBar count={selectedIds.size} onDelete={handleBulkDelete} onClear={() => { setSelectedIds(new Set()); setSelectionMode(false); }} deleting={bulkDeleting} />
 
@@ -179,14 +167,14 @@ export default function ContactList({
       ) : pageItems.length === 0 ? (
         <div className="flex flex-col items-center gap-3 px-4 py-16 text-center animate-scale-in">
           <p className="font-serif text-lg text-fg">
-            {query || filters.length > 0 ? "No contacts match your search or filters" : "No contacts yet"}
+            {filters.length > 0 ? "No contacts match your search or filters" : "No contacts yet"}
           </p>
           <p className="max-w-sm text-sm text-ink-soft">
-            {query || filters.length > 0
+            {filters.length > 0
               ? "Try a different search term, or remove a filter."
               : "Contacts you convert from leads, or add directly, show up here."}
           </p>
-          {!(query || filters.length > 0) && (
+          {!(filters.length > 0) && (
             <Link
               href="/dashboard/contacts/new"
               className="mt-1 rounded-md bg-ink px-4 py-2 text-sm font-semibold text-white transition hover:bg-ink-2 active:scale-[0.98]"
@@ -206,7 +194,7 @@ export default function ContactList({
                       <input
                         type="checkbox"
                         aria-label="Select all"
-                        checked={filtered.length > 0 && filtered.every((row) => selectedIds.has(row.id))}
+                        checked={contacts.length > 0 && contacts.every((row) => selectedIds.has(row.id))}
                         onChange={toggleSelectAll}
                         className="h-4 w-4 rounded border-line accent-slate"
                       />
@@ -282,28 +270,12 @@ export default function ContactList({
             </table>
           </div>
 
-          <div className="flex items-center justify-between border-t border-line px-4 py-3 text-sm text-ink-soft">
-            <span>Total Records {filtered.length}</span>
-            <div className="flex items-center gap-3">
-              <span>
-                {pageStart + 1} to {Math.min(pageStart + PAGE_SIZE, filtered.length)}
-              </span>
-              <button
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={currentPage === 1}
-                className="rounded border border-line px-2 py-1 disabled:opacity-40"
-              >
-                ‹
-              </button>
-              <button
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                disabled={currentPage === totalPages}
-                className="rounded border border-line px-2 py-1 disabled:opacity-40"
-              >
-                ›
-              </button>
-            </div>
-          </div>
+          <ServerPagination
+            pagination={pagination}
+            pageSize={pageSize}
+            onPageChange={onPageChange}
+            onPageSizeChange={onPageSizeChange}
+          />
         </>
       )}
 
