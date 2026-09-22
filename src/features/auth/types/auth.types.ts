@@ -28,12 +28,12 @@ export interface LoginCredentials {
 }
 
 /**
- * Shape returned by POST /auth/login/ on the Django backend:
- * { access_token, refresh_token, token_type }
+ * Shape returned by POST /auth/login/ on the Django backend.
+ * The refresh token is intentionally NOT included in JSON; it is set as
+ * an HttpOnly cookie by Django.
  */
 export interface AuthTokens {
   access_token: string;
-  refresh_token?: string;
   token_type: string;
 }
 

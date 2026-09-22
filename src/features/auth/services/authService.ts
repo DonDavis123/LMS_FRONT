@@ -1,6 +1,5 @@
-import axios from "axios";
-import { apiClient, refreshAccessToken } from "@/infrastructure/api/client";
-import { authStorage } from "@/features/auth/services/authStorage";
+import { apiClient, authClient, refreshAccessToken } from "@/infrastructure/api/client";
+import { authStorage } from "@/infrastructure/auth/tokenStorage";
 import type {
   AuthUser,
   LoginCredentials,
@@ -40,10 +39,9 @@ function userFromToken(accessToken: string): AuthUser {
 
 export const authService = {
   async login(credentials: LoginCredentials): Promise<AuthUser> {
-    const { data } = await axios.post<LoginResponse>(
-      `${process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000/api"}/auth/login/`,
+    const { data } = await authClient.post<LoginResponse>(
+      "/auth/login/",
       credentials,
-      { withCredentials: true, headers: { "ngrok-skip-browser-warning": "true" } }
     );
 
     authStorage.setAccessToken(data.access_token);
