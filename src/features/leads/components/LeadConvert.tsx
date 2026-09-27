@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Building2, CheckCircle2, Contact2, Search, UserRound } from "lucide-react";
+import { Building2, Contact2, Search, UserRound } from "lucide-react";
 import { LeadService } from "@/features/leads/services/LeadService";
 import Spinner from "@/shared/components/Spinner";
 import type {

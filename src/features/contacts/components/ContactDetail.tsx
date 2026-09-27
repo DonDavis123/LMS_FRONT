@@ -85,12 +85,12 @@ export default function ContactDetail({ contact, onContactChange }: ContactDetai
       />
 
       {activeTab === "timeline" ? (
-        <RecordTimeline module="contacts" recordId={contact.id} />
+        <RecordTimeline module="contacts" recordId={contact.id} showLeadOrigin />
       ) : (
         <div className="animate-fade-in">
           <div className="mt-4 rounded-lg border border-line bg-surface p-6">
             <h2 className="mb-4 text-xs font-semibold uppercase tracking-wide text-ink-soft">Overview</h2>
-            <div className="grid grid-cols-1 gap-y-3 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-x-4 gap-y-3 sm:grid-cols-2">
               <Row label="Contact Owner" value={contact.contact_owner_name} editable={false} />
               <Row label="Account" value={contact.account_name} editable={false} />
               <Row label="Email" value={contact.email} onSave={(raw) => updateField("email", raw)} />

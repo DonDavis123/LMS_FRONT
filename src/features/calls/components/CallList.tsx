@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import RecordActionsMenu from "@/shared/components/RecordActionsMenu";
 import BulkDeleteBar from "@/shared/components/BulkDeleteBar";
 import SelectionIndicator from "@/shared/components/SelectionIndicator";
@@ -121,7 +121,7 @@ export default function CallList({
   }
 
   return (
-    <div className="rounded-lg border border-line bg-surface">
+    <div className="lp-card overflow-hidden">
       <div className="flex flex-col gap-3 border-b border-line p-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="font-serif text-xl text-fg">Calls</h1>
@@ -182,7 +182,7 @@ export default function CallList({
       ) : (
         <>
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[820px] text-left text-sm">
+            <table className="w-full min-w-[820px] border-separate border-spacing-0 text-left text-sm">
               <thead>
                 <tr className="border-b border-line text-xs font-semibold uppercase tracking-wide text-ink-soft">
                   <th className="w-10 px-4 py-3" aria-label="Selection and actions">
@@ -205,7 +205,7 @@ export default function CallList({
                   <th className="px-4 py-3">Owner</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-line">
                 {pageItems.map((call) => (
                   <tr
                     key={call.id}
@@ -221,9 +221,14 @@ export default function CallList({
                         return next;
                       });
                     }}
-                    onDoubleClick={() => { if (!selectionMode) (onOpenClick ? onOpenClick(call) : onEditClick(call)); }}
+                    onDoubleClick={() => {
+                      if (!selectionMode) {
+                        if (onOpenClick) onOpenClick(call);
+                        else onEditClick(call);
+                      }
+                    }}
                     title="Double-click to open call details"
-                    className="group cursor-pointer border-b border-line last:border-0 hover:bg-paper hover:shadow-[inset_2px_0_0_var(--color-amber)]"
+                    className="group cursor-pointer hover:bg-paper hover:shadow-[inset_2px_0_0_var(--color-amber)]"
                   >
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">

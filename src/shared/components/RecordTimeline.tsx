@@ -3,6 +3,7 @@
 import { Fragment, useEffect, useMemo, useState } from "react";
 import {
   ArrowRightCircle,
+  ChevronDown,
   CheckCircle2,
   Clock3,
   FileEdit,
@@ -16,6 +17,9 @@ import { TimelineService, type TimelineEvent, type TimelineModule } from "@/feat
 interface RecordTimelineProps {
   module: TimelineModule;
   recordId: string;
+  /** Show an expandable original-lead timeline on converted contact/account records. */
+  showLeadOrigin?: boolean;
+  compact?: boolean;
 }
 
 interface ChangeEntry {
@@ -78,16 +82,60 @@ function formatDayLabel(value: string) {
   return date.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
 }
 
+
+function findLeadId(value: unknown, keyHint = ""): string | null {
+  if (!value || typeof value !== "object") return null;
+
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const found = findLeadId(item, keyHint);
+      if (found) return found;
+    }
+    return null;
+  }
+
+  const record = value as Record<string, unknown>;
+  for (const [key, child] of Object.entries(record)) {
+    const normalized = key.toLowerCase().replace(/[^a-z0-9]/g, "");
+    if (typeof child === "string" && child.trim() && normalized.includes("lead") && normalized.endsWith("id")) {
+      return child;
+    }
+    if (child && typeof child === "object") {
+      if (normalized === "lead" || normalized.includes("lead")) {
+        const nested = (child as Record<string, unknown>).id;
+        if (typeof nested === "string" && nested.trim()) return nested;
+      }
+      const found = findLeadId(child, normalized);
+      if (found) return found;
+    }
+  }
+
+  // Some timeline payloads can put the source record id in a generic `id`
+  // nested under a key such as `source_lead` / `converted_lead`.
+  if (keyHint.includes("lead")) {
+    const nested = record.id;
+    if (typeof nested === "string" && nested.trim()) return nested;
+  }
+
+  return null;
+}
+
+function isConversionEvent(event: TimelineEvent) {
+  const type = `${event.event_type ?? ""} ${event.type ?? ""}`.toUpperCase();
+  return type.includes("CONVERT") || /converted/i.test(event.title);
+}
+
 function formatTime(value: string) {
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? "" : date.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
 }
 
-export default function RecordTimeline({ module, recordId }: RecordTimelineProps) {
+export default function RecordTimeline({ module, recordId, showLeadOrigin = false, compact = false }: RecordTimelineProps) {
   const [events, setEvents] = useState<TimelineEvent[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState("All");
+  const [expandedLeadEvents, setExpandedLeadEvents] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     let cancelled = false;
@@ -142,7 +190,7 @@ export default function RecordTimeline({ module, recordId }: RecordTimelineProps
   }, [visibleEvents]);
 
   return (
-    <div className="mt-4 rounded-lg border border-line bg-surface">
+    <div className={`${compact ? "mt-0" : "mt-4"} rounded-lg border border-line bg-surface`}>
       <div className="flex flex-col gap-3 border-b border-line px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-base font-semibold text-fg">Timeline</h2>
@@ -193,7 +241,10 @@ export default function RecordTimeline({ module, recordId }: RecordTimelineProps
                   {dayEvents.map((event) => {
                     const { Icon, tone } = iconFor(event.event_type ?? event.type);
                     const changes = getChanges(event);
-                    const segments = highlightMessage(event.title, changes);
+                    const conversion = showLeadOrigin && isConversionEvent(event);
+                    const segments = conversion
+                      ? [{ text: `Lead converted to ${module === "accounts" ? "Account" : "Contact"}`, bold: true }]
+                      : highlightMessage(event.title, changes);
                     const actor = event.actor_name || event.user_name || event.user;
 
                     return (
@@ -208,21 +259,50 @@ export default function RecordTimeline({ module, recordId }: RecordTimelineProps
 
                         <div className="min-w-0 flex-1 pt-0.5">
                           <p className="text-sm leading-relaxed text-fg">
+                            {conversion && <ArrowRightCircle size={15} className="mr-1.5 inline-block align-[-2px] text-slate" />}
                             {segments.map((segment, i) => (
                               <Fragment key={i}>
                                 {segment.bold ? <strong className="font-semibold">{segment.text}</strong> : segment.text}
                               </Fragment>
                             ))}
                           </p>
-                          {event.description && (
-                            <p className="mt-1 text-sm text-ink-soft">{event.description}</p>
-                          )}
                           {actor && (
                             <p className="mt-1 text-xs text-ink-soft">
                               by <span className="font-medium text-fg">{actor}</span>
                               {event.source ? ` · ${event.source}` : ""}
                             </p>
                           )}
+                          {event.description && !conversion && (
+                            <p className="mt-1 text-sm text-ink-soft">{event.description}</p>
+                          )}
+
+                          {conversion && (() => {
+                            const leadId = findLeadId(event.raw);
+                            if (!leadId) return null;
+                            const expanded = expandedLeadEvents.has(event.id);
+                            return (
+                              <div className="mt-3">
+                                <button
+                                  type="button"
+                                  onClick={() => setExpandedLeadEvents((current) => {
+                                    const next = new Set(current);
+                                    if (next.has(event.id)) next.delete(event.id);
+                                    else next.add(event.id);
+                                    return next;
+                                  })}
+                                  className="mt-2 inline-flex items-center gap-1.5 rounded-md px-0 py-1 text-xs font-semibold text-slate transition hover:text-fg"
+                                >
+                                  <ChevronDown size={13} className={`transition-transform ${expanded ? "rotate-180" : ""}`} />
+                                  {expanded ? "Hide original lead timeline" : "View original lead timeline"}
+                                </button>
+                                {expanded && (
+                                  <div className="mt-3 border-l-2 border-slate-light pl-3">
+                                    <RecordTimeline module="leads" recordId={leadId} compact />
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })()}
                         </div>
                       </li>
                     );

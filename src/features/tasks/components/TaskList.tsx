@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { ChevronDown } from "lucide-react";
+
 import RecordActionsMenu from "@/shared/components/RecordActionsMenu";
 import BulkDeleteBar from "@/shared/components/BulkDeleteBar";
 import SelectionIndicator from "@/shared/components/SelectionIndicator";
@@ -14,6 +14,7 @@ import type { LeadOwnerOption } from "@/features/auth/types/auth.types";
 import { confirmDelete } from "@/shared/utils/confirmDelete";
 import { useSelectionKeyboard } from "@/shared/hooks/useSelectionKeyboard";
 import ServerPagination from "@/shared/components/ServerPagination";
+import ModernStatusSelect from "@/shared/components/ModernStatusSelect";
 import type { PaginationMeta } from "@/shared/types/pagination";
 
 interface TaskListProps {
@@ -43,14 +44,6 @@ const PRIORITY_STYLES: Record<string, string> = {
   Normal: "bg-slate-light text-slate",
   Low: "bg-paper text-ink-soft",
   Lowest: "bg-paper text-ink-soft",
-};
-
-const STATUS_STYLES: Record<string, string> = {
-  "Not Started": "bg-paper text-ink-soft",
-  Deferred: "bg-paper text-ink-soft",
-  "In Progress": "bg-slate-light text-slate",
-  Completed: "bg-success-soft text-success",
-  "Waiting for Input": "bg-danger-soft text-danger",
 };
 
 function dueDateWithDaysLeft(value: string | null): string {
@@ -183,8 +176,8 @@ export default function TaskList({
   }
 
   return (
-    <div className="rounded-lg border border-line bg-surface">
-      <div className="flex flex-col gap-3 border-b border-line p-4">
+    <div className="lp-card overflow-hidden">
+      <div className="flex flex-col gap-3 border-b border-line bg-surface/80 p-5 backdrop-blur-sm">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="font-serif text-xl text-fg">Tasks</h1>
@@ -243,7 +236,7 @@ export default function TaskList({
       ) : (
         <>
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[820px] text-left text-sm">
+            <table className="w-full min-w-[820px] border-separate border-spacing-0 text-left text-sm">
               <thead>
                 <tr className="border-b border-line text-xs font-semibold uppercase tracking-wide text-ink-soft">
                   <th className="w-10 px-4 py-3" aria-label="Selection and actions">
@@ -265,7 +258,7 @@ export default function TaskList({
                   <th className="px-4 py-3">Owner</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-line">
                 {pageItems.map((task) => (
                   <tr
                     key={task.id}
@@ -283,7 +276,7 @@ export default function TaskList({
                     }}
                     onDoubleClick={() => { if (!selectionMode) onOpenClick(task); }}
                     title="Double-click to open task details"
-                    className="group cursor-pointer border-b border-line last:border-0 hover:bg-paper hover:shadow-[inset_2px_0_0_var(--color-amber)]"
+                    className="group cursor-pointer hover:bg-paper hover:shadow-[inset_2px_0_0_var(--color-amber)]"
                   >
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
@@ -322,26 +315,18 @@ export default function TaskList({
                       </span>
                     </td>
                     <td className="px-4 py-3">
-                      <div className="relative inline-flex">
-                        <select
-                          value={task.status}
-                          disabled={updatingStatusId === task.id}
-                          aria-label={`Change status for ${task.subject}`}
-                          onChange={(event) =>
-                            handleStatusChange(task, event.target.value as Task["status"])
-                          }
-                          className={`appearance-none rounded-full border-0 py-1 pl-2.5 pr-7 text-xs font-medium outline-none cursor-pointer disabled:cursor-wait disabled:opacity-60 ${
-                            STATUS_STYLES[task.status] ?? "bg-paper text-ink-soft"
-                          }`}
-                        >
-                          {(["Not Started", "Deferred", "In Progress", "Completed", "Waiting for Input"] as const).map((status) => (
-                            <option key={status} value={status}>
-                              {status}
-                            </option>
-                          ))}
-                        </select>
-                        <ChevronDown size={13} className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-current" />
-                      </div>
+                      <ModernStatusSelect
+                        value={task.status}
+                        disabled={updatingStatusId === task.id}
+                        ariaLabel={`Change status for ${task.subject}`}
+                        onChange={(next) => handleStatusChange(task, next as Task["status"])}
+                        options={TASK_STATUSES.map((status) => ({
+                          value: status,
+                          label: status,
+                          tone: status === "Completed" ? "success" : status === "In Progress" ? "info" : status === "Deferred" ? "warning" : status === "Waiting for Input" ? "danger" : "neutral",
+                          description: status === "Completed" ? "Task finished" : status === "In Progress" ? "Currently being worked on" : status === "Waiting for Input" ? "Blocked by a response" : status === "Deferred" ? "Moved to a later time" : "Not started yet",
+                        }))}
+                      />
                     </td>
                     <td className="px-4 py-3 text-ink-soft">{relatedLabel(task)}</td>
                     <td className="px-4 py-3 text-ink-soft">{task.owner_name ?? "Unassigned"}</td>

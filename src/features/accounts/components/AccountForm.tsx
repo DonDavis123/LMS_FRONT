@@ -119,7 +119,6 @@ export default function AccountForm({ mode, initialAccount, onSubmit, onCancel }
         update("ownerLabel", current.name);
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode]);
 
   function update<K extends keyof FormState>(key: K, value: FormState[K]) {

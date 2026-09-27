@@ -4,6 +4,7 @@ export type MeetingParticipantType = "user" | "lead" | "contact";
 export interface MeetingParticipant {
   id: string;
   name: string;
+  email?: string | null;
   type: MeetingParticipantType;
 }
 

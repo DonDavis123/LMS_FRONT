@@ -168,7 +168,7 @@ async function handleStatusClick(status: LeadStatus) {
             <h2 className="mb-4 text-xs font-semibold uppercase tracking-wide text-ink-soft">
               Overview
             </h2>
-            <div className="grid grid-cols-1 gap-y-3 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-x-4 gap-y-3 sm:grid-cols-2">
               <Row label="Lead Owner" value={lead.owner?.name} editable={false} />
               <Row label="Email" value={lead.email} onSave={(raw) => updateField("email", raw)} />
               <Row label="Phone" value={lead.phone} onSave={(raw) => updateField("phone", raw)} />

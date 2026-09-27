@@ -58,7 +58,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           isSidebarCollapsed={isSidebarCollapsed}
           onToggleSidebar={toggleSidebar}
         />
-        <main className="flex-1 overflow-y-auto px-6 py-6">{children}</main>
+        <main className="lp-page-bg flex-1 overflow-y-auto px-4 py-5 sm:px-6 sm:py-6">{children}</main>
       </div>
     </div>
   );

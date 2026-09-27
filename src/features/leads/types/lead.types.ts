@@ -128,7 +128,7 @@ export interface Lead {
  */
 export interface CreateLeadPayload {
   name: string;
-  company_name: string;
+  company_name?: string | null;
   owner_id: string;
   email?: string | null;
   title?: string | null;

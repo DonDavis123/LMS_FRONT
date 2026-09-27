@@ -8,7 +8,6 @@ import AccountDetail from "@/features/accounts/components/AccountDetail";
 import AccountForm from "@/features/accounts/components/AccountForm";
 import { AccountService } from "@/features/accounts/services/AccountService";
 import type { Account, CreateAccountPayload } from "@/features/accounts/types/account.types";
-import { CreateContactPayload } from "@/features/contacts/types/contact.types";
 
 function AccountDetailPageInner() {
   const params = useParams<{ id: string }>();

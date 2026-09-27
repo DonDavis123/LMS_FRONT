@@ -10,15 +10,20 @@ import type { RelatedToValue, RelatedPersonType } from "@/shared/components/Rela
 
 type RelatedType = "" | "lead" | "contact" | "account";
 
-export default function ActivityRelatedPicker({ value, onChange }: { value: RelatedToValue; onChange: (value: RelatedToValue) => void }) {
+export default function ActivityRelatedPicker({ value, onChange, includeAccount = true, pickerMenuClassName }: { value: RelatedToValue; onChange: (value: RelatedToValue) => void; includeAccount?: boolean; pickerMenuClassName?: string }) {
   const [options, setOptions] = useState<RecordPickerOption[]>([]);
-  const [type, setType] = useState<RelatedType>(value.personType || (value.accountId ? "account" : ""));
+  const [type, setType] = useState<RelatedType>(value.personType || (includeAccount && value.accountId ? "account" : ""));
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
-    Promise.all([LeadService.getLeads(), ContactService.getContacts(), AccountService.getAccounts()])
+    setLoading(true);
+    Promise.all([
+      LeadService.getLeads(),
+      ContactService.getContacts(),
+      includeAccount ? AccountService.getAccounts() : Promise.resolve([]),
+    ])
       .then(([leads, contacts, accounts]) => {
         if (cancelled) return;
         setOptions([
@@ -30,9 +35,15 @@ export default function ActivityRelatedPicker({ value, onChange }: { value: Rela
       .catch(() => { if (!cancelled) setOptions([]); })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
-  }, []);
+  }, [includeAccount]);
 
-  const label = type === "lead" ? "Lead" : type === "contact" ? "Contact" : type === "account" ? "Others" : "None";
+  useEffect(() => {
+    if (includeAccount || type !== "account") return;
+    setType("");
+    onChange({ personType: "", personId: "", personLabel: "", accountId: "", accountLabel: "" });
+  }, [includeAccount, type, onChange]);
+
+  const label = type === "lead" ? "Lead" : type === "contact" ? "Contact" : type === "account" ? "Account" : "None";
   const selectedId = type === "account" ? value.accountId : value.personId;
   const selectedLabel = type === "account" ? value.accountLabel : value.personLabel;
   const filtered = type ? options.filter((option) => option.id.startsWith(`${type}:`)) : [];
@@ -54,7 +65,7 @@ export default function ActivityRelatedPicker({ value, onChange }: { value: Rela
           </button>
           {open && (
             <div className="absolute left-0 top-full z-40 mt-1 w-36 overflow-hidden rounded-md border border-line bg-surface shadow-xl">
-              {([["", "None"], ["lead", "Lead"], ["contact", "Contact"], ["account", "Others"]] as const).map(([valueType, valueLabel]) => (
+              {([["", "None"], ["lead", "Lead"], ["contact", "Contact"], ...(includeAccount ? [["account", "Account"] as const] : [])] as const).map(([valueType, valueLabel]) => (
                 <button key={valueLabel} type="button" onClick={() => choose(valueType)} className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-paper">
                   <span className="w-3 text-slate">{label === valueLabel ? "✓" : ""}</span>{valueLabel}
                 </button>
@@ -75,6 +86,7 @@ export default function ActivityRelatedPicker({ value, onChange }: { value: Rela
                 else onChange({ personType: type, personId: rawId, personLabel: selected, accountId: "", accountLabel: "" });
               }}
               placeholder={loading ? "Loading…" : `Search ${type === "account" ? "account" : type}…`}
+              menuClassName={pickerMenuClassName}
             />
           </div>
         )}

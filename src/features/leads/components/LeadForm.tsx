@@ -7,6 +7,7 @@ import { authService } from "@/features/auth/services/authService";
 import OwnerPicker from "@/shared/components/OwnerPicker";
 import Spinner from "@/shared/components/Spinner";
 import { inputClass, Section, Field } from "@/shared/components/FormLayout";
+import ModernStatusSelect from "@/shared/components/ModernStatusSelect";
 import {
   LEAD_INDUSTRIES,
   LEAD_RATINGS,
@@ -150,14 +151,14 @@ export default function LeadForm({
   }
 
   function buildPayload(): CreateLeadPayload | null {
-    if (!form.name.trim() || !form.company_name.trim()) {
-      setError("Name and Company Name are required.");
+    if (!form.name.trim()) {
+      setError("Name is required.");
       return null;
     }
     setError(null);
     return {
       name: form.name.trim(),
-      company_name: form.company_name.trim(),
+      company_name: form.company_name.trim() || null,
       owner_id: form.owner_id,
       email: form.email.trim() || null,
       title: form.title.trim() || null,
@@ -277,7 +278,7 @@ export default function LeadForm({
             }}
           />
         </Field>
-        <Field label="Company" required>
+        <Field label="Company">
           <input
             value={form.company_name}
             onChange={(e) => update("company_name", e.target.value)}
@@ -346,17 +347,16 @@ export default function LeadForm({
           />
         </Field>
         <Field label="Lead Status">
-          <select
+          <ModernStatusSelect
             value={form.lead_status}
-            onChange={(e) => update("lead_status", e.target.value as LeadStatus)}
-            className={inputClass}
-          >
-            {LEAD_STATUSES.map((status) => (
-              <option key={status} value={status}>
-                {status}
-              </option>
-            ))}
-          </select>
+            onChange={(value) => update("lead_status", value as LeadStatus)}
+            fullWidth
+            options={LEAD_STATUSES.map((status) => ({
+              value: status,
+              label: status,
+              tone: status === "Contacted" || status === "Pre-Qualified" ? "success" : status === "Junk Lead" || status === "Lost Lead" || status === "Not Qualified" ? "danger" : status === "Attempted to Contact" || status === "Contact in Future" ? "warning" : "neutral",
+            }))}
+          />
         </Field>
 
         <Field label="Lead Source">

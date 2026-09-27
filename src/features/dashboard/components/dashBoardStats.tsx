@@ -82,11 +82,11 @@ function StatCard({
 
   return (
     <div
-      className="animate-fade-in-up cursor-default rounded-lg border border-line bg-surface p-4 transition hover:-translate-y-0.5 hover:shadow-md"
+      className="lp-card animate-fade-in-up relative cursor-default overflow-hidden p-5"
       style={{ borderLeft: `3px solid ${accent}`, animationDelay: `${delay}ms` }}
     >
       <p className="text-xs font-medium uppercase tracking-wide text-ink-soft">{label}</p>
-      <p className="mt-2 font-serif text-3xl text-fg tabular-nums">{animatedValue}</p>
+      <div className="mt-3 flex items-end justify-between gap-3"><p className="font-serif text-3xl text-fg tabular-nums">{animatedValue}</p><span className="mb-1 h-2 w-12 overflow-hidden rounded-full bg-paper"><span className="block h-full rounded-full bg-amber/70" style={{ width: `${Math.min(100, Math.max(14, value * 4))}%` }} /></span></div>
     </div>
   );
 }

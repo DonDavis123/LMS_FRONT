@@ -9,10 +9,30 @@ import type {
 
 export const ContactService = {
   async getContactsPage(params: ListQueryParams = {}): Promise<PaginatedResponse<Contact>> {
-    const { data } = await apiClient.get<PaginatedResponse<Contact>>("/contacts/", {
+    const { data } = await apiClient.get<PaginatedResponse<Contact> | Contact[]>("/contacts/", {
       params: toListQueryParams(params),
     });
-    return data;
+
+    if (Array.isArray(data)) {
+      const page = params.page ?? 1;
+      const pageSize = params.page_size ?? 10;
+      const total = data.length;
+      return {
+        results: data,
+        pagination: {
+          page,
+          page_size: pageSize,
+          total,
+          total_pages: total === 0 ? 0 : Math.ceil(total / pageSize),
+        },
+      };
+    }
+
+    if (data && Array.isArray(data.results) && data.pagination) {
+      return data;
+    }
+
+    throw new Error("Invalid contacts response from the server.");
   },
 
   // Compatibility method for existing pickers/forms that need a plain array.

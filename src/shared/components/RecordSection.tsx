@@ -10,7 +10,7 @@ export function RecordSection({ title, children }: { title: string; children: Re
   return (
     <div className="rounded-lg border border-line bg-surface p-6">
       <h3 className="mb-4 text-xs font-semibold uppercase tracking-wide text-ink-soft">{title}</h3>
-      <div className="grid grid-cols-1 gap-y-3 sm:grid-cols-2">{children}</div>
+      <div className="grid grid-cols-1 gap-x-4 gap-y-3 sm:grid-cols-2">{children}</div>
     </div>
   );
 }

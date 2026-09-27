@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from "react";
-import { Calendar, Check, ChevronDown, Plus, Search, X } from "lucide-react";
+import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react";
+import { Check, ChevronDown, Plus, Search, X } from "lucide-react";
 import { userService } from "@/features/users/services/userService";
 import type { LeadOwnerOption } from "@/features/auth/types/auth.types";
 import { authService } from "@/features/auth/services/authService";
@@ -9,6 +9,7 @@ import { LeadService } from "@/features/leads/services/LeadService";
 import { ContactService } from "@/features/contacts/services/ContactService";
 import Spinner from "@/shared/components/Spinner";
 import Time12hPicker from "@/shared/components/Time12hPicker";
+import DateInput from "@/shared/components/DateInput";
 import {
   type Meeting,
   type MeetingParticipant,
@@ -103,10 +104,10 @@ function fromMeeting(m: Meeting): FormState {
 
   return {
     title: m.title ?? "",
-    owner_id: m.owner_id ?? "",
+    owner_id: m.host_id ?? "",
     ownerLabel: m.host_name ?? "",
     location: m.location ?? "",
-    all_day: m.all_day ?? false,
+    all_day: m.is_all_day ?? false,
     from_date: fd,
     from_time: ft,
     to_date: td || fd,
@@ -690,92 +691,6 @@ function DateLine({
           <Time12hPicker value={time} onChange={onTime} />
         )}
       </div>
-    </div>
-  );
-}
-
-function DateInput({ value, onChange }: { value: string; onChange: (value: string) => void }) {
-  const pickerRef = useRef<HTMLInputElement>(null);
-  const [text, setText] = useState("");
-
-  useEffect(() => {
-    if (!value) {
-      setText("");
-      return;
-    }
-    const [year, month, day] = value.split("-");
-    setText(year && month && day ? `${month}/${day}/${year}` : value);
-  }, [value]);
-
-  function parseAndCommit(raw: string) {
-    const input = raw.trim();
-    if (!input) {
-      onChange("");
-      return;
-    }
-
-    const match = input.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})$/);
-    if (!match) {
-      const iso = input.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
-      if (!iso) {
-        setText(value ? (() => { const [y,m,d] = value.split("-"); return y && m && d ? `${m}/${d}/${y}` : value; })() : "");
-        return;
-      }
-      const [, y, m, d] = iso;
-      const normalized = `${y}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`;
-      onChange(normalized);
-      return;
-    }
-
-    const [, month, day, year] = match;
-    const mm = month.padStart(2, "0");
-    const dd = day.padStart(2, "0");
-    const candidate = new Date(Number(year), Number(month) - 1, Number(day));
-    if (candidate.getFullYear() !== Number(year) || candidate.getMonth() !== Number(month) - 1 || candidate.getDate() !== Number(day)) {
-      setText(value ? (() => { const [y,m,d] = value.split("-"); return y && m && d ? `${m}/${d}/${y}` : value; })() : "");
-      return;
-    }
-    onChange(`${year}-${mm}-${dd}`);
-  }
-
-  function openPicker() {
-    const input = pickerRef.current;
-    if (!input) return;
-    const picker = input as HTMLInputElement & { showPicker?: () => void };
-    if (typeof picker.showPicker === "function") picker.showPicker();
-    else picker.click();
-  }
-
-  return (
-    <div className="relative flex min-w-0 items-center">
-      <input
-        type="text"
-        value={text}
-        onChange={(e) => setText(e.target.value)}
-        onBlur={(e) => parseAndCommit(e.target.value)}
-        onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); parseAndCommit(e.currentTarget.value); e.currentTarget.blur(); } }}
-        placeholder="MM/DD/YYYY"
-        inputMode="numeric"
-        className="min-w-0 border-0 bg-transparent px-0 py-2 pr-7 text-sm text-fg outline-none focus:ring-0"
-        aria-label="Date"
-      />
-      <button
-        type="button"
-        onClick={openPicker}
-        className="absolute right-0 rounded p-1 text-ink-soft hover:bg-paper hover:text-fg"
-        aria-label="Choose date"
-      >
-        <Calendar size={15} />
-      </button>
-      <input
-        ref={pickerRef}
-        type="date"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="pointer-events-none absolute h-px w-px opacity-0"
-        tabIndex={-1}
-        aria-hidden="true"
-      />
     </div>
   );
 }

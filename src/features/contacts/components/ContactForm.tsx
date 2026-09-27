@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, type FormEvent } from "react";
+import { useRouter } from "next/navigation";
 import { userService } from "@/features/users/services/userService";
 import type { LeadOwnerOption } from "@/features/auth/types/auth.types";
 import { authService } from "@/features/auth/services/authService";
@@ -126,6 +127,7 @@ export default function ContactForm({ mode, initialContact, onSubmit, onCancel }
   const [contactOptions, setContactOptions] = useState<{ id: string; label: string }[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     userService
@@ -258,6 +260,8 @@ export default function ContactForm({ mode, initialContact, onSubmit, onCancel }
               update("account_id", id);
               update("accountLabel", label);
             }}
+            onCreate={() => router.push("/dashboard/accounts/new")}
+            createLabel="Create Account"
             placeholder="No account"
           />
         </Field>

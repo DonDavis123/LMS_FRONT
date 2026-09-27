@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Check, Pencil, X } from "lucide-react";
+import ModernStatusSelect from "@/shared/components/ModernStatusSelect";
 
 export interface InlineEditOption { value: string; label: string }
 
@@ -61,11 +62,11 @@ export default function InlineEditRow({
   function cancel() { setDraft(normalized); setError(false); setEditing(false); }
 
   return (
-    <div className={`group relative rounded-md px-2 py-2 -mx-2 hover:bg-paper ${fullWidth ? "sm:col-span-2" : ""}`}>
+    <div className={`group relative min-w-0 overflow-hidden rounded-xl border border-transparent px-3 py-2.5 -mx-1.5 transition-all duration-200 hover:border-line hover:bg-paper/70 ${editing ? "border-line bg-paper/80 shadow-sm" : ""} ${fullWidth ? "sm:col-span-2" : ""}`}>
       <p className="text-xs text-ink-soft">{label}</p>
       {!editing ? (
         <div className="flex min-h-7 items-center justify-between gap-2">
-          <p className="min-w-0 flex-1 whitespace-pre-wrap break-words text-sm text-fg">
+          <p className="min-w-0 max-w-full flex-1 whitespace-pre-wrap break-words text-sm text-fg">
             {displayValue ?? (normalized.trim() ? normalized : "—")}
           </p>
           {editable && onSave && (
@@ -76,23 +77,32 @@ export default function InlineEditRow({
           )}
         </div>
       ) : (
-        <div className="mt-1 flex items-start gap-2">
+        <div className="mt-2 flex min-w-0 max-w-full items-start gap-2 animate-inline-edit">
           {type === "textarea" ? (
             <textarea autoFocus value={draft} onChange={e => setDraft(e.target.value)} className={editClass + " min-h-20 resize-y"} />
           ) : type === "select" ? (
-            <select autoFocus value={draft} onChange={e => setDraft(e.target.value)} className={editClass}>
-              {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-            </select>
+            <div className="min-w-0 flex-1">
+              <ModernStatusSelect
+                value={draft}
+                fullWidth
+                onChange={setDraft}
+                options={options.map((option) => ({
+                  value: option.value,
+                  label: option.label,
+                  tone: /completed|contacted|qualified/i.test(option.label) ? "success" : /lost|junk|not qualified|waiting/i.test(option.label) ? "danger" : /progress|future|attempted|deferred/i.test(option.label) ? "warning" : "neutral",
+                }))}
+              />
+            </div>
           ) : (
             <input autoFocus type={type} value={draft} onChange={e => setDraft(e.target.value)} className={editClass} />
           )}
-          <button type="button" disabled={saving} onClick={save} className="rounded-md bg-ink p-2 text-white hover:bg-ink-2 disabled:opacity-50"><Check size={14}/></button>
-          <button type="button" disabled={saving} onClick={cancel} className="rounded-md border border-line p-2 text-ink-soft hover:bg-paper disabled:opacity-50"><X size={14}/></button>
+          <button type="button" disabled={saving} onClick={save} aria-label={`Save ${label}`} className="shrink-0 rounded-lg bg-ink p-2 text-white shadow-sm transition-all hover:-translate-y-0.5 hover:bg-ink-2 hover:shadow-md active:scale-95 disabled:opacity-50"><Check size={14}/></button>
+          <button type="button" disabled={saving} onClick={cancel} aria-label={`Cancel editing ${label}`} className="shrink-0 rounded-lg border border-line bg-surface p-2 text-ink-soft shadow-sm transition-all hover:-translate-y-0.5 hover:bg-paper hover:text-fg active:scale-95 disabled:opacity-50"><X size={14}/></button>
         </div>
       )}
-      {error && <p className="mt-1 text-xs text-danger">Couldn't save. Try again.</p>}
+      {error && <p className="mt-1 text-xs text-danger">Couldn&apos;t save. Try again.</p>}
     </div>
   );
 }
 
-const editClass = "min-w-0 flex-1 rounded-md border border-slate bg-surface px-2.5 py-2 text-sm text-fg outline-none focus:ring-2 focus:ring-slate-light";
+const editClass = "min-w-0 w-full max-w-full flex-1 rounded-xl border border-line bg-surface px-3 py-2 text-sm text-fg shadow-inner outline-none transition-all duration-200 focus:border-slate focus:ring-4 focus:ring-slate-light/50";

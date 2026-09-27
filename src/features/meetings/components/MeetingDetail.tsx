@@ -14,6 +14,8 @@ import type {
   UpdateMeetingPayload,
 } from "@/features/meetings/types/meeting.types";
 import { confirmDelete } from "@/shared/utils/confirmDelete";
+import RecordTimeline from "@/shared/components/RecordTimeline";
+import { Tabs } from "@/shared/components/Tabs";
 
 interface Props {
   meeting: Meeting;
@@ -26,6 +28,7 @@ export default function MeetingDetail({ meeting, onMeetingChange }: Props) {
   const router = useRouter();
   const [menu, setMenu] = useState(false);
   const [editing, setEditing] = useState(false);
+  const [activeTab, setActiveTab] = useState<"overview" | "timeline">("overview");
 
   async function updateField(field: EditableField, raw: string) {
     if (field === "title" && !raw.trim()) {
@@ -143,62 +146,42 @@ export default function MeetingDetail({ meeting, onMeetingChange }: Props) {
           </div>
         </div>
 
-        <div className="mt-6 rounded-lg border border-line bg-surface p-6">
-          <h2 className="mb-4 text-xs font-semibold uppercase tracking-wide text-ink-soft">
-            Overview
-          </h2>
+        <Tabs
+          tabs={[
+            { value: "overview", label: "Overview" },
+            { value: "timeline", label: "Timeline" },
+          ]}
+          active={activeTab}
+          onChange={setActiveTab}
+        />
 
-          <div className="grid grid-cols-1 gap-y-2 sm:grid-cols-2">
-            <Row
-              label="Title"
-              value={meeting.title}
-              onSave={(value) => updateField("title", value)}
-            />
+        <div key={activeTab} className="animate-fade-in">
+          {activeTab === "overview" ? (
+            <>
+              <div className="mt-4 rounded-lg border border-line bg-surface p-6">
+                <h2 className="mb-4 text-xs font-semibold uppercase tracking-wide text-ink-soft">Overview</h2>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <Row label="Title" value={meeting.title} onSave={(value) => updateField("title", value)} />
+                  <Row label="Host" value={meeting.host_name} editable={false} />
+                  <Row label="Location" value={meeting.location} onSave={(value) => updateField("location", value)} />
+                  <Row label="From" value={new Date(meeting.start_at).toLocaleString()} editable={false} />
+                  <Row label="To" value={new Date(meeting.end_at).toLocaleString()} editable={false} />
+                  <Row label="All Day" value={meeting.is_all_day ? "Yes" : "No"} editable={false} />
+                  <Row label="Related To" value={related} editable={false} />
+                  <Row label="Participants" value={participants} editable={false} />
+                </div>
+              </div>
 
-            <Row label="Host" value={meeting.host_name} editable={false} />
-
-            <Row
-              label="Location"
-              value={meeting.location}
-              onSave={(value) => updateField("location", value)}
-            />
-
-            <Row
-              label="From"
-              value={new Date(meeting.start_at).toLocaleString()}
-              editable={false}
-            />
-
-            <Row
-              label="To"
-              value={new Date(meeting.end_at).toLocaleString()}
-              editable={false}
-            />
-
-            <Row
-              label="All Day"
-              value={meeting.is_all_day ? "Yes" : "No"}
-              editable={false}
-            />
-
-            <Row label="Related To" value={related} editable={false} />
-
-            <Row label="Participants" value={participants} editable={false} />
-          </div>
-        </div>
-
-        <div className="mt-4 rounded-lg border border-line bg-surface p-6">
-          <h2 className="mb-4 text-xs font-semibold uppercase tracking-wide text-ink-soft">
-            Description
-          </h2>
-
-          <Row
-            label="Description"
-            value={meeting.description}
-            type="textarea"
-            fullWidth
-            onSave={(value) => updateField("description", value)}
-          />
+              <div className="mt-4 rounded-lg border border-line bg-surface p-6">
+                <h2 className="mb-4 text-xs font-semibold uppercase tracking-wide text-ink-soft">Description</h2>
+                <Row label="Description" value={meeting.description} type="textarea" fullWidth onSave={(value) => updateField("description", value)} />
+              </div>
+            </>
+          ) : (
+            <div className="mt-4">
+              <RecordTimeline module="meetings" recordId={meeting.id} />
+            </div>
+          )}
         </div>
       </div>
 

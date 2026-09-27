@@ -26,13 +26,13 @@ export default function DashboardHeader({
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
-    <header className="flex items-center justify-between gap-4 border-b border-line bg-surface px-4 py-3">
+    <header className="sticky top-0 z-40 flex items-center justify-between gap-4 border-b border-line bg-surface/85 px-4 py-3 shadow-[0_6px_25px_rgba(18,33,58,0.035)] backdrop-blur-xl">
       <div className="flex flex-1 items-center gap-3">
         <button
           onClick={onToggleSidebar}
           aria-label={isSidebarCollapsed ? "Expand sidebar" : "Minimize sidebar"}
           title={isSidebarCollapsed ? "Expand sidebar" : "Minimize sidebar"}
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-ink-soft transition hover:bg-paper hover:text-fg active:scale-90"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-transparent text-ink-soft transition hover:border-line hover:bg-paper hover:text-fg active:scale-90"
         >
           {isSidebarCollapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
         </button>
@@ -41,7 +41,7 @@ export default function DashboardHeader({
           <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-soft" />
           <input
             placeholder="Search records…"
-            className="w-full rounded-md border border-line bg-paper py-2 pl-9 pr-3 text-sm outline-none focus:border-slate focus:bg-surface focus:ring-2 focus:ring-slate-light"
+            className="w-full rounded-xl border border-line bg-paper/80 py-2.5 pl-10 pr-3 text-sm shadow-inner outline-none transition-all placeholder:text-ink-soft focus:border-slate focus:bg-surface focus:ring-4 focus:ring-slate-light/50"
           />
         </div>
       </div>
@@ -52,9 +52,9 @@ export default function DashboardHeader({
         <div className="relative">
           <button
             onClick={() => setIsMenuOpen((v) => !v)}
-            className="flex items-center gap-2 rounded-md px-2 py-1.5 transition hover:bg-paper active:scale-[0.98]"
+            className="flex items-center gap-2 rounded-xl border border-transparent px-2 py-1.5 transition hover:border-line hover:bg-paper active:scale-[0.98]"
           >
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-light text-sm font-semibold text-slate">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-slate-light to-paper text-sm font-bold text-slate shadow-sm">
               {user.name.slice(0, 1).toUpperCase()}
             </div>
             <div className="text-left">

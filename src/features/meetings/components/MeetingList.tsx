@@ -161,7 +161,7 @@ export default function MeetingList({
         );
 
   return (
-    <div className="rounded-lg border border-line bg-surface">
+    <div className="lp-card overflow-hidden">
       <div className="flex flex-col gap-3 border-b border-line p-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="font-serif text-xl text-fg">Meetings</h1>
@@ -222,7 +222,7 @@ export default function MeetingList({
       ) : (
         <>
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[760px] text-left text-sm">
+            <table className="w-full min-w-[760px] border-separate border-spacing-0 text-left text-sm">
               <thead>
                 <tr className="border-b border-line text-xs font-semibold uppercase tracking-wide text-ink-soft">
                   <th className="w-10 px-4 py-3" aria-label="Selection and actions">
@@ -247,7 +247,7 @@ export default function MeetingList({
                 </tr>
               </thead>
 
-              <tbody>
+              <tbody className="divide-y divide-line">
                 {meetings.map((meeting) => (
                   <tr
                     key={meeting.id}
@@ -275,13 +275,12 @@ export default function MeetingList({
                     }}
                     onDoubleClick={() => {
                       if (!selectionMode) {
-                        onOpenClick
-                          ? onOpenClick(meeting)
-                          : onEditClick(meeting);
+                        if (onOpenClick) onOpenClick(meeting);
+                        else onEditClick(meeting);
                       }
                     }}
                     title="Double-click to open meeting details"
-                    className="group cursor-pointer border-b border-line last:border-0 hover:bg-paper hover:shadow-[inset_2px_0_0_var(--color-amber)]"
+                    className="group cursor-pointer hover:bg-paper hover:shadow-[inset_2px_0_0_var(--color-amber)]"
                   >
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
@@ -317,9 +316,8 @@ export default function MeetingList({
                               return next;
                             });
                           } else {
-                            onOpenClick
-                              ? onOpenClick(meeting)
-                              : onEditClick(meeting);
+                            if (onOpenClick) onOpenClick(meeting);
+                            else onEditClick(meeting);
                           }
                         }}
                         className="text-left font-medium text-slate hover:underline"

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { ChevronDown } from "lucide-react";
+
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -17,6 +17,7 @@ import { userService } from "@/features/users/services/userService";
 import RecordActionsMenu from "@/shared/components/RecordActionsMenu";
 import BulkDeleteBar from "@/shared/components/BulkDeleteBar";
 import SelectionIndicator from "@/shared/components/SelectionIndicator";
+import ModernStatusSelect from "@/shared/components/ModernStatusSelect";
 import FilterBar, { type FilterCondition, type FilterFieldConfig } from "@/shared/components/FilterBar";
 import type { LeadOwnerOption } from "@/features/auth/types/auth.types";
 
@@ -158,8 +159,8 @@ export default function LeadList({
   }
 
   return (
-    <div className="rounded-lg border border-line bg-surface">
-      <div className="flex flex-col gap-3 border-b border-line p-4">
+    <div className="lp-card overflow-hidden">
+      <div className="flex flex-col gap-3 border-b border-line bg-surface/80 p-5 backdrop-blur-sm">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="font-serif text-xl text-fg">Leads</h1>
@@ -248,6 +249,7 @@ export default function LeadList({
                         onEdit={() => router.push(`/dashboard/leads/${lead.id}/edit`)}
                         onDelete={() => handleDelete(lead)}
                         onSelect={() => setSelectionMode(true)}
+                        onConvert={() => router.push(`/dashboard/leads/${lead.id}/convert`)}
                         recordId={lead.id}
                         disabled={deletingId === lead.id}
                       />
@@ -281,24 +283,17 @@ export default function LeadList({
                       </span>
                     </td>
                     <td className="px-4 py-3">
-                      <div className="relative inline-flex">
-                        <select
-                          value={lead.lead_status || "None"}
-                          disabled={updatingStatusId === lead.id}
-                          aria-label={`Change status for ${lead.name || "lead"}`}
-                          onChange={(event) =>
-                            handleStatusChange(lead, event.target.value as LeadStatus)
-                          }
-                          className="appearance-none rounded-full border-0 bg-slate-light py-1 pl-2.5 pr-7 text-xs font-medium text-slate outline-none cursor-pointer disabled:cursor-wait disabled:opacity-60"
-                        >
-                          {LEAD_STATUSES.map((status) => (
-                            <option key={status} value={status}>
-                              {status}
-                            </option>
-                          ))}
-                        </select>
-                        <ChevronDown size={13} className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-slate" />
-                      </div>
+                      <ModernStatusSelect
+                        value={lead.lead_status || "None"}
+                        disabled={updatingStatusId === lead.id}
+                        ariaLabel={`Change status for ${lead.name || "lead"}`}
+                        onChange={(next) => handleStatusChange(lead, next as LeadStatus)}
+                        options={LEAD_STATUSES.map((status) => ({
+                          value: status,
+                          label: status,
+                          tone: status === "Contacted" || status === "Pre-Qualified" ? "success" : status === "Junk Lead" || status === "Lost Lead" || status === "Not Qualified" ? "danger" : status === "Attempted to Contact" || status === "Contact in Future" ? "warning" : "neutral",
+                        }))}
+                      />
                     </td>
                     <td className="px-4 py-3 text-ink-soft">{lead.owner?.name ?? "Unassigned"}</td>
                   </tr>

@@ -79,12 +79,12 @@ export default function Sidebar({ user, isCollapsed }: SidebarProps) {
 
   return (
     <aside
-      className={`flex h-screen shrink-0 flex-col overflow-hidden border-r border-line bg-surface transition-[width] duration-200 ease-out ${
+      className={`flex h-screen shrink-0 flex-col overflow-hidden border-r border-line bg-surface/95 shadow-[8px_0_30px_rgba(18,33,58,0.035)] backdrop-blur-xl transition-[width] duration-300 ease-out ${
         isCollapsed ? "w-16" : "w-64"
       }`}
     >
       <div className={`flex items-center px-5 py-5 ${isCollapsed ? "justify-center px-0" : ""}`}>
-        <span className="font-serif text-xl text-fg">{isCollapsed ? "L" : "LeadPulse"}</span>
+        <div className={`flex items-center gap-2.5 ${isCollapsed ? "" : ""}`}><span className="grid h-9 w-9 place-items-center rounded-xl bg-ink text-sm font-black text-white shadow-md animate-soft-glow">L</span>{!isCollapsed && <div><span className="block font-serif text-xl leading-none text-fg">LeadPulse</span><span className="mt-1 block text-[9px] font-bold uppercase tracking-[0.2em] text-ink-soft">CRM workspace</span></div>}</div>
       </div>
 
       <nav className="px-3">
@@ -212,11 +212,11 @@ function SidebarLink({
     <Link
       href={href}
       title={isCollapsed ? label : undefined}
-      className={`group flex items-center gap-2.5 rounded-md px-2.5 py-2 text-sm font-medium transition-all duration-150 active:scale-[0.98] ${
+      className={`group relative flex items-center gap-2.5 rounded-xl px-2.5 py-2.5 text-sm font-medium transition-all duration-200 active:scale-[0.98] ${
         isCollapsed ? "justify-center" : ""
       } ${
         isActive
-          ? "bg-ink text-white"
+          ? "bg-ink text-white shadow-md shadow-ink/10"
           : "text-fg hover:translate-x-0.5 hover:bg-paper hover:shadow-sm"
       }`}
     >

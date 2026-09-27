@@ -9,6 +9,9 @@ import { emptyRelatedTo, type RelatedToValue } from "@/shared/components/Related
 import ActivityRelatedPicker from "@/shared/components/ActivityRelatedPicker";
 import Spinner from "@/shared/components/Spinner";
 import { inputClass, Field } from "@/shared/components/FormLayout";
+import DateInput from "@/shared/components/DateInput";
+import Time12hPicker from "@/shared/components/Time12hPicker";
+import ModernStatusSelect from "@/shared/components/ModernStatusSelect";
 import {
   TASK_PRIORITIES,
   TASK_STATUSES,
@@ -35,7 +38,8 @@ interface FormState {
   due_date: string;
   priority: TaskPriority;
   status: TaskStatus;
-  reminder_at: string;
+  reminder_date: string;
+  reminder_time: string;
   description: string;
   related: RelatedToValue;
 }
@@ -48,7 +52,8 @@ function emptyForm(): FormState {
     due_date: "",
     priority: DEFAULT_TASK_PRIORITY,
     status: DEFAULT_TASK_STATUS,
-    reminder_at: "",
+    reminder_date: "",
+    reminder_time: "",
     description: "",
     related: emptyRelatedTo(),
   };
@@ -71,7 +76,8 @@ function formFromTask(task: Task): FormState {
     priority: task.priority ?? DEFAULT_TASK_PRIORITY,
     status: task.status ?? DEFAULT_TASK_STATUS,
     // datetime-local inputs want "YYYY-MM-DDTHH:mm", ISO strings carry more.
-    reminder_at: task.reminder_at ? task.reminder_at.slice(0, 16) : "",
+    reminder_date: task.reminder_at ? task.reminder_at.slice(0, 10) : "",
+    reminder_time: task.reminder_at ? task.reminder_at.slice(11, 16) : "",
     description: task.description ?? "",
     related,
   };
@@ -124,11 +130,13 @@ export default function TaskForm({ mode, initialTask, onSubmit, onCancel, initia
         due_date: form.due_date || null,
         priority: form.priority,
         status: form.status,
-        reminder_at: form.reminder_at ? new Date(form.reminder_at).toISOString() : null,
+        reminder_at: form.reminder_date && form.reminder_time
+          ? new Date(`${form.reminder_date}T${form.reminder_time}`).toISOString()
+          : null,
         description: form.description.trim() || null,
         lead_id: form.related.personType === "lead" ? form.related.personId || null : null,
         contact_id: form.related.personType === "contact" ? form.related.personId || null : null,
-        account_id: form.related.accountId || null,
+        account_id: null,
       });
     } catch {
       setError("Couldn't save this task. Check the fields and try again.");
@@ -173,12 +181,7 @@ export default function TaskForm({ mode, initialTask, onSubmit, onCancel, initia
           </Field>
 
           <Field label="Due Date">
-            <input
-              type="date"
-              value={form.due_date}
-              onChange={(e) => update("due_date", e.target.value)}
-              className={inputClass}
-            />
+            <DateInput value={form.due_date} onChange={(value) => update("due_date", value)} ariaLabel="Task due date" />
           </Field>
 
           <Field label="Priority">
@@ -196,30 +199,44 @@ export default function TaskForm({ mode, initialTask, onSubmit, onCancel, initia
           </Field>
 
           <Field label="Status">
-            <select
+            <ModernStatusSelect
               value={form.status}
-              onChange={(e) => update("status", e.target.value as TaskStatus)}
-              className={inputClass}
-            >
-              {TASK_STATUSES.map((s) => (
-                <option key={s} value={s}>
-                  {s}
-                </option>
-              ))}
-            </select>
-          </Field>
-
-          <Field label="Reminder At">
-            <input
-              type="datetime-local"
-              value={form.reminder_at}
-              onChange={(e) => update("reminder_at", e.target.value)}
-              className={inputClass}
+              onChange={(value) => update("status", value as TaskStatus)}
+              fullWidth
+              options={TASK_STATUSES.map((status) => ({
+                value: status,
+                label: status,
+                tone: status === "Completed" ? "success" : status === "In Progress" ? "info" : status === "Deferred" ? "warning" : status === "Waiting for Input" ? "danger" : "neutral",
+                description: status === "Completed" ? "Task finished" : status === "In Progress" ? "Currently being worked on" : status === "Waiting for Input" ? "Blocked by a response" : status === "Deferred" ? "Moved to a later time" : "Not started yet",
+              }))}
             />
           </Field>
 
+          <Field label="Reminder At">
+            <div className="flex min-w-0 flex-wrap items-center gap-3">
+              <DateInput
+                value={form.reminder_date}
+                onChange={(value) => update("reminder_date", value)}
+                ariaLabel="Reminder date"
+              />
+              {form.reminder_date ? (
+                <Time12hPicker
+                  value={form.reminder_time}
+                  onChange={(value) => update("reminder_time", value)}
+                />
+              ) : (
+                <span className="text-xs text-ink-soft">Select a reminder date first</span>
+              )}
+            </div>
+          </Field>
+
           <div className="sm:col-span-2">
-            <ActivityRelatedPicker value={form.related} onChange={(related) => update("related", related)} />
+            <ActivityRelatedPicker
+              value={form.related}
+              includeAccount={false}
+              pickerMenuClassName="w-[440px] max-w-[calc(100vw-2rem)]"
+              onChange={(related) => update("related", { ...related, accountId: "", accountLabel: "" })}
+            />
           </div>
 
           <Field label="Description" fullWidth>

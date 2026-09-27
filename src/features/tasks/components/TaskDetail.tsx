@@ -9,6 +9,8 @@ import { TaskService } from "@/features/tasks/services/TaskService";
 import { TASK_PRIORITIES, TASK_STATUSES, type Task, type TaskPriority, type TaskStatus } from "@/features/tasks/types/task.types";
 
 import { confirmDelete } from "@/shared/utils/confirmDelete";
+import RecordTimeline from "@/shared/components/RecordTimeline";
+import { Tabs } from "@/shared/components/Tabs";
 
 interface Props { task: Task; onTaskChange: (task: Task) => void; }
 
@@ -28,6 +30,7 @@ function dueDateWithDaysLeft(value: string | null): string {
 export default function TaskDetail({ task, onTaskChange }: Props) {
   const router = useRouter();
   const [menu, setMenu] = useState(false);
+  const [activeTab, setActiveTab] = useState<"overview" | "timeline">("overview");
 
   async function updateField(field: string, raw: string) {
     let value: unknown = raw.trim() ? raw : null;
@@ -67,30 +70,49 @@ export default function TaskDetail({ task, onTaskChange }: Props) {
         </div>
       </div>
 
-      <div className="mt-6 rounded-lg border border-line bg-surface p-6">
-        <h2 className="mb-4 text-xs font-semibold uppercase tracking-wide text-ink-soft">Overview</h2>
-        <div className="grid grid-cols-1 gap-y-2 sm:grid-cols-2">
-          <Row label="Subject" value={task.subject} onSave={v => updateField("subject", v)} />
-          <Row label="Owner" value={task.owner_name} editable={false} />
-          <Row label="Due Date" value={task.due_date} displayValue={dueDateWithDaysLeft(task.due_date)} type="date" onSave={v => updateField("due_date", v)} />
-          <Row label="Priority" value={task.priority} type="select" options={TASK_PRIORITIES.map(v=>({value:v,label:v}))} onSave={v=>updateField("priority",v)} />
-          <Row label="Status" value={task.status} type="select" options={TASK_STATUSES.map(v=>({value:v,label:v}))} onSave={v=>updateField("status",v)} />
-          <Row label="Reminder At" value={task.reminder_at ? task.reminder_at.slice(0,16) : null} type="datetime-local" onSave={v=>updateField("reminder_at",v)} />
-          <Row label="Related To" value={related} editable={false} />
-        </div>
-      </div>
+      <Tabs
+        tabs={[
+          { value: "overview", label: "Overview" },
+          { value: "timeline", label: "Timeline" },
+        ]}
+        active={activeTab}
+        onChange={setActiveTab}
+      />
 
-      <div className="mt-4 rounded-lg border border-line bg-surface p-6">
-        <h2 className="mb-4 text-xs font-semibold uppercase tracking-wide text-ink-soft">Description</h2>
-        <Row label="Description" value={task.description} type="textarea" fullWidth onSave={v=>updateField("description",v)} />
-      </div>
+      <div key={activeTab} className="animate-fade-in">
+        {activeTab === "overview" ? (
+          <>
+            <div className="mt-4 rounded-lg border border-line bg-surface p-6">
+              <h2 className="mb-4 text-xs font-semibold uppercase tracking-wide text-ink-soft">Overview</h2>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <Row label="Subject" value={task.subject} onSave={v => updateField("subject", v)} />
+                <Row label="Owner" value={task.owner_name} editable={false} />
+                <Row label="Due Date" value={task.due_date} displayValue={dueDateWithDaysLeft(task.due_date)} type="date" onSave={v => updateField("due_date", v)} />
+                <Row label="Priority" value={task.priority} type="select" options={TASK_PRIORITIES.map(v=>({value:v,label:v}))} onSave={v=>updateField("priority",v)} />
+                <Row label="Status" value={task.status} type="select" options={TASK_STATUSES.map(v=>({value:v,label:v}))} onSave={v=>updateField("status",v)} />
+                <Row label="Reminder At" value={task.reminder_at ? task.reminder_at.slice(0,16) : null} type="datetime-local" onSave={v=>updateField("reminder_at",v)} />
+                <Row label="Related To" value={related} editable={false} />
+              </div>
+            </div>
 
-      <div className="mt-4 rounded-lg border border-line bg-surface p-6">
-        <h2 className="mb-4 text-xs font-semibold uppercase tracking-wide text-ink-soft">System Information</h2>
-        <div className="grid grid-cols-1 gap-y-2 sm:grid-cols-2">
-          <Row label="Created At" value={task.created_at ? new Date(task.created_at).toLocaleString() : null} editable={false}/>
-          <Row label="Updated At" value={task.updated_at ? new Date(task.updated_at).toLocaleString() : null} editable={false}/>
-        </div>
+            <div className="mt-4 rounded-lg border border-line bg-surface p-6">
+              <h2 className="mb-4 text-xs font-semibold uppercase tracking-wide text-ink-soft">Description</h2>
+              <Row label="Description" value={task.description} type="textarea" fullWidth onSave={v=>updateField("description",v)} />
+            </div>
+
+            <div className="mt-4 rounded-lg border border-line bg-surface p-6">
+              <h2 className="mb-4 text-xs font-semibold uppercase tracking-wide text-ink-soft">System Information</h2>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <Row label="Created At" value={task.created_at ? new Date(task.created_at).toLocaleString() : null} editable={false}/>
+                <Row label="Updated At" value={task.updated_at ? new Date(task.updated_at).toLocaleString() : null} editable={false}/>
+              </div>
+            </div>
+          </>
+        ) : (
+          <div className="mt-4">
+            <RecordTimeline module="tasks" recordId={task.id} />
+          </div>
+        )}
       </div>
     </div>
   );
