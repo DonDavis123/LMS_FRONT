@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { LogOut, PanelLeftClose, PanelLeftOpen, Search } from "lucide-react";
+import { AlarmClock, LogOut, PanelLeftClose, PanelLeftOpen, Search } from "lucide-react";
 import type { AuthUser } from "@/features/auth/types/auth.types";
 import ThemeToggle from "@/shared/components/ThemeToggle";
+import NotificationBell from "@/features/notifications/components/NotificationBell";
+import ReminderDialog from "@/features/reminders/components/ReminderDialog";
 
 interface DashboardHeaderProps {
   user: AuthUser;
@@ -24,6 +26,7 @@ export default function DashboardHeader({
   onToggleSidebar,
 }: DashboardHeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isReminderOpen, setIsReminderOpen] = useState(false);
 
   return (
     <header className="sticky top-0 z-40 flex items-center justify-between gap-4 border-b border-line bg-surface/85 px-4 py-3 shadow-[0_6px_25px_rgba(18,33,58,0.035)] backdrop-blur-xl">
@@ -47,6 +50,7 @@ export default function DashboardHeader({
       </div>
 
       <div className="flex items-center gap-2">
+        <NotificationBell />
         <ThemeToggle />
 
         <div className="relative">
@@ -64,7 +68,16 @@ export default function DashboardHeader({
           </button>
 
           {isMenuOpen && (
-            <div className="absolute right-0 top-full z-20 mt-1 w-40 rounded-md border border-line bg-surface p-1 shadow-lg animate-menu-in">
+            <div className="absolute right-0 top-full z-20 mt-1 w-44 rounded-md border border-line bg-surface p-1 shadow-lg animate-menu-in">
+              <button
+                onClick={() => {
+                  setIsMenuOpen(false);
+                  setIsReminderOpen(true);
+                }}
+                className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm text-fg hover:bg-paper"
+              >
+                <AlarmClock size={14} /> Custom Reminder
+              </button>
               <button
                 onClick={onLogout}
                 className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm text-danger hover:bg-danger-soft"
@@ -75,6 +88,8 @@ export default function DashboardHeader({
           )}
         </div>
       </div>
+
+      <ReminderDialog isOpen={isReminderOpen} onClose={() => setIsReminderOpen(false)} />
     </header>
   );
 }

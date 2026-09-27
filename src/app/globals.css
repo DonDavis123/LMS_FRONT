@@ -256,6 +256,30 @@ body {
   animation: pop-in 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) both;
 }
 
+/* Bell ring — very small, brief tilt used only when a new notification
+   arrives (not a persistent/looping animation). Reduced-motion users get
+   this clamped to near-zero duration by the global rule above. */
+@keyframes bell-ring {
+  0%, 100% {
+    transform: rotate(0deg);
+  }
+  20% {
+    transform: rotate(-10deg);
+  }
+  40% {
+    transform: rotate(8deg);
+  }
+  60% {
+    transform: rotate(-6deg);
+  }
+  80% {
+    transform: rotate(4deg);
+  }
+}
+.animate-bell-ring {
+  animation: bell-ring 0.5s ease-in-out;
+}
+
 /*
  * Smooth theme switch — elements that don't already declare their own
  * `transition` utility (which takes precedence via specificity) get a
