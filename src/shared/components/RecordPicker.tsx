@@ -256,7 +256,7 @@ export default function RecordPicker({
             id={listId}
             role="listbox"
             onScroll={handleScroll}
-            className={`max-h-60 overflow-y-auto overscroll-contain transition-opacity ${
+            className={`max-h-[min(15rem,calc(var(--curtain-max,24rem)-8.5rem))] overflow-y-auto overscroll-contain transition-opacity ${
               loading && items.length > 0 ? "opacity-60" : ""
             }`}
           >

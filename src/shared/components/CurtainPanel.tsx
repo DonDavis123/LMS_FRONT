@@ -15,11 +15,18 @@ interface CurtainPanelProps {
 }
 
 interface Position {
-  top: number;
+  /** Distance from the viewport top (below) or bottom (above). */
+  edge: number;
   left: number;
   width: number;
   above: boolean;
+  /** Tallest the panel can be without leaving the viewport. */
+  maxHeight: number;
 }
+
+// Roughly the panel's height with a full page of results; used to pick a
+// side once, up front, so the panel never changes side as results change.
+const EXPECTED_HEIGHT = 380;
 
 const EXIT_MS = 170;
 
@@ -62,6 +69,14 @@ export default function CurtainPanel({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
+  // The side (above / below the field) is chosen ONCE when the panel opens,
+  // using its full expected height. Re-deciding on every resize made a short
+  // result list (1–2 rows) jump from above the field to below it.
+  const sideRef = useRef<"above" | "below" | null>(null);
+  useEffect(() => {
+    if (!open) sideRef.current = null;
+  }, [open]);
+
   useLayoutEffect(() => {
     if (!mounted) return;
 
@@ -73,34 +88,58 @@ export default function CurtainPanel({
       const margin = 8;
       const gap = 4;
       const rect = anchor.getBoundingClientRect();
-      const height = panel.offsetHeight;
       const width = Math.min(Math.max(rect.width, minWidth), window.innerWidth - margin * 2);
       const left = Math.max(margin, Math.min(rect.left, window.innerWidth - width - margin));
-      const spaceBelow = window.innerHeight - rect.bottom - margin;
-      const spaceAbove = rect.top - margin;
-      const above = spaceBelow < height + gap && spaceAbove > spaceBelow;
-      const rawTop = above ? rect.top - height - gap : rect.bottom + gap;
-      const top = Math.max(margin, Math.min(rawTop, window.innerHeight - height - margin));
+      const spaceBelow = window.innerHeight - rect.bottom - margin - gap;
+      const spaceAbove = rect.top - margin - gap;
+
+      if (sideRef.current === null) {
+        sideRef.current = spaceBelow < EXPECTED_HEIGHT && spaceAbove > spaceBelow ? "above" : "below";
+      }
+      const above = sideRef.current === "above";
+      const maxHeight = Math.max(160, above ? spaceAbove : spaceBelow);
+      // Anchor the edge that touches the field, so the panel grows/shrinks
+      // away from the field instead of sliding around.
+      const edge = above ? window.innerHeight - rect.top + gap : rect.bottom + gap;
 
       setPosition((prev) =>
-        prev && prev.top === top && prev.left === left && prev.width === width && prev.above === above
+        prev &&
+        prev.edge === edge &&
+        prev.left === left &&
+        prev.width === width &&
+        prev.above === above &&
+        prev.maxHeight === maxHeight
           ? prev
-          : { top, left, width, above }
+          : { edge, left, width, above, maxHeight }
       );
     }
 
     place();
     window.addEventListener("resize", place);
     window.addEventListener("scroll", place, true);
-    // Results arrive asynchronously and change the panel's height.
-    const observer = typeof ResizeObserver !== "undefined" ? new ResizeObserver(place) : null;
-    if (panelRef.current) observer?.observe(panelRef.current);
     return () => {
       window.removeEventListener("resize", place);
       window.removeEventListener("scroll", place, true);
-      observer?.disconnect();
     };
   }, [mounted, anchorRef, minWidth]);
+
+  // Field's rectangle, used to keep the field itself sharp inside the blur.
+  const [anchorRect, setAnchorRect] = useState<DOMRect | null>(null);
+  const [viewport, setViewport] = useState({ w: 0, h: 0 });
+  useLayoutEffect(() => {
+    if (!mounted) return;
+    function measure() {
+      setAnchorRect(anchorRef.current?.getBoundingClientRect() ?? null);
+      setViewport({ w: window.innerWidth, h: window.innerHeight });
+    }
+    measure();
+    window.addEventListener("resize", measure);
+    window.addEventListener("scroll", measure, true);
+    return () => {
+      window.removeEventListener("resize", measure);
+      window.removeEventListener("scroll", measure, true);
+    };
+  }, [mounted, anchorRef]);
 
   // The panel stays visibility:hidden until it has been positioned, and a
   // hidden element can't take focus — so focus the search input (marked with
@@ -140,25 +179,61 @@ export default function CurtainPanel({
 
   if (!mounted || typeof document === "undefined") return null;
 
+  // Full-screen blur with a rounded "hole" over the field, so the page
+  // behind is softened while the field being edited stays crisp.
+  const pad = 3;
+  const hole =
+    anchorRect && viewport.w
+      ? (() => {
+          const x = Math.max(0, anchorRect.left - pad);
+          const y = Math.max(0, anchorRect.top - pad);
+          const w = anchorRect.width + pad * 2;
+          const h = anchorRect.height + pad * 2;
+          const r = 8;
+          return (
+            `path(evenodd, 'M0 0H${viewport.w}V${viewport.h}H0Z ` +
+            `M${x + r} ${y}H${x + w - r}A${r} ${r} 0 0 1 ${x + w} ${y + r}V${y + h - r}` +
+            `A${r} ${r} 0 0 1 ${x + w - r} ${y + h}H${x + r}A${r} ${r} 0 0 1 ${x} ${y + h - r}` +
+            `V${y + r}A${r} ${r} 0 0 1 ${x + r} ${y}Z')`
+          );
+        })()
+      : undefined;
+
   return createPortal(
-    <div
-      ref={panelRef}
-      role="dialog"
-      aria-label={ariaLabel}
-      data-state={closing ? "closing" : "open"}
-      data-side={side}
-      style={{
-        position: "fixed",
-        top: position?.top ?? 0,
-        left: position?.left ?? 0,
-        width: position?.width ?? Math.max(minWidth, 240),
-        visibility: position ? "visible" : "hidden",
-        pointerEvents: closing ? "none" : undefined,
-      }}
-      className={`curtain-panel z-[90] ${className}`}
-    >
-      {children}
-    </div>,
+    <>
+      <div
+        aria-hidden
+        data-state={closing ? "closing" : "open"}
+        className="curtain-backdrop fixed inset-0 z-[85] bg-ink/20 backdrop-blur-[3px]"
+        style={hole ? { clipPath: hole } : undefined}
+        onMouseDown={(event) => {
+          // Clicking the blurred page only dismisses the dropdown; it must
+          // not also activate whatever is underneath.
+          event.preventDefault();
+          event.stopPropagation();
+          if (open) onClose();
+        }}
+      />
+      <div
+        ref={panelRef}
+        role="dialog"
+        aria-label={ariaLabel}
+        data-state={closing ? "closing" : "open"}
+        data-side={side}
+        style={{
+          position: "fixed",
+          ...(position?.above ? { bottom: position.edge } : { top: position?.edge ?? 0 }),
+          left: position?.left ?? 0,
+          width: position?.width ?? Math.max(minWidth, 240),
+          ...(position ? ({ "--curtain-max": `${position.maxHeight}px` } as React.CSSProperties) : {}),
+          visibility: position ? "visible" : "hidden",
+          pointerEvents: closing ? "none" : undefined,
+        }}
+        className={`curtain-panel z-[90] ${className}`}
+      >
+        {children}
+      </div>
+    </>,
     document.body
   );
 }

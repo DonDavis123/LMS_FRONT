@@ -407,3 +407,9 @@ button, a, input, select, textarea {
   animation: curtain-row 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
   animation-delay: calc(var(--i, 0) * 20ms + 70ms);
 }
+
+/* Backdrop behind an open picker: fades/blurs in with the curtain. */
+@keyframes curtain-backdrop-in  { from { opacity: 0; } to { opacity: 1; } }
+@keyframes curtain-backdrop-out { from { opacity: 1; } to { opacity: 0; } }
+.curtain-backdrop[data-state="open"]    { animation: curtain-backdrop-in 0.25s ease-out both; }
+.curtain-backdrop[data-state="closing"] { animation: curtain-backdrop-out 0.17s ease-in both; pointer-events: none; }
