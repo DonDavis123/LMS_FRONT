@@ -6,7 +6,7 @@ import { NotificationService } from "@/features/notifications/services/Notificat
 import type { Notification } from "@/features/notifications/types/notification.types";
 import NotificationDropdown from "@/features/notifications/components/NotificationDropdown";
 
-const POLL_INTERVAL_MS = 30_000;
+const POLL_INTERVAL_MS = 10_000;
 
 function unreadCountOf(notifications: Notification[]): number {
   return notifications.filter((n) => !n.is_read).length;
@@ -30,7 +30,11 @@ export default function NotificationBell() {
   const previousUnreadRef = useRef(0);
   const rootRef = useRef<HTMLDivElement>(null);
 
+  const inFlightRef = useRef(false);
+
   const refresh = useCallback(async () => {
+    if (inFlightRef.current) return;
+    inFlightRef.current = true;
     try {
       const data = await NotificationService.getNotifications();
       setNotifications(data);
@@ -45,6 +49,7 @@ export default function NotificationBell() {
       // Silently keep the last known list — a failed poll shouldn't
       // interrupt the dashboard.
     } finally {
+      inFlightRef.current = false;
       setIsLoading(false);
     }
   }, []);
@@ -52,7 +57,22 @@ export default function NotificationBell() {
   useEffect(() => {
     refresh();
     const interval = window.setInterval(refresh, POLL_INTERVAL_MS);
-    return () => window.clearInterval(interval);
+
+    // Browsers throttle timers in background tabs, so also refresh the
+    // moment the user returns to the tab / regains focus / reconnects.
+    const refreshIfVisible = () => {
+      if (document.visibilityState === "visible") refresh();
+    };
+    document.addEventListener("visibilitychange", refreshIfVisible);
+    window.addEventListener("focus", refreshIfVisible);
+    window.addEventListener("online", refreshIfVisible);
+
+    return () => {
+      window.clearInterval(interval);
+      document.removeEventListener("visibilitychange", refreshIfVisible);
+      window.removeEventListener("focus", refreshIfVisible);
+      window.removeEventListener("online", refreshIfVisible);
+    };
   }, [refresh]);
 
   useEffect(() => {

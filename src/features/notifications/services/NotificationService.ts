@@ -14,7 +14,13 @@ import type { Notification } from "@/features/notifications/types/notification.t
  */
 export const NotificationService = {
   async getNotifications(): Promise<Notification[]> {
-    const { data } = await apiClient.get<Notification[]>("/notifications/");
+    // `_t` busts any browser/proxy cache so polling always sees new rows.
+    // (A Cache-Control request header would trigger a CORS preflight that
+    // the API doesn't allow, so a query param is used instead.)
+    const { data } = await apiClient.get<Notification[]>("/notifications/", {
+      params: { _t: Date.now() },
+      timeout: 15_000,
+    });
     return data;
   },
 

@@ -349,3 +349,27 @@ button, a, input, select, textarea {
     radial-gradient(circle at 15% 20%, rgba(76,103,133,.05), transparent 30%),
     var(--color-paper);
 }
+
+/* ── Date / time picker popovers ───────────────────────────────────── */
+@keyframes popover-down {
+  from { opacity: 0; transform: translateY(-8px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes popover-up {
+  from { opacity: 0; transform: translateY(8px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.animate-popover-down { animation: popover-down 0.22s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.animate-popover-up   { animation: popover-up 0.22s cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+/* Month change: the day grid slides in from the direction of travel. */
+@keyframes cal-next {
+  from { opacity: 0; transform: translateX(16px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes cal-prev {
+  from { opacity: 0; transform: translateX(-16px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+.animate-cal-next { animation: cal-next 0.24s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.animate-cal-prev { animation: cal-prev 0.24s cubic-bezier(0.16, 1, 0.3, 1) both; }
