@@ -179,17 +179,20 @@ export interface ConversionCheckResponse {
 
 export type ConversionAction = "create_new" | "use_existing";
 
+/** Account decisions additionally allow "skip" for company-less (Contact-only) leads. */
+export type AccountConversionAction = ConversionAction | "skip";
+
 /**
  * Body for POST /leads/{id}/convert/.
- * - "create_new" needs no extra fields — the backend derives the new
- *   Account/Contact's name straight from the lead's own name/company.
+ * - "create_new" sends no id and no record data — the backend derives the new
+ *   Account/Contact straight from the lead itself.
  * - "use_existing" requires the matching id picked from conversion-check.
+ * - account_action "skip" (no account_id) is valid only for leads without a
+ *   company name (Contact-only conversion).
  */
 export interface ConvertLeadPayload {
-  account_action: ConversionAction;
+  account_action: AccountConversionAction;
   account_id?: string;
-  account_name?: string;
   contact_action: ConversionAction;
   contact_id?: string;
-  contact_name?: string;
 }
