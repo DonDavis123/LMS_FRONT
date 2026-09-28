@@ -204,7 +204,7 @@ export default function CurtainPanel({
       <div
         aria-hidden
         data-state={closing ? "closing" : "open"}
-        className="curtain-backdrop fixed inset-0 z-[85] bg-ink/20 backdrop-blur-[3px]"
+        className="curtain-backdrop fixed inset-0 z-[85] bg-ink/20 backdrop-blur-[1px]"
         style={hole ? { clipPath: hole } : undefined}
         onMouseDown={(event) => {
           // Clicking the blurred page only dismisses the dropdown; it must
