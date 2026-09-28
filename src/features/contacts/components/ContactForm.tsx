@@ -10,8 +10,6 @@ import RecordPicker from "@/shared/components/RecordPicker";
 import Spinner from "@/shared/components/Spinner";
 import { inputClass, Section, Field } from "@/shared/components/FormLayout";
 import { LEAD_SOURCES, type LeadSource } from "@/features/leads/types/lead.types";
-import { AccountService } from "@/features/accounts/services/AccountService";
-import { ContactService } from "@/features/contacts/services/ContactService";
 import type { Contact, CreateContactPayload } from "@/features/contacts/types/contact.types";
 
 interface ContactFormProps {
@@ -123,8 +121,6 @@ export default function ContactForm({ mode, initialContact, onSubmit, onCancel }
     initialContact ? formFromContact(initialContact) : emptyForm()
   );
   const [owners, setOwners] = useState<LeadOwnerOption[]>([]);
-  const [accountOptions, setAccountOptions] = useState<{ id: string; label: string }[]>([]);
-  const [contactOptions, setContactOptions] = useState<{ id: string; label: string }[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
@@ -135,22 +131,6 @@ export default function ContactForm({ mode, initialContact, onSubmit, onCancel }
       .then(setOwners)
       .catch(() => setOwners([]));
 
-    AccountService.getAccounts()
-      .then((accounts) =>
-        setAccountOptions(accounts.map((a) => ({ id: a.id, label: a.account_name })))
-      )
-      .catch(() => setAccountOptions([]));
-
-    ContactService.getContacts()
-      .then((contacts) =>
-        setContactOptions(
-          contacts
-            .filter((c) => c.id !== initialContact?.id)
-            .map((c) => ({ id: c.id, label: c.name }))
-        )
-      )
-      .catch(() => setContactOptions([]));
-
     if (mode === "create") {
       const current = authService.getSessionUser();
       if (current) {
@@ -158,7 +138,6 @@ export default function ContactForm({ mode, initialContact, onSubmit, onCancel }
         update("ownerLabel", current.name);
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode]);
 
   function update<K extends keyof FormState>(key: K, value: FormState[K]) {
@@ -253,7 +232,7 @@ export default function ContactForm({ mode, initialContact, onSubmit, onCancel }
         </Field>
         <Field label="Account Name">
           <RecordPicker
-            options={accountOptions}
+            kind="account"
             value={form.account_id}
             label={form.accountLabel}
             onChange={(id, label) => {
@@ -261,7 +240,7 @@ export default function ContactForm({ mode, initialContact, onSubmit, onCancel }
               update("accountLabel", label);
             }}
             onCreate={() => router.push("/dashboard/accounts/new")}
-            createLabel="Create Account"
+            createLabel="New Account"
             placeholder="No account"
           />
         </Field>
@@ -386,7 +365,8 @@ export default function ContactForm({ mode, initialContact, onSubmit, onCancel }
 
         <Field label="Reporting To">
           <RecordPicker
-            options={contactOptions}
+            kind="contact"
+            excludeId={initialContact?.id}
             value={form.reporting_to_id}
             label={form.reportingToLabel}
             onChange={(id, label) => {

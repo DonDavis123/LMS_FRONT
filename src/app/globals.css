@@ -373,3 +373,37 @@ button, a, input, select, textarea {
 }
 .animate-cal-next { animation: cal-next 0.24s cubic-bezier(0.16, 1, 0.3, 1) both; }
 .animate-cal-prev { animation: cal-prev 0.24s cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+/* ── Record picker: "curtain" dropdown ─────────────────────────────────
+   The panel is revealed top-to-bottom like a curtain being drawn. The
+   clip-path keeps negative side/bottom insets so the box-shadow is never
+   clipped once the curtain is fully open. Rows then cascade in. */
+@keyframes curtain-drop {
+  from { clip-path: inset(0 -28px 100% -28px); opacity: 0.35; transform: translateY(-6px); }
+  to   { clip-path: inset(0 -28px -28px -28px); opacity: 1; transform: translateY(0); }
+}
+@keyframes curtain-lift {
+  from { clip-path: inset(0 -28px -28px -28px); opacity: 1; transform: translateY(0); }
+  to   { clip-path: inset(0 -28px 100% -28px); opacity: 0; transform: translateY(-6px); }
+}
+@keyframes curtain-rise {
+  from { clip-path: inset(100% -28px 0 -28px); opacity: 0.35; transform: translateY(6px); }
+  to   { clip-path: inset(-28px -28px 0 -28px); opacity: 1; transform: translateY(0); }
+}
+@keyframes curtain-fall {
+  from { clip-path: inset(-28px -28px 0 -28px); opacity: 1; transform: translateY(0); }
+  to   { clip-path: inset(100% -28px 0 -28px); opacity: 0; transform: translateY(6px); }
+}
+.curtain-panel[data-side="below"][data-state="open"]    { animation: curtain-drop 0.36s cubic-bezier(0.22, 1, 0.36, 1) backwards; }
+.curtain-panel[data-side="below"][data-state="closing"] { animation: curtain-lift 0.17s cubic-bezier(0.4, 0, 0.6, 1) both; }
+.curtain-panel[data-side="above"][data-state="open"]    { animation: curtain-rise 0.36s cubic-bezier(0.22, 1, 0.36, 1) backwards; }
+.curtain-panel[data-side="above"][data-state="closing"] { animation: curtain-fall 0.17s cubic-bezier(0.4, 0, 0.6, 1) both; }
+
+@keyframes curtain-row {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.curtain-row {
+  animation: curtain-row 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: calc(var(--i, 0) * 20ms + 70ms);
+}

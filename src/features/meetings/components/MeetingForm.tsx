@@ -5,9 +5,10 @@ import { Check, ChevronDown, Plus, Search, X } from "lucide-react";
 import { userService } from "@/features/users/services/userService";
 import type { LeadOwnerOption } from "@/features/auth/types/auth.types";
 import { authService } from "@/features/auth/services/authService";
-import { LeadService } from "@/features/leads/services/LeadService";
-import { ContactService } from "@/features/contacts/services/ContactService";
 import Spinner from "@/shared/components/Spinner";
+import RecordPicker from "@/shared/components/RecordPicker";
+import RelatedTypeSelect from "@/shared/components/RelatedTypeSelect";
+import { useRecordSearch } from "@/shared/hooks/useRecordSearch";
 import Time12hPicker from "@/shared/components/Time12hPicker";
 import DateInput from "@/shared/components/DateInput";
 import {
@@ -22,12 +23,6 @@ interface Props {
   initialMeeting?: Meeting;
   onSubmit: (payload: CreateMeetingPayload) => Promise<void>;
   onCancel: () => void;
-}
-
-interface RelatedRecord {
-  id: string;
-  label: string;
-  sublabel?: string;
 }
 
 type RelatedType = "" | "lead" | "contact";
@@ -129,8 +124,6 @@ export default function MeetingForm({ mode, initialMeeting, onSubmit, onCancel }
   );
   const [owners, setOwners] = useState<LeadOwnerOption[]>([]);
   const [participantUsers, setParticipantUsers] = useState<ParticipantCandidate[]>([]);
-  const [leadOptions, setLeadOptions] = useState<RelatedRecord[]>([]);
-  const [contactOptions, setContactOptions] = useState<RelatedRecord[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [showParticipants, setShowParticipants] = useState(false);
@@ -138,16 +131,13 @@ export default function MeetingForm({ mode, initialMeeting, onSubmit, onCancel }
   const [participantCategory, setParticipantCategory] = useState<ParticipantCategory>("user");
   const [participantTab, setParticipantTab] = useState<"all" | "selected">("all");
   const [showMore, setShowMore] = useState(false);
-  const [showRelatedMenu, setShowRelatedMenu] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
     Promise.all([
       userService.getLeadOwners().catch(() => [] as LeadOwnerOption[]),
       userService.getUsers().catch(() => []),
-      LeadService.getLeads().catch(() => []),
-      ContactService.getContacts().catch(() => []),
-    ]).then(([ownerRows, users, leads, contacts]) => {
+    ]).then(([ownerRows, users]) => {
       if (cancelled) return;
       setOwners(ownerRows);
       setParticipantUsers(
@@ -156,20 +146,6 @@ export default function MeetingForm({ mode, initialMeeting, onSubmit, onCancel }
           name: user.name,
           email: user.email ?? null,
           type: "user",
-        })),
-      );
-      setLeadOptions(
-        leads.map((row) => ({
-          id: row.id,
-          label: row.name || row.company_name || "Unnamed Lead",
-          sublabel: row.company_name || row.email || undefined,
-        })),
-      );
-      setContactOptions(
-        contacts.map((row) => ({
-          id: row.id,
-          label: row.name || "Unnamed Contact",
-          sublabel: row.email || row.account_name || undefined,
         })),
       );
     });
@@ -190,24 +166,17 @@ export default function MeetingForm({ mode, initialMeeting, onSubmit, onCancel }
     };
   }, [mode]);
 
+  // Leads and contacts are searched on the server as the user types; only the
+  // (small) user list is filtered locally.
+  const remoteParticipants = participantCategory !== "user" && participantTab === "all";
+  const participantSearchResults = useRecordSearch({
+    kinds: [participantCategory === "lead" ? "lead" : "contact"],
+    query: participantSearch,
+    enabled: showParticipants && remoteParticipants,
+  });
+
   const participantCandidates = useMemo(() => {
     const query = participantSearch.trim().toLowerCase();
-
-    const allCandidates: ParticipantCandidate[] = [
-      ...participantUsers,
-      ...leadOptions.map((lead) => ({
-        id: lead.id,
-        name: lead.label,
-        email: lead.sublabel ?? null,
-        type: "lead" as const,
-      })),
-      ...contactOptions.map((contact) => ({
-        id: contact.id,
-        name: contact.label,
-        email: contact.sublabel ?? null,
-        type: "contact" as const,
-      })),
-    ];
 
     const matchesSearch = (participant: ParticipantCandidate | MeetingParticipant) =>
       `${participant.name} ${participant.email ?? ""}`.toLowerCase().includes(query);
@@ -225,25 +194,24 @@ export default function MeetingForm({ mode, initialMeeting, onSubmit, onCancel }
         }));
     }
 
-    return allCandidates
-      .filter((candidate) => candidate.type === participantCategory)
-      .filter(matchesSearch);
+    if (participantCategory === "user") {
+      return participantUsers.filter(matchesSearch);
+    }
+
+    return participantSearchResults.items.map((item) => ({
+      id: item.id,
+      name: item.label,
+      email: item.email ?? item.sublabel ?? null,
+      type: item.kind as MeetingParticipantType,
+    }));
   }, [
     participantUsers,
-    leadOptions,
-    contactOptions,
+    participantSearchResults.items,
     participantCategory,
     participantSearch,
     participantTab,
     form.participants,
   ]);
-
-  const relatedOptions =
-    form.relatedType === "lead"
-      ? leadOptions
-      : form.relatedType === "contact"
-        ? contactOptions
-        : [];
 
   function update<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((current) => ({ ...current, [key]: value }));
@@ -256,7 +224,6 @@ export default function MeetingForm({ mode, initialMeeting, onSubmit, onCancel }
       relatedId: "",
       relatedLabel: "",
     }));
-    setShowRelatedMenu(false);
   }
 
   function participantIdentity(participant: Pick<MeetingParticipant, "id" | "type">) {
@@ -466,48 +433,18 @@ export default function MeetingForm({ mode, initialMeeting, onSubmit, onCancel }
         </ZohoRow>
 
         <ZohoRow label="Related To">
-          <div className="relative">
-            <button
-              type="button"
-              onClick={() => setShowRelatedMenu((v) => !v)}
-              className="flex w-full items-center justify-between border-0 border-b border-line bg-transparent py-2 text-left text-sm outline-none"
-            >
-              <span className={form.relatedType ? "text-fg" : "text-ink-soft"}>
-                {form.relatedType === "lead"
-                  ? "Lead"
-                  : form.relatedType === "contact"
-                    ? "Contact"
-                    : "None"}
-              </span>
-              <ChevronDown size={14} className="text-ink-soft" />
-            </button>
-
-            {showRelatedMenu && (
-              <div className="absolute left-0 top-full z-30 mt-1 w-36 overflow-hidden rounded-md border border-line bg-surface shadow-xl">
-                {([
-                  ["", "None"],
-                  ["lead", "Lead"],
-                  ["contact", "Contact"],
-                ] as const).map(([value, label]) => (
-                  <button
-                    type="button"
-                    key={label}
-                    onClick={() => chooseRelatedType(value)}
-                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-paper"
-                  >
-                    <span className="w-3 text-slate">{form.relatedType === value ? "✓" : ""}</span>
-                    {label}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+          <RelatedTypeSelect
+            value={form.relatedType}
+            onChange={chooseRelatedType}
+            options={[["", "None"], ["lead", "Lead"], ["contact", "Contact"]] as const}
+          />
 
           {form.relatedType && (
-            <div className="relative mt-1 flex items-center border-b border-line">
-              <Search size={14} className="mr-2 shrink-0 text-ink-soft" />
-              <RelatedSelect
-                options={relatedOptions}
+            <div className="mt-1">
+              <RecordPicker
+                key={form.relatedType}
+                kind={form.relatedType}
+                variant="underline"
                 value={form.relatedId}
                 label={form.relatedLabel}
                 onChange={(id, label) => {
@@ -602,12 +539,32 @@ export default function MeetingForm({ mode, initialMeeting, onSubmit, onCancel }
             </button>
           </div>
 
-          <div className="mt-3 max-h-48 overflow-y-auto border-y border-line">
+          <div
+            className="mt-3 max-h-48 overflow-y-auto border-y border-line"
+            onScroll={(event) => {
+              if (!remoteParticipants) return;
+              const el = event.currentTarget;
+              if (el.scrollHeight - el.scrollTop - el.clientHeight < 48) void participantSearchResults.loadMore();
+            }}
+          >
             {participantCandidates.length === 0 ? (
-              <div className="px-2 py-8 text-center text-sm text-ink-soft">
-                {participantTab === "selected"
-                  ? "No selected participants found."
-                  : `No ${participantCategory === "user" ? "users" : `${participantCategory}s`} found.`}
+              <div className="flex items-center justify-center gap-2 px-2 py-8 text-center text-sm text-ink-soft">
+                {remoteParticipants && participantSearchResults.loading ? (
+                  <>
+                    <Spinner size="sm" /> Searching…
+                  </>
+                ) : remoteParticipants && participantSearchResults.error ? (
+                  <>
+                    {participantSearchResults.error}
+                    <button type="button" onClick={participantSearchResults.retry} className="font-semibold text-indigo-400 hover:text-indigo-300">
+                      Try again
+                    </button>
+                  </>
+                ) : participantTab === "selected" ? (
+                  "No selected participants found."
+                ) : (
+                  `No ${participantCategory === "user" ? "users" : `${participantCategory}s`} found.`
+                )}
               </div>
             ) : (
               participantCandidates.map((participant) => {
@@ -637,6 +594,11 @@ export default function MeetingForm({ mode, initialMeeting, onSubmit, onCancel }
                   </button>
                 );
               })
+            )}
+            {remoteParticipants && participantSearchResults.loadingMore && (
+              <div className="flex justify-center py-2">
+                <Spinner size="sm" />
+              </div>
             )}
           </div>
 
@@ -749,70 +711,6 @@ function HostPicker({
                 <span className="text-xs text-ink-soft">{owner.email}</span>
               </button>
             ))}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-function RelatedSelect({
-  options,
-  value,
-  label,
-  onChange,
-  placeholder,
-}: {
-  options: RelatedRecord[];
-  value: string;
-  label: string;
-  onChange: (id: string, label: string) => void;
-  placeholder: string;
-}) {
-  const [open, setOpen] = useState(false);
-  const [query, setQuery] = useState("");
-  const filtered = options.filter((option) =>
-    `${option.label} ${option.sublabel ?? ""}`.toLowerCase().includes(query.toLowerCase()),
-  );
-
-  return (
-    <div className="relative w-full">
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        className="flex w-full items-center justify-between py-2 text-left text-sm"
-      >
-        <span className={value ? "text-fg" : "text-ink-soft"}>{label || placeholder}</span>
-        <ChevronDown size={14} className="text-ink-soft" />
-      </button>
-      {open && (
-        <div className="absolute left-0 top-full z-40 mt-1 w-full rounded-md border border-line bg-surface shadow-xl">
-          <div className="border-b border-line p-2">
-            <input
-              autoFocus
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search…"
-              className="w-full rounded border border-line bg-transparent px-2 py-1.5 text-sm outline-none"
-            />
-          </div>
-          <div className="max-h-48 overflow-y-auto py-1">
-            {filtered.map((option) => (
-              <button
-                type="button"
-                key={option.id}
-                onClick={() => {
-                  onChange(option.id, option.label);
-                  setOpen(false);
-                  setQuery("");
-                }}
-                className={`flex w-full flex-col px-3 py-2 text-left hover:bg-paper ${option.id === value ? "bg-slate-light" : ""}`}
-              >
-                <span className="text-sm">{option.label}</span>
-                {option.sublabel && <span className="text-xs text-ink-soft">{option.sublabel}</span>}
-              </button>
-            ))}
-            {filtered.length === 0 && <p className="px-3 py-3 text-sm text-ink-soft">No matches.</p>}
           </div>
         </div>
       )}
