@@ -12,6 +12,8 @@ import { inputClass, Field } from "@/shared/components/FormLayout";
 import DateInput from "@/shared/components/DateInput";
 import Time12hPicker from "@/shared/components/Time12hPicker";
 import ModernStatusSelect from "@/shared/components/ModernStatusSelect";
+import { extractApiError } from "@/shared/utils/apiError";
+import { isoToLocalParts, isSameMinute, localPartsToIso } from "@/shared/utils/dateTime";
 import {
   TASK_PRIORITIES,
   TASK_STATUSES,
@@ -60,6 +62,10 @@ function emptyForm(): FormState {
 }
 
 function formFromTask(task: Task): FormState {
+  // Convert the API instant to the user's *local* date/time. Slicing the ISO
+  // string would read UTC digits as local time and shift the reminder on
+  // every edit.
+  const reminder = isoToLocalParts(task.reminder_at);
   const related: RelatedToValue = {
     personType: task.lead_id ? "lead" : task.contact_id ? "contact" : "",
     personId: task.lead_id ?? task.contact_id ?? "",
@@ -75,9 +81,8 @@ function formFromTask(task: Task): FormState {
     due_date: task.due_date ?? "",
     priority: task.priority ?? DEFAULT_TASK_PRIORITY,
     status: task.status ?? DEFAULT_TASK_STATUS,
-    // datetime-local inputs want "YYYY-MM-DDTHH:mm", ISO strings carry more.
-    reminder_date: task.reminder_at ? task.reminder_at.slice(0, 10) : "",
-    reminder_time: task.reminder_at ? task.reminder_at.slice(11, 16) : "",
+    reminder_date: reminder?.date ?? "",
+    reminder_time: reminder?.time ?? "",
     description: task.description ?? "",
     related,
   };
@@ -121,6 +126,31 @@ export default function TaskForm({ mode, initialTask, onSubmit, onCancel, initia
       return;
     }
 
+    // Reminder: a date without a time used to be silently dropped (saved as
+    // "no reminder"), so require both or neither.
+    let reminderAt: string | null = null;
+    if (form.reminder_date) {
+      if (!form.reminder_time) {
+        setError("Select a reminder time, or clear the reminder date.");
+        return;
+      }
+      const iso = localPartsToIso(form.reminder_date, form.reminder_time);
+      if (!iso) {
+        setError("The reminder date or time is invalid.");
+        return;
+      }
+      if (initialTask?.reminder_at && isSameMinute(initialTask.reminder_at, iso)) {
+        // Unchanged: send the original value back untouched so the backend
+        // doesn't treat an unrelated edit as a new reminder.
+        reminderAt = initialTask.reminder_at;
+      } else if (new Date(iso).getTime() <= Date.now()) {
+        setError("Reminder time must be in the future.");
+        return;
+      } else {
+        reminderAt = iso;
+      }
+    }
+
     setError(null);
     setIsSubmitting(true);
     try {
@@ -130,16 +160,14 @@ export default function TaskForm({ mode, initialTask, onSubmit, onCancel, initia
         due_date: form.due_date || null,
         priority: form.priority,
         status: form.status,
-        reminder_at: form.reminder_date && form.reminder_time
-          ? new Date(`${form.reminder_date}T${form.reminder_time}`).toISOString()
-          : null,
+        reminder_at: reminderAt,
         description: form.description.trim() || null,
         lead_id: form.related.personType === "lead" ? form.related.personId || null : null,
         contact_id: form.related.personType === "contact" ? form.related.personId || null : null,
         account_id: null,
       });
-    } catch {
-      setError("Couldn't save this task. Check the fields and try again.");
+    } catch (err) {
+      setError(extractApiError(err, "Couldn't save this task. Check the fields and try again."));
       setIsSubmitting(false);
     }
   }
@@ -216,7 +244,10 @@ export default function TaskForm({ mode, initialTask, onSubmit, onCancel, initia
             <div className="flex min-w-0 flex-wrap items-center gap-3">
               <DateInput
                 value={form.reminder_date}
-                onChange={(value) => update("reminder_date", value)}
+                onChange={(value) => {
+                  update("reminder_date", value);
+                  if (!value) update("reminder_time", "");
+                }}
                 ariaLabel="Reminder date"
               />
               {form.reminder_date ? (

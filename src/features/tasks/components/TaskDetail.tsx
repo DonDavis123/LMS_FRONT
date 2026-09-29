@@ -11,6 +11,7 @@ import { TASK_PRIORITIES, TASK_STATUSES, type Task, type TaskPriority, type Task
 import { confirmDelete } from "@/shared/utils/confirmDelete";
 import RecordTimeline from "@/shared/components/RecordTimeline";
 import { Tabs } from "@/shared/components/Tabs";
+import { formatLocalDateTime, isoToLocalInputValue } from "@/shared/utils/dateTime";
 
 interface Props { task: Task; onTaskChange: (task: Task) => void; }
 
@@ -36,9 +37,16 @@ export default function TaskDetail({ task, onTaskChange }: Props) {
     let value: unknown = raw.trim() ? raw : null;
     if (field === "priority") value = raw as TaskPriority;
     if (field === "status") value = raw as TaskStatus;
-    if (field === "reminder_at") value = raw ? new Date(raw).toISOString() : null;
+    if (field === "reminder_at") {
+      // `raw` is a local datetime-local value; convert to a real instant.
+      const parsed = raw ? new Date(raw) : null;
+      if (parsed && Number.isNaN(parsed.getTime())) throw new Error("Invalid reminder");
+      value = parsed ? parsed.toISOString() : null;
+    }
     const updated = await TaskService.updateTask(task.id, { [field]: value } as never);
-    onTaskChange(updated);
+    // PATCH returns the bare task without owner_name / lead_name / contact_name,
+    // so merge instead of replacing or those fields blank out after an edit.
+    onTaskChange({ ...task, ...updated });
   }
 
   async function deleteTask() {
@@ -90,7 +98,7 @@ export default function TaskDetail({ task, onTaskChange }: Props) {
                 <Row label="Due Date" value={task.due_date} displayValue={dueDateWithDaysLeft(task.due_date)} type="date" onSave={v => updateField("due_date", v)} />
                 <Row label="Priority" value={task.priority} type="select" options={TASK_PRIORITIES.map(v=>({value:v,label:v}))} onSave={v=>updateField("priority",v)} />
                 <Row label="Status" value={task.status} type="select" options={TASK_STATUSES.map(v=>({value:v,label:v}))} onSave={v=>updateField("status",v)} />
-                <Row label="Reminder At" value={task.reminder_at ? task.reminder_at.slice(0,16) : null} type="datetime-local" onSave={v=>updateField("reminder_at",v)} />
+                <Row label="Reminder At" value={isoToLocalInputValue(task.reminder_at)} displayValue={task.reminder_at ? formatLocalDateTime(task.reminder_at) : undefined} type="datetime-local" onSave={v=>updateField("reminder_at",v)} />
                 <Row label="Related To" value={related} editable={false} />
               </div>
             </div>

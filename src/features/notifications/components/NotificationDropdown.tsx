@@ -1,7 +1,11 @@
 "use client";
 
 import { Bell, CalendarClock, Users, X } from "lucide-react";
-import type { Notification, NotificationType } from "@/features/notifications/types/notification.types";
+import {
+  notificationTime,
+  type Notification,
+  type NotificationType,
+} from "@/features/notifications/types/notification.types";
 import { formatRelativeTime } from "@/shared/utils/formatDate";
 
 const TYPE_ICON: Record<NotificationType, typeof Bell> = {
@@ -26,7 +30,7 @@ export default function NotificationDropdown({
   onDismiss,
 }: NotificationDropdownProps) {
   const sorted = [...notifications].sort(
-    (a, b) => new Date(b.scheduled_for).getTime() - new Date(a.scheduled_for).getTime()
+    (a, b) => new Date(notificationTime(b)).getTime() - new Date(notificationTime(a)).getTime()
   );
 
   return (
@@ -66,7 +70,7 @@ export default function NotificationDropdown({
                   <p className="truncate text-sm font-medium text-fg">{notification.title}</p>
                   <p className="mt-0.5 line-clamp-2 text-xs text-ink-soft">{notification.message}</p>
                   <p className="mt-1 text-[11px] text-ink-soft">
-                    {formatRelativeTime(notification.scheduled_for)}
+                    {formatRelativeTime(notificationTime(notification))}
                   </p>
                 </div>
 

@@ -6,6 +6,8 @@ import { Field, inputClass } from "@/shared/components/FormLayout";
 import DateInput from "@/shared/components/DateInput";
 import Time12hPicker from "@/shared/components/Time12hPicker";
 import type { CreateReminderPayload } from "@/features/reminders/types/reminder.types";
+import { extractApiError } from "@/shared/utils/apiError";
+import { localPartsToIso } from "@/shared/utils/dateTime";
 
 interface ReminderFormProps {
   onSubmit: (payload: CreateReminderPayload) => Promise<void>;
@@ -47,15 +49,26 @@ export default function ReminderForm({ onSubmit, onCancel }: ReminderFormProps) 
       return;
     }
 
+    const remindAt = localPartsToIso(form.date, form.time);
+    if (!remindAt) {
+      setError("The reminder date or time is invalid.");
+      return;
+    }
+    // A reminder in the past would fire immediately and show up as an old notification.
+    if (new Date(remindAt).getTime() <= Date.now()) {
+      setError("Reminder time must be in the future.");
+      return;
+    }
+
     setError(null);
     setIsSubmitting(true);
     try {
       await onSubmit({
         subject: form.subject.trim(),
-        remind_at: new Date(`${form.date}T${form.time}`).toISOString(),
+        remind_at: remindAt,
       });
-    } catch {
-      setError("Couldn't save this reminder. Check the fields and try again.");
+    } catch (err) {
+      setError(extractApiError(err, "Couldn't save this reminder. Check the fields and try again."));
       setIsSubmitting(false);
     }
   }
