@@ -151,6 +151,19 @@ export default function LeadConvert({ lead }: LeadConvertProps) {
       setError("A company name is required to create a new Account.");
       return;
     }
+    // Account names must be unique (case-insensitive, ignoring surrounding
+    // spaces). If an Account with this exact name is already listed, creating
+    // another would be rejected, so guide the user to reuse it instead.
+    if (hasCompany && accountChoice === NEW) {
+      const normalizedName = lead.company_name.trim().toLowerCase();
+      const duplicate = accounts.find((a) => a.account_name.trim().toLowerCase() === normalizedName);
+      if (duplicate) {
+        setError(
+          `An Account named "${duplicate.account_name}" already exists. Select it above instead of creating a new Account.`
+        );
+        return;
+      }
+    }
     if (contactChoice === null) {
       setError("Select an existing Contact or choose Create a new Contact.");
       return;
