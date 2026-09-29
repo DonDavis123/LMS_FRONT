@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import RecordActionsMenu from "@/shared/components/RecordActionsMenu";
 import BulkDeleteBar from "@/shared/components/BulkDeleteBar";
 import SelectionIndicator from "@/shared/components/SelectionIndicator";
@@ -48,19 +48,13 @@ export default function CallList({
   onOpenClick,
   onCallDeleted,
 }: CallListProps) {
-  const [query, setQuery] = useState("");
   const [page, setPage] = useState(1);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [selectionMode, setSelectionMode] = useState(false);
   const [bulkDeleting, setBulkDeleting] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  const filtered = useMemo(() => {
-    const q = query.toLowerCase();
-    return calls.filter((call) =>
-      `${call.subject} ${call.owner_name ?? ""}`.toLowerCase().includes(q)
-    );
-  }, [calls, query]);
+  const filtered = calls;
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const currentPage = Math.min(page, totalPages);
@@ -130,15 +124,6 @@ export default function CallList({
           </p>
         </div>
         <div className="flex gap-2">
-          <input
-            value={query}
-            onChange={(e) => {
-              setQuery(e.target.value);
-              setPage(1);
-            }}
-            placeholder="Search calls…"
-            className="w-full rounded-md border border-line px-3 py-2 text-sm outline-none focus:border-slate focus:ring-2 focus:ring-slate-light sm:w-56"
-          />
           <button
             onClick={onCreateClick}
             className="whitespace-nowrap rounded-md bg-amber px-4 py-2 text-sm font-semibold text-fg transition hover:bg-amber-dark active:scale-[0.98]"
@@ -163,21 +148,17 @@ export default function CallList({
       ) : pageItems.length === 0 ? (
         <div className="flex flex-col items-center gap-3 px-4 py-16 text-center animate-scale-in">
           <p className="font-serif text-lg text-fg">
-            {query ? "No calls match that search" : "No calls yet"}
+            No calls yet
           </p>
           <p className="max-w-sm text-sm text-ink-soft">
-            {query
-              ? "Try a different subject or owner."
-              : "Log a call with a lead, contact, or account."}
+            Log a call with a lead, contact, or account.
           </p>
-          {!query && (
             <button
               onClick={onCreateClick}
               className="mt-1 rounded-md bg-ink px-4 py-2 text-sm font-semibold text-white transition hover:bg-ink-2 active:scale-[0.98]"
             >
               + Log a Call
             </button>
-          )}
         </div>
       ) : (
         <>

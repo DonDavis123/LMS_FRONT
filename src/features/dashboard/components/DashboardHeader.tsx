@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { AlarmClock, LogOut, PanelLeftClose, PanelLeftOpen, Search } from "lucide-react";
+import { AlarmClock, LogOut, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import type { AuthUser } from "@/features/auth/types/auth.types";
 import ThemeToggle from "@/shared/components/ThemeToggle";
 import NotificationBell from "@/features/notifications/components/NotificationBell";
@@ -40,13 +40,6 @@ export default function DashboardHeader({
           {isSidebarCollapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
         </button>
 
-        <div className="relative w-full max-w-sm">
-          <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-soft" />
-          <input
-            placeholder="Search records…"
-            className="w-full rounded-xl border border-line bg-paper/80 py-2.5 pl-10 pr-3 text-sm shadow-inner outline-none transition-all placeholder:text-ink-soft focus:border-slate focus:bg-surface focus:ring-4 focus:ring-slate-light/50"
-          />
-        </div>
       </div>
 
       <div className="flex items-center gap-2">

@@ -58,6 +58,7 @@ export default function AccountList({
 
   const fields = useMemo<FilterFieldConfig[]>(
     () => [
+      { field: "account_name", label: "Account Name", type: "text" },
       { field: "account_number", label: "Account Number", type: "text" },
       { field: "account_type", label: "Account Type", type: "text" },
       { field: "billing_city", label: "Billing City", type: "text" },

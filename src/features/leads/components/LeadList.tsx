@@ -74,6 +74,7 @@ export default function LeadList({
 
   const fields = useMemo<FilterFieldConfig[]>(
     () => [
+      { field: "name", label: "Lead Name", type: "text" },
       { field: "company_name", label: "Company", type: "text" },
       { field: "email", label: "Email", type: "text" },
       { field: "city", label: "City", type: "text" },

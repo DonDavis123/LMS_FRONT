@@ -58,6 +58,7 @@ export default function ContactList({
 
   const fields = useMemo<FilterFieldConfig[]>(
     () => [
+      { field: "name", label: "Contact Name", type: "text" },
       { field: "account_name", label: "Account", type: "text" },
       { field: "email", label: "Email", type: "text" },
       { field: "mobile", label: "Mobile", type: "text" },
