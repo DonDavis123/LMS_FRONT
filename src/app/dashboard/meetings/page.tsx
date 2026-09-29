@@ -12,6 +12,7 @@ import type {
   MeetingListItem,
 } from "@/features/meetings/types/meeting.types";
 import type { PaginationMeta } from "@/shared/types/pagination";
+import type { SortState } from "@/shared/types/sort";
 
 type ModalState = { mode: "create" | "edit"; meeting?: Meeting } | null;
 
@@ -30,6 +31,7 @@ export default function MeetingsPage() {
   const [pagination, setPagination] =
     useState<PaginationMeta>(EMPTY_PAGINATION);
   const [page, setPage] = useState(1);
+  const [sort, setSort] = useState<SortState | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [modalState, setModalState] = useState<ModalState>(null);
@@ -43,6 +45,7 @@ export default function MeetingsPage() {
       const response = await MeetingService.getMeetingsPage(
         requestedPage,
         PAGE_SIZE,
+        sort,
       );
 
       // The backend can return an empty page when a record was deleted from
@@ -64,7 +67,7 @@ export default function MeetingsPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [page]);
+  }, [page, sort]);
 
   useEffect(() => {
     void load(page);
@@ -127,6 +130,11 @@ export default function MeetingsPage() {
           }
         }}
         onRefresh={refreshAfterDelete}
+        sort={sort}
+        onSortChange={(next) => {
+          setSort(next);
+          setPage(1);
+        }}
       />
 
       <Modal

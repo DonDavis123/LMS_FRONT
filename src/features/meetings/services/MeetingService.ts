@@ -1,5 +1,6 @@
 import { apiClient } from "@/infrastructure/api/client";
 import type { PaginatedResponse } from "@/shared/types/pagination";
+import type { SortState } from "@/shared/types/sort";
 import type {
   CreateMeetingPayload,
   Meeting,
@@ -108,6 +109,7 @@ export const MeetingService = {
   async getMeetingsPage(
     page = 1,
     pageSize = DEFAULT_PAGE_SIZE,
+    sort: SortState | null = null,
   ): Promise<PaginatedResponse<MeetingListItem>> {
     const { data } = await apiClient.get<{
       results: BackendMeetingListItem[];
@@ -116,6 +118,7 @@ export const MeetingService = {
       params: {
         page,
         page_size: Math.min(pageSize, 50),
+        ...(sort ? { sort_by: sort.field, sort_direction: sort.direction } : {}),
       },
     });
 

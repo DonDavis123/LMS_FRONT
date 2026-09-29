@@ -8,6 +8,8 @@ import SelectionIndicator from "@/shared/components/SelectionIndicator";
 import { TASK_PRIORITIES, TASK_STATUSES, type Task } from "@/features/tasks/types/task.types";
 import { TaskService } from "@/features/tasks/services/TaskService";
 import { userService } from "@/features/users/services/userService";
+import SortableHeader from "@/shared/components/SortableHeader";
+import type { SortState } from "@/shared/types/sort";
 import FilterBar, { type FilterCondition, type FilterFieldConfig } from "@/shared/components/FilterBar";
 import type { LeadOwnerOption } from "@/features/auth/types/auth.types";
 
@@ -26,6 +28,8 @@ interface TaskListProps {
   onOpenClick: (task: Task) => void;
   filters: FilterCondition[];
   onFiltersChange: (filters: FilterCondition[]) => void;
+  sort: SortState | null;
+  onSortChange: (sort: SortState | null) => void;
   pageSize: number;
   pagination: PaginationMeta;
   onPageChange: (page: number) => void;
@@ -72,6 +76,8 @@ export default function TaskList({
   onOpenClick,
   filters,
   onFiltersChange,
+  sort,
+  onSortChange,
   pageSize,
   pagination,
   onPageChange,
@@ -250,12 +256,12 @@ export default function TaskList({
                       />
                     )}
                   </th>
-                  <th className="px-4 py-3">Subject</th>
-                  <th className="px-4 py-3">Due Date</th>
-                  <th className="px-4 py-3">Priority</th>
-                  <th className="px-4 py-3">Status</th>
-                  <th className="px-4 py-3">Related To</th>
-                  <th className="px-4 py-3">Owner</th>
+                  <SortableHeader label="Subject" field="subject" sort={sort} onSortChange={onSortChange} />
+                  <SortableHeader label="Due Date" field="due_date" sort={sort} onSortChange={onSortChange} />
+                  <SortableHeader label="Priority" field="priority" sort={sort} onSortChange={onSortChange} />
+                  <SortableHeader label="Status" field="status" sort={sort} onSortChange={onSortChange} />
+                  <SortableHeader label="Related To" field="related_to" sort={sort} onSortChange={onSortChange} />
+                  <SortableHeader label="Owner" field="owner" sort={sort} onSortChange={onSortChange} />
                 </tr>
               </thead>
               <tbody className="divide-y divide-line">

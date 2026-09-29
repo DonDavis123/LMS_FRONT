@@ -9,6 +9,8 @@ import { userService } from "@/features/users/services/userService";
 import RecordActionsMenu from "@/shared/components/RecordActionsMenu";
 import BulkDeleteBar from "@/shared/components/BulkDeleteBar";
 import SelectionIndicator from "@/shared/components/SelectionIndicator";
+import SortableHeader from "@/shared/components/SortableHeader";
+import type { SortState } from "@/shared/types/sort";
 import FilterBar, { type FilterCondition, type FilterFieldConfig } from "@/shared/components/FilterBar";
 import type { LeadOwnerOption } from "@/features/auth/types/auth.types";
 
@@ -24,6 +26,8 @@ interface AccountListProps {
   highlightId?: string | null;
   filters: FilterCondition[];
   onFiltersChange: (filters: FilterCondition[]) => void;
+  sort: SortState | null;
+  onSortChange: (sort: SortState | null) => void;
   pageSize: number;
   pagination: PaginationMeta;
   onPageChange: (page: number) => void;
@@ -39,6 +43,8 @@ export default function AccountList({
   highlightId,
   filters,
   onFiltersChange,
+  sort,
+  onSortChange,
   pageSize,
   pagination,
   onPageChange,
@@ -198,11 +204,11 @@ export default function AccountList({
                       />
                     )}
                   </th>
-                  <th className="px-4 py-3">Account Name</th>
-                  <th className="px-4 py-3">Website</th>
-                  <th className="px-4 py-3">Phone</th>
-                  <th className="px-4 py-3">Industry</th>
-                  <th className="px-4 py-3">Account Owner</th>
+                  <SortableHeader label="Account Name" field="account_name" sort={sort} onSortChange={onSortChange} />
+                  <SortableHeader label="Website" field="website" sort={sort} onSortChange={onSortChange} />
+                  <SortableHeader label="Phone" field="phone" sort={sort} onSortChange={onSortChange} />
+                  <SortableHeader label="Industry" field="industry" sort={sort} onSortChange={onSortChange} />
+                  <SortableHeader label="Account Owner" field="account_owner" sort={sort} onSortChange={onSortChange} />
                 </tr>
               </thead>
               <tbody>

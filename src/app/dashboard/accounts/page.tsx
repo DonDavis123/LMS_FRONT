@@ -8,6 +8,7 @@ import { AccountService } from "@/features/accounts/services/AccountService";
 import type { Account } from "@/features/accounts/types/account.types";
 import type { FilterCondition } from "@/shared/components/FilterBar";
 import type { PaginationMeta } from "@/shared/types/pagination";
+import type { SortState } from "@/shared/types/sort";
 
 const DEFAULT_PAGE_SIZE = 10;
 const EMPTY_PAGINATION: PaginationMeta = {
@@ -22,6 +23,7 @@ function AccountsPageInner() {
   const searchParams = useSearchParams();
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [filters, setFilters] = useState<FilterCondition[]>([]);
+  const [sort, setSort] = useState<SortState | null>(null);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
   const [pagination, setPagination] = useState<PaginationMeta>(EMPTY_PAGINATION);
@@ -36,7 +38,7 @@ function AccountsPageInner() {
     setIsLoading(true);
     setError(null);
 
-    AccountService.getAccountsPage({ page, page_size: pageSize, filters })
+    AccountService.getAccountsPage({ page, page_size: pageSize, filters, sort })
       .then((data) => {
         if (cancelled) return;
         setAccounts(data.results);
@@ -55,7 +57,7 @@ function AccountsPageInner() {
     return () => {
       cancelled = true;
     };
-  }, [page, pageSize, filters, refreshKey]);
+  }, [page, pageSize, filters, sort, refreshKey]);
 
   useEffect(() => {
     const createdId = searchParams.get("created");
@@ -91,6 +93,11 @@ function AccountsPageInner() {
         filters={filters}
         onFiltersChange={(next) => {
           setFilters(next);
+          setPage(1);
+        }}
+        sort={sort}
+        onSortChange={(next) => {
+          setSort(next);
           setPage(1);
         }}
         pageSize={pageSize}

@@ -5,6 +5,8 @@ import RecordActionsMenu from "@/shared/components/RecordActionsMenu";
 import BulkDeleteBar from "@/shared/components/BulkDeleteBar";
 import SelectionIndicator from "@/shared/components/SelectionIndicator";
 import type { PaginationMeta } from "@/shared/types/pagination";
+import type { SortState } from "@/shared/types/sort";
+import SortableHeader from "@/shared/components/SortableHeader";
 import type { MeetingListItem } from "@/features/meetings/types/meeting.types";
 import { MeetingService } from "@/features/meetings/services/MeetingService";
 import { confirmDelete } from "@/shared/utils/confirmDelete";
@@ -20,6 +22,8 @@ interface MeetingListProps {
   onOpenClick?: (meeting: MeetingListItem) => void;
   onPageChange: (page: number) => void;
   onRefresh: () => Promise<void>;
+  sort: SortState | null;
+  onSortChange: (sort: SortState | null) => void;
 }
 
 function formatDateTime(iso: string | null): string {
@@ -42,6 +46,8 @@ export default function MeetingList({
   onOpenClick,
   onPageChange,
   onRefresh,
+  sort,
+  onSortChange,
 }: MeetingListProps) {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [selectionMode, setSelectionMode] = useState(false);
@@ -239,11 +245,11 @@ export default function MeetingList({
                       />
                     )}
                   </th>
-                  <th className="px-4 py-3">Title</th>
-                  <th className="px-4 py-3">From</th>
-                  <th className="px-4 py-3">To</th>
-                  <th className="px-4 py-3">Related To</th>
-                  <th className="px-4 py-3">Owner</th>
+                  <SortableHeader label="Title" field="title" sort={sort} onSortChange={onSortChange} />
+                  <SortableHeader label="From" field="start_at" sort={sort} onSortChange={onSortChange} />
+                  <SortableHeader label="To" field="end_at" sort={sort} onSortChange={onSortChange} />
+                  <SortableHeader label="Related To" field="related_to" sort={sort} onSortChange={onSortChange} />
+                  <SortableHeader label="Owner" field="host" sort={sort} onSortChange={onSortChange} />
                 </tr>
               </thead>
 

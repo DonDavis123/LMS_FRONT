@@ -9,6 +9,8 @@ import { userService } from "@/features/users/services/userService";
 import RecordActionsMenu from "@/shared/components/RecordActionsMenu";
 import BulkDeleteBar from "@/shared/components/BulkDeleteBar";
 import SelectionIndicator from "@/shared/components/SelectionIndicator";
+import SortableHeader from "@/shared/components/SortableHeader";
+import type { SortState } from "@/shared/types/sort";
 import FilterBar, { type FilterCondition, type FilterFieldConfig } from "@/shared/components/FilterBar";
 import type { LeadOwnerOption } from "@/features/auth/types/auth.types";
 
@@ -24,6 +26,8 @@ interface ContactListProps {
   highlightId?: string | null;
   filters: FilterCondition[];
   onFiltersChange: (filters: FilterCondition[]) => void;
+  sort: SortState | null;
+  onSortChange: (sort: SortState | null) => void;
   pageSize: number;
   pagination: PaginationMeta;
   onPageChange: (page: number) => void;
@@ -39,6 +43,8 @@ export default function ContactList({
   highlightId,
   filters,
   onFiltersChange,
+  sort,
+  onSortChange,
   pageSize,
   pagination,
   onPageChange,
@@ -201,11 +207,11 @@ export default function ContactList({
                       />
                     )}
                   </th>
-                  <th className="px-4 py-3">Contact Name</th>
-                  <th className="px-4 py-3">Account</th>
-                  <th className="px-4 py-3">Email</th>
-                  <th className="px-4 py-3">Phone</th>
-                  <th className="px-4 py-3">Contact Owner</th>
+                  <SortableHeader label="Contact Name" field="name" sort={sort} onSortChange={onSortChange} />
+                  <SortableHeader label="Account" field="account" sort={sort} onSortChange={onSortChange} />
+                  <SortableHeader label="Email" field="email" sort={sort} onSortChange={onSortChange} />
+                  <SortableHeader label="Phone" field="phone" sort={sort} onSortChange={onSortChange} />
+                  <SortableHeader label="Contact Owner" field="contact_owner" sort={sort} onSortChange={onSortChange} />
                 </tr>
               </thead>
               <tbody>

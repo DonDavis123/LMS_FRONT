@@ -18,6 +18,8 @@ import RecordActionsMenu from "@/shared/components/RecordActionsMenu";
 import BulkDeleteBar from "@/shared/components/BulkDeleteBar";
 import SelectionIndicator from "@/shared/components/SelectionIndicator";
 import ModernStatusSelect from "@/shared/components/ModernStatusSelect";
+import SortableHeader from "@/shared/components/SortableHeader";
+import type { SortState } from "@/shared/types/sort";
 import FilterBar, { type FilterCondition, type FilterFieldConfig } from "@/shared/components/FilterBar";
 import type { LeadOwnerOption } from "@/features/auth/types/auth.types";
 
@@ -33,6 +35,8 @@ interface LeadListProps {
   highlightId?: string | null;
   filters: FilterCondition[];
   onFiltersChange: (filters: FilterCondition[]) => void;
+  sort: SortState | null;
+  onSortChange: (sort: SortState | null) => void;
   pageSize: number;
   pagination: PaginationMeta;
   onPageChange: (page: number) => void;
@@ -53,6 +57,8 @@ export default function LeadList({
   highlightId,
   filters,
   onFiltersChange,
+  sort,
+  onSortChange,
   pageSize,
   pagination,
   onPageChange,
@@ -213,12 +219,12 @@ export default function LeadList({
                       />
                     )}
                   </th>
-                  <th className="px-4 py-3">Lead Name</th>
-                  <th className="px-4 py-3">Company</th>
-                  <th className="px-4 py-3">Email</th>
-                  <th className="px-4 py-3">Lead Source</th>
-                  <th className="px-4 py-3">Lead Status</th>
-                  <th className="px-4 py-3">Lead Owner</th>
+                  <SortableHeader label="Lead Name" field="name" sort={sort} onSortChange={onSortChange} />
+                  <SortableHeader label="Company" field="company_name" sort={sort} onSortChange={onSortChange} />
+                  <SortableHeader label="Email" field="email" sort={sort} onSortChange={onSortChange} />
+                  <SortableHeader label="Lead Source" field="lead_source" sort={sort} onSortChange={onSortChange} />
+                  <SortableHeader label="Lead Status" field="lead_status" sort={sort} onSortChange={onSortChange} />
+                  <SortableHeader label="Lead Owner" field="owner" sort={sort} onSortChange={onSortChange} />
                 </tr>
               </thead>
               <tbody>

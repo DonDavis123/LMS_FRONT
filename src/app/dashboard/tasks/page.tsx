@@ -8,6 +8,7 @@ import { TaskService } from "@/features/tasks/services/TaskService";
 import type { CreateTaskPayload, Task } from "@/features/tasks/types/task.types";
 import type { FilterCondition } from "@/shared/components/FilterBar";
 import type { PaginationMeta } from "@/shared/types/pagination";
+import type { SortState } from "@/shared/types/sort";
 
 type ModalState = { mode: "create" | "edit"; task?: Task } | null;
 
@@ -22,6 +23,7 @@ const EMPTY_PAGINATION: PaginationMeta = {
 export default function TasksPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [filters, setFilters] = useState<FilterCondition[]>([]);
+  const [sort, setSort] = useState<SortState | null>(null);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
   const [pagination, setPagination] = useState<PaginationMeta>(EMPTY_PAGINATION);
@@ -36,7 +38,7 @@ export default function TasksPage() {
     setIsLoading(true);
     setError(null);
 
-    TaskService.getTasksPage({ page, page_size: pageSize, filters })
+    TaskService.getTasksPage({ page, page_size: pageSize, filters, sort })
       .then((data) => {
         if (cancelled) return;
         setTasks(data.results);
@@ -55,7 +57,7 @@ export default function TasksPage() {
     return () => {
       cancelled = true;
     };
-  }, [page, pageSize, filters, refreshKey]);
+  }, [page, pageSize, filters, sort, refreshKey]);
 
   useEffect(() => {
     if (!toast) return;
@@ -90,6 +92,11 @@ export default function TasksPage() {
         filters={filters}
         onFiltersChange={(next) => {
           setFilters(next);
+          setPage(1);
+        }}
+        sort={sort}
+        onSortChange={(next) => {
+          setSort(next);
           setPage(1);
         }}
         pageSize={pageSize}
