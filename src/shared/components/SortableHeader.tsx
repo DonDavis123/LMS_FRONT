@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { ArrowDown, ArrowUp, ArrowUpDown, X } from "lucide-react";
+import { ArrowDown, ArrowUp, Menu, X } from "lucide-react";
 import FloatingPopover from "@/shared/components/FloatingPopover";
 import type { SortDirection, SortState } from "@/shared/types/sort";
 
@@ -15,10 +15,15 @@ interface SortableHeaderProps {
 }
 
 /**
- * Table column header with a small sort menu (Ascending / Descending),
- * mirroring the per-column sort option in Zoho's list views. It only reports
- * the chosen sort — the page sends it to the backend, which orders the full
- * result set before paginating.
+ * Table column header with a per-column sort menu (Asc / Desc / Unsort),
+ * modelled on Zoho's list views:
+ *  - Devices with a mouse: a menu icon fades in when the header is hovered.
+ *  - Touch devices (phones/tablets): no icon; tapping the column name
+ *    opens the same menu.
+ *  - A star after the column name marks the column the list is sorted by.
+ *
+ * It only reports the chosen sort — the page sends it to the backend,
+ * which orders the full result set before paginating.
  */
 export default function SortableHeader({
   label,
@@ -27,11 +32,10 @@ export default function SortableHeader({
   onSortChange,
   className = "px-4 py-3",
 }: SortableHeaderProps) {
-  const buttonRef = useRef<HTMLButtonElement>(null);
+  const anchorRef = useRef<HTMLDivElement>(null);
   const [isOpen, setIsOpen] = useState(false);
 
   const activeDirection: SortDirection | null = sort?.field === field ? sort.direction : null;
-  const Icon = activeDirection === "asc" ? ArrowUp : activeDirection === "desc" ? ArrowDown : ArrowUpDown;
 
   function choose(direction: SortDirection) {
     onSortChange({ field, direction });
@@ -50,45 +54,64 @@ export default function SortableHeader({
 
   return (
     <th
-      className={className}
+      className={`group ${className}`}
       aria-sort={activeDirection === "asc" ? "ascending" : activeDirection === "desc" ? "descending" : "none"}
     >
-      <div className="flex items-center gap-1.5">
-        <span>{label}</span>
+      <div ref={anchorRef} className="flex items-center justify-between gap-2">
+        {/* Clicking/tapping the name opens the menu — the only way in on touch devices. */}
         <button
-          ref={buttonRef}
           type="button"
           onClick={(event) => {
             event.stopPropagation();
             setIsOpen((value) => !value);
           }}
-          aria-label={`Sort by ${label}`}
+          aria-haspopup="dialog"
           aria-expanded={isOpen}
-          className={`flex h-5 w-5 items-center justify-center rounded transition hover:bg-paper hover:text-fg ${
-            activeDirection ? "text-slate" : "text-ink-soft/60"
+          aria-label={`Sort options for ${label}`}
+          className="flex min-w-0 items-center gap-1 text-left uppercase tracking-wide outline-none focus-visible:underline"
+        >
+          <span className="truncate">{label}</span>
+          {activeDirection && (
+            <span aria-hidden="true" className="text-sm font-bold leading-none text-fg">
+              *
+            </span>
+          )}
+        </button>
+
+        {/* Hover-only menu icon; hidden entirely on touch devices. */}
+        <button
+          type="button"
+          tabIndex={-1}
+          onClick={(event) => {
+            event.stopPropagation();
+            setIsOpen((value) => !value);
+          }}
+          aria-hidden="true"
+          className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border border-line bg-surface text-ink-soft transition hover:bg-paper hover:text-fg [@media(hover:none)]:hidden ${
+            isOpen ? "opacity-100" : "opacity-0 group-hover:opacity-100"
           }`}
         >
-          <Icon size={13} />
+          <Menu size={12} />
         </button>
       </div>
 
       {isOpen && (
         <FloatingPopover
-          anchorRef={buttonRef}
+          anchorRef={anchorRef}
           onClose={() => setIsOpen(false)}
           width={168}
           ariaLabel={`Sort ${label}`}
         >
           <div className="-m-2 space-y-0.5">
             <button type="button" onClick={() => choose("asc")} className={itemClass(activeDirection === "asc")}>
-              <ArrowUp size={14} /> Ascending
+              <ArrowUp size={14} /> Asc
             </button>
             <button type="button" onClick={() => choose("desc")} className={itemClass(activeDirection === "desc")}>
-              <ArrowDown size={14} /> Descending
+              <ArrowDown size={14} /> Desc
             </button>
             {activeDirection && (
               <button type="button" onClick={clear} className={itemClass(false)}>
-                <X size={14} /> Clear sort
+                <X size={14} /> Unsort
               </button>
             )}
           </div>
