@@ -173,12 +173,12 @@ export default function TaskForm({ mode, initialTask, onSubmit, onCancel, initia
   }
 
   return (
-    <form onSubmit={handleSubmit}>
-      <div className="flex items-center justify-between border-b border-line px-6 py-4">
+    <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
+      <div className="flex shrink-0 items-center justify-between border-b border-line px-5 py-3">
         <h2 className="font-serif text-xl text-fg">{mode === "create" ? "Create Task" : "Edit Task"}</h2>
       </div>
 
-      <div className="max-h-[70vh] overflow-y-auto px-6 py-5">
+      <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
         {error && (
           <p className="mb-4 animate-shake rounded-md border border-danger/30 bg-danger-soft px-3 py-2 text-sm text-danger">
             {error}
@@ -280,7 +280,7 @@ export default function TaskForm({ mode, initialTask, onSubmit, onCancel, initia
         </div>
       </div>
 
-      <div className="flex justify-end gap-3 border-t border-line px-6 py-4">
+      <div className="flex shrink-0 justify-end gap-3 border-t border-line px-5 py-3">
         <button
           type="button"
           onClick={onCancel}

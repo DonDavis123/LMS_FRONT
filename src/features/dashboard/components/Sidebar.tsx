@@ -79,7 +79,7 @@ export default function Sidebar({ user, isCollapsed }: SidebarProps) {
 
   return (
     <aside
-      className={`flex h-screen shrink-0 flex-col overflow-hidden border-r border-line bg-surface/95 shadow-[8px_0_30px_rgba(18,33,58,0.035)] backdrop-blur-xl transition-[width] duration-300 ease-out ${
+      className={`flex h-full shrink-0 flex-col overflow-hidden border-r border-line bg-surface/95 shadow-[8px_0_30px_rgba(18,33,58,0.035)] backdrop-blur-xl transition-[width] duration-300 ease-out ${
         isCollapsed ? "w-16" : "w-64"
       }`}
     >

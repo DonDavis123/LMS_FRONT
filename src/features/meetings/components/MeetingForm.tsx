@@ -333,12 +333,12 @@ export default function MeetingForm({ mode, initialMeeting, onSubmit, onCancel }
   }
 
   return (
-    <form onSubmit={submit} className="bg-surface text-fg">
-      <div className="border-b border-line px-6 py-5">
+    <form onSubmit={submit} className="flex min-h-0 flex-1 flex-col bg-surface text-fg">
+      <div className="shrink-0 border-b border-line px-5 py-4">
         <h2 className="font-serif text-xl font-semibold">Meeting Information</h2>
       </div>
 
-      <div className="max-h-[72vh] overflow-y-auto px-6 py-2">
+      <div className="min-h-0 flex-1 overflow-y-auto px-5 py-2">
         {error && (
           <div className="my-3 rounded-md border border-danger/30 bg-danger-soft px-3 py-2 text-sm text-danger">
             {error}
@@ -480,7 +480,7 @@ export default function MeetingForm({ mode, initialMeeting, onSubmit, onCancel }
         )}
       </div>
 
-      <div className="flex justify-end gap-2 border-t border-line px-6 py-4">
+      <div className="flex shrink-0 justify-end gap-2 border-t border-line px-5 py-3">
         <button
           type="button"
           onClick={onCancel}

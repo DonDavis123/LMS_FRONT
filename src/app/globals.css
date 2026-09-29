@@ -48,6 +48,13 @@ html {
   color-scheme: light;
 }
 
+/* The dashboard shell scrolls inside <main> only. Locking the document
+   removes the second (browser-level) scrollbar. */
+html:has(.lp-app-shell),
+body:has(.lp-app-shell) {
+  overflow: hidden;
+}
+
 html.dark {
   color-scheme: dark;
 }

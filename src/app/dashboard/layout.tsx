@@ -49,16 +49,20 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-paper">
+    <div className="lp-app-shell fixed inset-0 flex overflow-hidden bg-paper">
       <Sidebar user={user} isCollapsed={isSidebarCollapsed} />
-      <div className="flex flex-1 flex-col overflow-hidden">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
         <DashboardHeader
           user={user}
           onLogout={handleLogout}
           isSidebarCollapsed={isSidebarCollapsed}
           onToggleSidebar={toggleSidebar}
         />
-        <main className="lp-page-bg flex-1 overflow-y-auto px-4 py-5 sm:px-6 sm:py-6">{children}</main>
+        {/* Padding lives on an inner wrapper, NOT on the scroll container, so
+            sticky headers stick flush to the top edge with no see-through gap. */}
+        <main className="lp-page-bg min-h-0 flex-1 overflow-y-auto overscroll-contain">
+          <div className="px-4 py-4 sm:px-5">{children}</div>
+        </main>
       </div>
     </div>
   );

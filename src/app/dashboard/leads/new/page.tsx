@@ -20,7 +20,7 @@ export default function NewLeadPage() {
   }
 
   return (
-    <div className="mx-auto max-w-4xl rounded-lg border border-line bg-surface p-6">
+    <div className="mx-auto max-w-4xl rounded-lg border border-line bg-surface p-5">
       <LeadForm
         mode="create"
         onSubmit={handleSubmit}

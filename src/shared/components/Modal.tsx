@@ -47,7 +47,7 @@ export default function Modal({
   return createPortal(
     <div
       onClick={onClose}
-      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/40 p-4 pt-[8vh] animate-fade-in"
+      className="fixed inset-0 z-50 flex items-start justify-center overflow-hidden bg-black/40 p-4 pt-[6vh] animate-fade-in"
     >
       <div
         role="dialog"
@@ -55,7 +55,7 @@ export default function Modal({
         aria-label={ariaLabelledBy ? undefined : ariaLabel}
         aria-labelledby={ariaLabelledBy}
         onClick={(e) => e.stopPropagation()}
-        className={`relative w-full ${maxWidthClass} rounded-lg border border-line bg-surface shadow-xl animate-scale-in`}
+        className={`relative flex max-h-[calc(100dvh-6vh-2rem)] w-full flex-col ${maxWidthClass} rounded-lg border border-line bg-surface shadow-xl animate-scale-in`}
       >
         <button
           type="button"

@@ -97,14 +97,14 @@ export default function ReminderForm({
   }
 
   return (
-    <form onSubmit={handleSubmit}>
-      <div className="flex items-center justify-between border-b border-line px-6 py-4 pr-14">
+    <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
+      <div className="flex shrink-0 items-center justify-between border-b border-line px-5 py-3 pr-14">
         <h2 id="reminder-form-title" className="font-serif text-xl text-fg">
           {isEdit ? "Edit Reminder" : "Create Reminder"}
         </h2>
       </div>
 
-      <div className="px-6 py-5">
+      <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
         {notice && (
           <p className="mb-4 rounded-md border border-line bg-paper px-3 py-2 text-sm text-ink-soft">{notice}</p>
         )}
@@ -155,7 +155,7 @@ export default function ReminderForm({
         </div>
       </div>
 
-      <div className="flex justify-end gap-3 border-t border-line px-6 py-4">
+      <div className="flex shrink-0 justify-end gap-3 border-t border-line px-5 py-3">
         <button
           type="button"
           onClick={onCancel}

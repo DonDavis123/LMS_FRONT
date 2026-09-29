@@ -165,7 +165,7 @@ export default function AccountForm({ mode, initialAccount, onSubmit, onCancel }
 
   return (
     <form onSubmit={handleSubmit}>
-      <div className="sticky top-0 z-10 -mx-6 -mt-6 flex items-center justify-between rounded-t-lg border-b border-line bg-surface px-6 py-4">
+      <div className="sticky top-0 z-10 -mx-5 -mt-5 flex items-center justify-between rounded-t-[7px] border-b border-line bg-surface px-5 py-3">
         <h1 className="font-serif text-2xl text-fg">
           {mode === "create" ? "Create Account" : "Edit Account"}
         </h1>
