@@ -30,7 +30,12 @@ export const NotificationService = {
   },
 
   async markAsRead(id: string): Promise<Notification> {
-    const { data } = await apiClient.patch<Notification>(`/notifications/${id}/read/`);
+    // The backend only accepts exactly `{ "is_read": true }` here and answers
+    // 400 to an empty body — without this payload the read state never persisted
+    // and the notification came back as unread on the next poll.
+    const { data } = await apiClient.patch<Notification>(`/notifications/${id}/read/`, {
+      is_read: true,
+    });
     return data;
   },
 

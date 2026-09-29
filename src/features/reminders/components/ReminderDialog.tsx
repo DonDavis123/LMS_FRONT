@@ -1,42 +1,45 @@
 "use client";
 
-import { useState } from "react";
 import Modal from "@/shared/components/Modal";
 import ReminderForm from "@/features/reminders/components/ReminderForm";
 import { ReminderService } from "@/features/reminders/services/ReminderService";
-import type { CreateReminderPayload } from "@/features/reminders/types/reminder.types";
+import type { CreateReminderPayload, Reminder } from "@/features/reminders/types/reminder.types";
 
 interface ReminderDialogProps {
   isOpen: boolean;
   onClose: () => void;
+  /** When set the dialog edits this reminder; otherwise it creates a new one. */
+  reminder?: Reminder | null;
+  /** Optional hint shown above the fields. */
+  notice?: string;
+  onSaved: (reminder: Reminder, mode: "create" | "edit") => void;
 }
 
 /**
- * Controlled version of the "quick create" Modal pattern used by
- * CreateTaskFromRecord — the trigger here is the "Custom Reminder" item
- * inside the profile dropdown, so open state is owned by the caller
- * (DashboardHeader) instead of this component.
+ * The single Create / Edit reminder dialog — the same ReminderForm in both
+ * modes, wrapped in the shared Modal like the Task/Meeting quick-create
+ * dialogs. Open state is owned by the caller (the Reminder page).
  */
-export default function ReminderDialog({ isOpen, onClose }: ReminderDialogProps) {
-  const [message, setMessage] = useState<string | null>(null);
+export default function ReminderDialog({ isOpen, onClose, reminder, notice, onSaved }: ReminderDialogProps) {
+  const mode = reminder ? "edit" : "create";
 
   async function submit(payload: CreateReminderPayload) {
-    await ReminderService.createReminder(payload);
-    onClose();
-    setMessage("Reminder saved successfully");
-    window.setTimeout(() => setMessage(null), 3000);
+    const saved = reminder
+      ? await ReminderService.updateReminder(reminder.id, payload)
+      : await ReminderService.createReminder(payload);
+    onSaved(saved, mode);
   }
 
   return (
-    <>
-      <Modal isOpen={isOpen} onClose={onClose} maxWidthClass="max-w-md">
-        <ReminderForm onSubmit={submit} onCancel={onClose} />
-      </Modal>
-      {message && (
-        <div className="fixed bottom-6 right-6 z-[70] rounded-md border border-success/30 bg-success-soft px-4 py-3 text-sm font-medium text-success shadow-lg animate-toast-in">
-          {message}
-        </div>
-      )}
-    </>
+    <Modal isOpen={isOpen} onClose={onClose} maxWidthClass="max-w-md" ariaLabelledBy="reminder-form-title">
+      <ReminderForm
+        key={reminder?.id ?? "new"}
+        mode={mode}
+        initialReminder={reminder ?? undefined}
+        notice={notice}
+        onSubmit={submit}
+        onCancel={onClose}
+      />
+    </Modal>
   );
 }

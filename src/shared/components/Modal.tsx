@@ -9,6 +9,10 @@ interface ModalProps {
   onClose: () => void;
   children: React.ReactNode;
   maxWidthClass?: string;
+  /** Accessible name for the dialog when it has no visible heading with an id. */
+  ariaLabel?: string;
+  /** id of the element that titles the dialog. */
+  ariaLabelledBy?: string;
 }
 
 /**
@@ -16,7 +20,14 @@ interface ModalProps {
  * popups, matching Zoho CRM's Create Task / Create Meeting / Log Call
  * modals rather than a full page navigation.
  */
-export default function Modal({ isOpen, onClose, children, maxWidthClass = "max-w-2xl" }: ModalProps) {
+export default function Modal({
+  isOpen,
+  onClose,
+  children,
+  maxWidthClass = "max-w-2xl",
+  ariaLabel,
+  ariaLabelledBy,
+}: ModalProps) {
   useEffect(() => {
     if (!isOpen) return;
     function handleKeyDown(e: KeyboardEvent) {
@@ -39,6 +50,10 @@ export default function Modal({ isOpen, onClose, children, maxWidthClass = "max-
       className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/40 p-4 pt-[8vh] animate-fade-in"
     >
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-label={ariaLabelledBy ? undefined : ariaLabel}
+        aria-labelledby={ariaLabelledBy}
         onClick={(e) => e.stopPropagation()}
         className={`relative w-full ${maxWidthClass} rounded-lg border border-line bg-surface shadow-xl animate-scale-in`}
       >

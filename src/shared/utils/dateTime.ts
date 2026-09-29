@@ -52,6 +52,22 @@ export function formatLocalDateTime(iso?: string | null): string {
   });
 }
 
+/** Local date and time as separate, locale-aware parts, e.g. "Sep 29, 2026" and "10:30 AM". */
+export function formatLocalDateAndTimeParts(iso?: string | null): { date: string; time: string } | null {
+  const d = parse(iso);
+  if (!d) return null;
+  return {
+    date: d.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" }),
+    time: d.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" }),
+  };
+}
+
+/** Compact "date • time" label for lists, e.g. "Sep 29, 2026 • 10:30 AM". */
+export function formatLocalDateAndTime(iso?: string | null): string {
+  const parts = formatLocalDateAndTimeParts(iso);
+  return parts ? `${parts.date} • ${parts.time}` : "";
+}
+
 /** True when both instants fall in the same minute (forms only edit to the minute). */
 export function isSameMinute(a?: string | null, b?: string | null): boolean {
   const da = parse(a);

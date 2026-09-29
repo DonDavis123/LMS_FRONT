@@ -2,14 +2,20 @@
 
 import { useState, type FormEvent } from "react";
 import Spinner from "@/shared/components/Spinner";
+import Switch from "@/shared/components/Switch";
 import { Field, inputClass } from "@/shared/components/FormLayout";
 import DateInput from "@/shared/components/DateInput";
 import Time12hPicker from "@/shared/components/Time12hPicker";
-import type { CreateReminderPayload } from "@/features/reminders/types/reminder.types";
+import type { CreateReminderPayload, Reminder } from "@/features/reminders/types/reminder.types";
 import { extractApiError } from "@/shared/utils/apiError";
-import { localPartsToIso } from "@/shared/utils/dateTime";
+import { isoToLocalParts, localPartsToIso } from "@/shared/utils/dateTime";
 
 interface ReminderFormProps {
+  mode?: "create" | "edit";
+  /** Required in edit mode: the reminder whose values are preloaded. */
+  initialReminder?: Reminder;
+  /** Optional hint shown above the fields (e.g. why the user is editing). */
+  notice?: string;
   onSubmit: (payload: CreateReminderPayload) => Promise<void>;
   onCancel: () => void;
 }
@@ -18,14 +24,29 @@ interface FormState {
   subject: string;
   date: string;
   time: string;
+  enabled: boolean;
 }
 
-function emptyForm(): FormState {
-  return { subject: "", date: "", time: "" };
+function initialState(reminder?: Reminder): FormState {
+  if (!reminder) return { subject: "", date: "", time: "", enabled: true };
+  const parts = isoToLocalParts(reminder.remind_at);
+  return {
+    subject: reminder.subject,
+    date: parts?.date ?? "",
+    time: parts?.time ?? "",
+    enabled: reminder.is_enabled,
+  };
 }
 
-export default function ReminderForm({ onSubmit, onCancel }: ReminderFormProps) {
-  const [form, setForm] = useState<FormState>(emptyForm);
+export default function ReminderForm({
+  mode = "create",
+  initialReminder,
+  notice,
+  onSubmit,
+  onCancel,
+}: ReminderFormProps) {
+  const isEdit = mode === "edit";
+  const [form, setForm] = useState<FormState>(() => initialState(initialReminder));
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -54,8 +75,9 @@ export default function ReminderForm({ onSubmit, onCancel }: ReminderFormProps) 
       setError("The reminder date or time is invalid.");
       return;
     }
-    // A reminder in the past would fire immediately and show up as an old notification.
-    if (new Date(remindAt).getTime() <= Date.now()) {
+    // An enabled reminder in the past would fire immediately and show up as an
+    // old notification. A disabled one never fires, so it may keep its old time.
+    if (form.enabled && new Date(remindAt).getTime() <= Date.now()) {
       setError("Reminder time must be in the future.");
       return;
     }
@@ -66,6 +88,7 @@ export default function ReminderForm({ onSubmit, onCancel }: ReminderFormProps) 
       await onSubmit({
         subject: form.subject.trim(),
         remind_at: remindAt,
+        ...(isEdit ? { is_enabled: form.enabled } : {}),
       });
     } catch (err) {
       setError(extractApiError(err, "Couldn't save this reminder. Check the fields and try again."));
@@ -75,13 +98,21 @@ export default function ReminderForm({ onSubmit, onCancel }: ReminderFormProps) 
 
   return (
     <form onSubmit={handleSubmit}>
-      <div className="flex items-center justify-between border-b border-line px-6 py-4">
-        <h2 className="font-serif text-xl text-fg">Custom Reminder</h2>
+      <div className="flex items-center justify-between border-b border-line px-6 py-4 pr-14">
+        <h2 id="reminder-form-title" className="font-serif text-xl text-fg">
+          {isEdit ? "Edit Reminder" : "Create Reminder"}
+        </h2>
       </div>
 
       <div className="px-6 py-5">
+        {notice && (
+          <p className="mb-4 rounded-md border border-line bg-paper px-3 py-2 text-sm text-ink-soft">{notice}</p>
+        )}
         {error && (
-          <p className="mb-4 animate-shake rounded-md border border-danger/30 bg-danger-soft px-3 py-2 text-sm text-danger">
+          <p
+            role="alert"
+            className="mb-4 animate-shake rounded-md border border-danger/30 bg-danger-soft px-3 py-2 text-sm text-danger"
+          >
             {error}
           </p>
         )}
@@ -89,8 +120,9 @@ export default function ReminderForm({ onSubmit, onCancel }: ReminderFormProps) 
         <div className="flex flex-col gap-4">
           <Field label="Subject" required fullWidth>
             <input
-              autoFocus
+              autoFocus={!isEdit}
               value={form.subject}
+              maxLength={255}
               onChange={(e) => update("subject", e.target.value)}
               className={inputClass}
               placeholder="Call John about quotation"
@@ -108,6 +140,18 @@ export default function ReminderForm({ onSubmit, onCancel }: ReminderFormProps) 
               <span className="text-xs text-ink-soft">Select a date first</span>
             )}
           </Field>
+
+          {isEdit && (
+            <div className="flex items-center justify-between gap-3 rounded-md border border-line px-3 py-1.5">
+              <span className="text-sm font-medium text-fg">Reminder enabled</span>
+              <Switch
+                checked={form.enabled}
+                onChange={(next) => update("enabled", next)}
+                ariaLabel="Reminder enabled"
+                showState
+              />
+            </div>
+          )}
         </div>
       </div>
 
@@ -125,7 +169,7 @@ export default function ReminderForm({ onSubmit, onCancel }: ReminderFormProps) 
           className="flex items-center gap-2 rounded-md bg-ink px-4 py-2 text-sm font-semibold text-white transition hover:bg-ink-2 active:scale-[0.98] disabled:opacity-60"
         >
           {isSubmitting && <Spinner size="sm" className="border-white/30 border-t-white" />}
-          {isSubmitting ? "Saving…" : "Save Reminder"}
+          {isSubmitting ? "Saving…" : isEdit ? "Save Changes" : "Save Reminder"}
         </button>
       </div>
     </form>

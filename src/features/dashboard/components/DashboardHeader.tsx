@@ -1,11 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { AlarmClock, LogOut, PanelLeftClose, PanelLeftOpen, Search } from "lucide-react";
 import type { AuthUser } from "@/features/auth/types/auth.types";
 import ThemeToggle from "@/shared/components/ThemeToggle";
 import NotificationBell from "@/features/notifications/components/NotificationBell";
-import ReminderDialog from "@/features/reminders/components/ReminderDialog";
 
 interface DashboardHeaderProps {
   user: AuthUser;
@@ -25,8 +25,8 @@ export default function DashboardHeader({
   isSidebarCollapsed,
   onToggleSidebar,
 }: DashboardHeaderProps) {
+  const router = useRouter();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isReminderOpen, setIsReminderOpen] = useState(false);
 
   return (
     <header className="sticky top-0 z-40 flex items-center justify-between gap-4 border-b border-line bg-surface/85 px-4 py-3 shadow-[0_6px_25px_rgba(18,33,58,0.035)] backdrop-blur-xl">
@@ -72,11 +72,11 @@ export default function DashboardHeader({
               <button
                 onClick={() => {
                   setIsMenuOpen(false);
-                  setIsReminderOpen(true);
+                  router.push("/dashboard/reminders");
                 }}
                 className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm text-fg hover:bg-paper"
               >
-                <AlarmClock size={14} /> Custom Reminder
+                <AlarmClock size={14} /> Reminder
               </button>
               <button
                 onClick={onLogout}
@@ -88,8 +88,6 @@ export default function DashboardHeader({
           )}
         </div>
       </div>
-
-      <ReminderDialog isOpen={isReminderOpen} onClose={() => setIsReminderOpen(false)} />
     </header>
   );
 }

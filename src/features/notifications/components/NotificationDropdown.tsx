@@ -19,14 +19,14 @@ const TYPE_ICON: Record<NotificationType, typeof Bell> = {
 interface NotificationDropdownProps {
   notifications: Notification[];
   isLoading: boolean;
-  onMarkAsRead: (id: string) => void;
+  onSelect: (notification: Notification) => void;
   onDismiss: (id: string) => void;
 }
 
 export default function NotificationDropdown({
   notifications,
   isLoading,
-  onMarkAsRead,
+  onSelect,
   onDismiss,
 }: NotificationDropdownProps) {
   const sorted = [...notifications].sort(
@@ -34,7 +34,7 @@ export default function NotificationDropdown({
   );
 
   return (
-    <div className="absolute right-0 top-full z-20 mt-1 w-80 max-w-[calc(100vw-2rem)] rounded-md border border-line bg-surface shadow-lg animate-menu-in">
+    <div className="absolute right-0 top-full z-20 mt-1 w-80 max-w-[calc(100vw-2rem)] rounded-md max-sm:inset-x-3 max-sm:right-3 max-sm:w-auto max-sm:max-w-none border border-line bg-surface shadow-lg animate-menu-in">
       <div className="border-b border-line px-3 py-2.5">
         <p className="text-sm font-semibold text-fg">Notifications</p>
       </div>
@@ -52,10 +52,12 @@ export default function NotificationDropdown({
                 key={notification.id}
                 role="button"
                 tabIndex={0}
-                onClick={() => !notification.is_read && onMarkAsRead(notification.id)}
+                onClick={() => onSelect(notification)}
                 onKeyDown={(event) => {
-                  if ((event.key === "Enter" || event.key === " ") && !notification.is_read) {
-                    onMarkAsRead(notification.id);
+                  if (event.target !== event.currentTarget) return;
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    onSelect(notification);
                   }
                 }}
                 className={`group relative flex w-full items-start gap-2.5 border-b border-line px-3 py-2.5 text-left transition last:border-b-0 hover:bg-paper ${
@@ -75,20 +77,19 @@ export default function NotificationDropdown({
                 </div>
 
                 {!notification.is_read && (
-                  <span
-                    aria-hidden="true"
-                    className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-slate"
-                  />
+                  <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-slate">
+                    <span className="sr-only">Unread</span>
+                  </span>
                 )}
 
                 <button
                   type="button"
-                  aria-label="Dismiss notification"
+                  aria-label={`Dismiss notification: ${notification.title}`}
                   onClick={(event) => {
                     event.stopPropagation();
                     onDismiss(notification.id);
                   }}
-                  className="absolute right-1.5 top-1.5 rounded-md p-1 text-ink-soft opacity-0 transition hover:bg-surface hover:text-fg group-hover:opacity-100"
+                  className="absolute right-1.5 top-1.5 rounded-md p-1 text-ink-soft opacity-0 transition hover:bg-surface hover:text-fg focus-visible:opacity-100 group-hover:opacity-100 max-sm:p-2 max-sm:opacity-100"
                 >
                   <X size={12} />
                 </button>
