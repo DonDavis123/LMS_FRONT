@@ -29,6 +29,28 @@ interface ChangeEntry {
   new_value?: unknown;
 }
 
+const ISO_DATETIME = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:?\d{2})?/g;
+
+/**
+ * Replaces raw ISO timestamps (e.g. "2026-09-29T18:30:00+00:00") with a
+ * readable local date-time in 12-hour format (e.g. "Sep 30, 2026, 12:00 AM").
+ * Text without timestamps is returned untouched.
+ */
+function formatIsoDates(text: string) {
+  return text.replace(ISO_DATETIME, (match) => {
+    const date = new Date(match);
+    if (Number.isNaN(date.getTime())) return match;
+    return date.toLocaleString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    });
+  });
+}
+
 /** Reads `metadata.changes` off the raw backend event, if present. */
 function getChanges(event: TimelineEvent): Record<string, ChangeEntry> | null {
   const metadata = event.raw?.metadata as Record<string, unknown> | undefined;
@@ -48,6 +70,7 @@ function highlightMessage(
   changes: Record<string, ChangeEntry> | null,
   extraValues: string[] = [],
 ) {
+  message = formatIsoDates(message);
   if (!changes && extraValues.length === 0) return [{ text: message, bold: false }];
 
   const values = [
@@ -55,7 +78,7 @@ function highlightMessage(
     ...extraValues,
   ]
     .filter((value): value is string | number => typeof value === "string" || typeof value === "number")
-    .map((value) => String(value))
+    .map((value) => formatIsoDates(String(value)))
     .filter((value) => value.length > 0)
     .sort((a, b) => b.length - a.length); // longest first, avoids partial-substring overlap
 
@@ -314,7 +337,7 @@ export default function RecordTimeline({ module, recordId, showLeadOrigin = fals
                             </p>
                           )}
                           {event.description && (
-                            <p className="mt-1 text-sm text-ink-soft">{event.description}</p>
+                            <p className="mt-1 text-sm text-ink-soft">{formatIsoDates(event.description)}</p>
                           )}
                         </div>
                       </li>
