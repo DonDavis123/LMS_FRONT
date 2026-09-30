@@ -1,23 +1,25 @@
 "use client";
 
-import { Fragment, useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import {
   ArrowRightCircle,
-  ChevronDown,
   CheckCircle2,
   Clock3,
   FileEdit,
+  Filter,
   Loader2,
   PlusCircle,
   RefreshCcw,
   Trash2,
+  UserSquare2,
 } from "lucide-react";
 import { TimelineService, type TimelineEvent, type TimelineModule } from "@/features/timeline/services/TimelineService";
 
 interface RecordTimelineProps {
   module: TimelineModule;
   recordId: string;
-  /** Show an expandable original-lead timeline on converted contact/account records. */
+  /** On converted contact/account records, show a "View Lead History" link on the conversion entry. */
   showLeadOrigin?: boolean;
   compact?: boolean;
 }
@@ -41,11 +43,17 @@ function getChanges(event: TimelineEvent): Record<string, ChangeEntry> | null {
  * nothing to highlight — this never invents text, it only styles values
  * the backend already sent.
  */
-function highlightMessage(message: string, changes: Record<string, ChangeEntry> | null) {
-  if (!changes) return [{ text: message, bold: false }];
+function highlightMessage(
+  message: string,
+  changes: Record<string, ChangeEntry> | null,
+  extraValues: string[] = [],
+) {
+  if (!changes && extraValues.length === 0) return [{ text: message, bold: false }];
 
-  const values = Object.values(changes)
-    .flatMap((change) => [change.old_value, change.new_value])
+  const values = [
+    ...Object.values(changes ?? {}).flatMap((change) => [change.old_value, change.new_value]),
+    ...extraValues,
+  ]
     .filter((value): value is string | number => typeof value === "string" || typeof value === "number")
     .map((value) => String(value))
     .filter((value) => value.length > 0)
@@ -63,6 +71,7 @@ function highlightMessage(message: string, changes: Record<string, ChangeEntry> 
 function iconFor(eventType: string | null | undefined) {
   const type = (eventType ?? "").toUpperCase();
   if (type.includes("STATUS_CHANGED")) return { Icon: RefreshCcw, tone: "text-slate" };
+  if (type.includes("CONTACT_CREATED")) return { Icon: UserSquare2, tone: "text-slate" };
   if (type.includes("CREATED")) return { Icon: PlusCircle, tone: "text-success" };
   if (type.includes("CONVERTED")) return { Icon: ArrowRightCircle, tone: "text-slate" };
   if (type.includes("COMPLETED")) return { Icon: CheckCircle2, tone: "text-success" };
@@ -79,55 +88,34 @@ function dateKey(value: string) {
 function formatDayLabel(value: string) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
-  return date.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+  return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 }
 
 
-function findLeadId(value: unknown, keyHint = ""): string | null {
-  if (!value || typeof value !== "object") return null;
-
-  if (Array.isArray(value)) {
-    for (const item of value) {
-      const found = findLeadId(item, keyHint);
-      if (found) return found;
-    }
-    return null;
-  }
-
-  const record = value as Record<string, unknown>;
-  for (const [key, child] of Object.entries(record)) {
-    const normalized = key.toLowerCase().replace(/[^a-z0-9]/g, "");
-    if (typeof child === "string" && child.trim() && normalized.includes("lead") && normalized.endsWith("id")) {
-      return child;
-    }
-    if (child && typeof child === "object") {
-      if (normalized === "lead" || normalized.includes("lead")) {
-        const nested = (child as Record<string, unknown>).id;
-        if (typeof nested === "string" && nested.trim()) return nested;
-      }
-      const found = findLeadId(child, normalized);
-      if (found) return found;
-    }
-  }
-
-  // Some timeline payloads can put the source record id in a generic `id`
-  // nested under a key such as `source_lead` / `converted_lead`.
-  if (keyHint.includes("lead")) {
-    const nested = record.id;
-    if (typeof nested === "string" && nested.trim()) return nested;
-  }
-
-  return null;
+/**
+ * Returns the id of the lead this record was created from, when the event
+ * came from a lead conversion. The backend sends it as
+ * `metadata.source_lead_id` on the "created by converting the Lead" event.
+ */
+function getSourceLeadId(event: TimelineEvent): string | null {
+  const metadata = event.raw?.metadata as Record<string, unknown> | undefined;
+  if (!metadata) return null;
+  const id = metadata.source_lead_id ?? metadata.lead_id;
+  return typeof id === "string" && id.trim() ? id : null;
 }
 
-function isConversionEvent(event: TimelineEvent) {
-  const type = `${event.event_type ?? ""} ${event.type ?? ""}`.toUpperCase();
-  return type.includes("CONVERT") || /converted/i.test(event.title);
+/** True for entries created by a lead conversion (they carry the source lead). */
+function isLeadOriginEvent(event: TimelineEvent) {
+  const metadata = event.raw?.metadata as Record<string, unknown> | undefined;
+  return metadata?.source === "LEAD_CONVERSION" && getSourceLeadId(event) !== null;
 }
 
 function formatTime(value: string) {
   const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? "" : date.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+  // Always 12-hour with AM/PM (e.g. "6:08 PM"), regardless of browser locale.
+  return Number.isNaN(date.getTime())
+    ? ""
+    : date.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true });
 }
 
 export default function RecordTimeline({ module, recordId, showLeadOrigin = false, compact = false }: RecordTimelineProps) {
@@ -135,7 +123,8 @@ export default function RecordTimeline({ module, recordId, showLeadOrigin = fals
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState("All");
-  const [expandedLeadEvents, setExpandedLeadEvents] = useState<Set<string>>(new Set());
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const filterRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -161,6 +150,16 @@ export default function RecordTimeline({ module, recordId, showLeadOrigin = fals
       cancelled = true;
     };
   }, [module, recordId]);
+
+  // Close the filter popover on outside click.
+  useEffect(() => {
+    if (!isFilterOpen) return;
+    function handleClick(event: MouseEvent) {
+      if (filterRef.current && !filterRef.current.contains(event.target as Node)) setIsFilterOpen(false);
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [isFilterOpen]);
 
   const filters = useMemo(() => {
     const values = events
@@ -191,23 +190,50 @@ export default function RecordTimeline({ module, recordId, showLeadOrigin = fals
 
   return (
     <div className={`${compact ? "mt-0" : "mt-4"} rounded-lg border border-line bg-surface`}>
-      <div className="flex flex-col gap-3 border-b border-line px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h2 className="text-base font-semibold text-fg">Timeline</h2>
-          <p className="text-xs text-ink-soft">Record history and activity</p>
-        </div>
-        <select
-          value={filter}
-          onChange={(event) => setFilter(event.target.value)}
-          className="rounded-md border border-line bg-surface px-3 py-2 text-xs text-fg outline-none transition focus:border-slate focus:ring-2 focus:ring-slate-light"
-        >
-          {filters.map((value) => (
-            <option key={value} value={value}>{value}</option>
-          ))}
-        </select>
+      {/* "History" tab strip */}
+      <div className="border-b border-line px-5">
+        <span className="-mb-px inline-block border-b-2 border-indigo-600 px-1 py-3 text-sm font-medium text-indigo-600">
+          History
+        </span>
       </div>
 
       <div className="px-5 py-5">
+        <div className="mb-5 flex items-center gap-3">
+          <h2 className="text-sm font-semibold text-fg">Timeline History</h2>
+          <div ref={filterRef} className="relative">
+            <button
+              type="button"
+              aria-label="Filter timeline"
+              aria-expanded={isFilterOpen}
+              onClick={() => setIsFilterOpen((open) => !open)}
+              className={`flex h-8 w-9 items-center justify-center rounded-md border bg-surface text-fg transition hover:bg-paper ${
+                filter !== "All" ? "border-indigo-600" : "border-line"
+              }`}
+            >
+              <Filter size={15} />
+            </button>
+            {isFilterOpen && (
+              <div className="absolute left-0 top-full z-20 mt-1 max-h-64 min-w-48 overflow-y-auto rounded-md border border-line bg-surface py-1 shadow-lg">
+                {filters.map((value) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => {
+                      setFilter(value);
+                      setIsFilterOpen(false);
+                    }}
+                    className={`block w-full px-3 py-1.5 text-left text-xs hover:bg-paper ${
+                      value === filter ? "font-semibold text-indigo-600" : "text-fg"
+                    }`}
+                  >
+                    {value}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
         {isLoading ? (
           <div className="space-y-4 py-2" aria-label="Loading timeline">
             <div className="flex items-center gap-2 pb-2 text-sm text-ink-soft">
@@ -230,79 +256,66 @@ export default function RecordTimeline({ module, recordId, showLeadOrigin = fals
             <p className="mt-1 text-xs text-ink-soft">Changes and activities for this record will appear here.</p>
           </div>
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-8">
             {groups.map(([day, dayEvents]) => (
               <div key={day}>
-                <div className="mb-3 inline-flex items-center rounded-md border border-line bg-paper px-2.5 py-1 text-xs font-medium text-ink-soft">
+                {/* Date chip */}
+                <div className="mb-4 inline-flex min-w-28 items-center justify-center rounded-md border border-line bg-paper px-3 py-1 text-xs text-fg">
                   {formatDayLabel(dayEvents[0].timestamp)}
                 </div>
 
-                <ol className="relative border-l border-line pl-0">
-                  {dayEvents.map((event) => {
+                <ol className="relative">
+                  {dayEvents.map((event, index) => {
                     const { Icon, tone } = iconFor(event.event_type ?? event.type);
                     const changes = getChanges(event);
-                    const conversion = showLeadOrigin && isConversionEvent(event);
-                    const segments = conversion
-                      ? [{ text: `Lead converted to ${module === "accounts" ? "Account" : "Contact"}`, bold: true }]
-                      : highlightMessage(event.title, changes);
+                    const isLast = index === dayEvents.length - 1;
+                    const sourceLeadId = getSourceLeadId(event);
+                    const leadOrigin = showLeadOrigin && module !== "leads" && isLeadOriginEvent(event);
+                    const metadata = event.raw?.metadata as Record<string, unknown> | undefined;
+                    const leadName = typeof metadata?.source_lead_name === "string" ? metadata.source_lead_name : "";
+                    const segments = highlightMessage(event.title, changes, leadOrigin && leadName ? [leadName] : []);
                     const actor = event.actor_name || event.user_name || event.user;
 
                     return (
-                      <li key={event.id} className="relative flex gap-4 pb-6 last:pb-0">
-                        <time className="w-14 shrink-0 pt-0.5 text-right text-xs text-ink-soft">
+                      <li key={event.id} className="relative flex gap-3">
+                        <time className="w-[4.5rem] shrink-0 pt-1.5 text-right text-xs text-fg">
                           {formatTime(event.timestamp)}
                         </time>
 
-                        <span className={`relative -ml-px flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-line bg-surface ${tone}`}>
-                          <Icon size={14} />
-                        </span>
+                        {/* Icon column with the vertical connector line */}
+                        <div className="relative flex w-8 shrink-0 justify-center">
+                          {!isLast && <span aria-hidden="true" className="absolute left-1/2 top-8 bottom-0 w-px -translate-x-1/2 bg-line" />}
+                          <span className={`relative z-10 flex h-8 w-8 items-center justify-center rounded-full border border-line bg-surface ${tone}`}>
+                            <Icon size={15} />
+                          </span>
+                        </div>
 
-                        <div className="min-w-0 flex-1 pt-0.5">
-                          <p className="text-sm leading-relaxed text-fg">
-                            {conversion && <ArrowRightCircle size={15} className="mr-1.5 inline-block align-[-2px] text-slate" />}
+                        <div className={`min-w-0 flex-1 pt-1 ${isLast ? "" : "pb-7"}`}>
+                          <p className="text-sm leading-snug text-fg">
                             {segments.map((segment, i) => (
                               <Fragment key={i}>
-                                {segment.bold ? <strong className="font-semibold">{segment.text}</strong> : segment.text}
+                                {segment.bold ? <span className="font-medium text-indigo-600">{segment.text}</span> : segment.text}
                               </Fragment>
                             ))}
+                            {leadOrigin && sourceLeadId && (
+                              <Link
+                                href={`/dashboard/leads/${sourceLeadId}?tab=timeline`}
+                                className="ml-4 whitespace-nowrap text-sm text-fg underline underline-offset-4 transition hover:text-indigo-600"
+                              >
+                                View Lead History
+                              </Link>
+                            )}
                           </p>
-                          {actor && (
-                            <p className="mt-1 text-xs text-ink-soft">
-                              by <span className="font-medium text-fg">{actor}</span>
+                          {(actor || event.timestamp) && (
+                            <p className="mt-0.5 text-xs text-ink-soft">
+                              {actor && <>by {actor} </>}
+                              {formatDayLabel(event.timestamp)}
                               {event.source ? ` · ${event.source}` : ""}
                             </p>
                           )}
-                          {event.description && !conversion && (
+                          {event.description && (
                             <p className="mt-1 text-sm text-ink-soft">{event.description}</p>
                           )}
-
-                          {conversion && (() => {
-                            const leadId = findLeadId(event.raw);
-                            if (!leadId) return null;
-                            const expanded = expandedLeadEvents.has(event.id);
-                            return (
-                              <div className="mt-3">
-                                <button
-                                  type="button"
-                                  onClick={() => setExpandedLeadEvents((current) => {
-                                    const next = new Set(current);
-                                    if (next.has(event.id)) next.delete(event.id);
-                                    else next.add(event.id);
-                                    return next;
-                                  })}
-                                  className="mt-2 inline-flex items-center gap-1.5 rounded-md px-0 py-1 text-xs font-semibold text-slate transition hover:text-fg"
-                                >
-                                  <ChevronDown size={13} className={`transition-transform ${expanded ? "rotate-180" : ""}`} />
-                                  {expanded ? "Hide original lead timeline" : "View original lead timeline"}
-                                </button>
-                                {expanded && (
-                                  <div className="mt-3 border-l-2 border-slate-light pl-3">
-                                    <RecordTimeline module="leads" recordId={leadId} compact />
-                                  </div>
-                                )}
-                              </div>
-                            );
-                          })()}
                         </div>
                       </li>
                     );

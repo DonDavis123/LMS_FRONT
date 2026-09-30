@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ChevronDown, MoreVertical } from "lucide-react";
 import { LeadService } from "@/features/leads/services/LeadService";
 import LeadStatusPipeline from "@/features/leads/components/LeadStatusPipeline";
@@ -26,7 +26,11 @@ type DetailTab = "overview" | "timeline";
 
 export default function LeadDetail({ lead, onLeadChange }: LeadDetailProps) {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<DetailTab>("overview");
+  const searchParams = useSearchParams();
+  // "View Lead History" links from converted contacts/accounts open ?tab=timeline.
+  const [activeTab, setActiveTab] = useState<DetailTab>(
+    searchParams.get("tab") === "timeline" ? "timeline" : "overview",
+  );
   const [showDetails, setShowDetails] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
