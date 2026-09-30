@@ -307,7 +307,7 @@ export default function RecordTimeline({ module, recordId, showLeadOrigin = fals
 
                         {/* Icon column with the vertical connector line */}
                         <div className="relative flex w-8 shrink-0 justify-center">
-                          {!isLast && <span aria-hidden="true" className="absolute left-1/2 top-8 bottom-0 w-0.5 -translate-x-1/2 bg-line" />}
+                          {!isLast && <span aria-hidden="true" className="absolute left-1/2 top-8 bottom-0 w-0.5 -translate-x-1/2 bg-slate-light" />}
                           <span className={`relative z-10 flex h-8 w-8 items-center justify-center rounded-full border border-line bg-surface ${tone}`}>
                             <Icon size={15} />
                           </span>
