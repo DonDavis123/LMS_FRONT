@@ -5,13 +5,14 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ChevronDown, MoreVertical } from "lucide-react";
 import { LeadService } from "@/features/leads/services/LeadService";
+import LeadStatusPipeline from "@/features/leads/components/LeadStatusPipeline";
 import RecordTimeline from "@/shared/components/RecordTimeline";
 import InlineEditRow from "@/shared/components/InlineEditRow";
 import { Tabs } from "@/shared/components/Tabs";
 import { RecordSection } from "@/shared/components/RecordSection";
 import { formatDateTime } from "@/shared/utils/formatDate";
 import { LEAD_INDUSTRIES, LEAD_RATINGS, LEAD_SOURCES, LEAD_STATUSES } from "@/features/leads/types/lead.types";
-import { LEAD_STATUS_PIPELINE, type Lead, type LeadStatus } from "@/features/leads/types/lead.types";
+import type { Lead, LeadStatus } from "@/features/leads/types/lead.types";
 
 import CreateTaskFromRecord from "@/shared/components/CreateTaskFromRecord";
 import { confirmDelete } from "@/shared/utils/confirmDelete";
@@ -147,21 +148,11 @@ async function handleStatusClick(status: LeadStatus) {
       {activeTab === "overview" ? (
         <>
           {/* Status pipeline */}
-          <div className="mt-4 flex overflow-x-auto rounded-md border border-line bg-surface">
-            {LEAD_STATUS_PIPELINE.map((status) => (
-              <button
-                key={status}
-                onClick={() => handleStatusClick(status)}
-                className={`flex-1 whitespace-nowrap border-r border-line px-3 py-2.5 text-center text-xs font-medium transition-colors last:border-r-0 ${
-                  status === lead.lead_status
-                    ? "bg-ink text-white"
-                    : "text-ink-soft hover:bg-paper"
-                } ${status === pendingStatus ? "animate-stage-pulse bg-amber text-fg" : ""}`}
-              >
-                {status}
-              </button>
-            ))}
-          </div>
+          <LeadStatusPipeline
+            current={lead.lead_status}
+            pending={pendingStatus}
+            onSelect={handleStatusClick}
+          />
 
           {/* Overview */}
           <div className="mt-4 rounded-lg border border-line bg-surface p-6">

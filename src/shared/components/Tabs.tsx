@@ -1,11 +1,11 @@
 /**
- * Shared tab bar for record-detail pages (Lead / Contact / Account, ...).
+ * Shared tab switch for record-detail pages (Lead / Contact / Account /
+ * Task / Meeting).
  *
- * Previously each detail page implemented its own tab bar, and they'd
- * drifted apart visually — Contact/Account used an underline style while
- * Lead used a filled pill style. This standardizes on the underline style
- * (matches the reference CRM's tab pattern) so every record-detail screen
- * feels like the same product.
+ * Renders as a pill-shaped segmented switch — a highlighted thumb slides
+ * behind the active option — so every record-detail screen has the same
+ * Overview / Timeline control. Options share one width so the thumb can
+ * glide with a plain CSS transform.
  */
 export interface TabItem<T extends string> {
   value: T;
@@ -19,9 +19,26 @@ interface TabsProps<T extends string> {
 }
 
 export function Tabs<T extends string>({ tabs, active, onChange }: TabsProps<T>) {
+  const activeIndex = Math.max(
+    0,
+    tabs.findIndex((tab) => tab.value === active),
+  );
+
   return (
-    <div className="mt-6 border-b border-line">
-      <div className="flex gap-6" role="tablist">
+    <div className="mt-6">
+      <div
+        role="tablist"
+        className="relative inline-grid grid-flow-col auto-cols-fr rounded-full border border-line bg-surface p-1"
+      >
+        {/* Sliding thumb: one option wide, moved by whole-width steps. */}
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute bottom-1 left-1 top-1 rounded-full border border-slate bg-slate-light transition-transform duration-300 ease-out"
+          style={{
+            width: `calc((100% - 0.5rem) / ${tabs.length})`,
+            transform: `translateX(${activeIndex * 100}%)`,
+          }}
+        />
         {tabs.map((tab) => {
           const isActive = tab.value === active;
           return (
@@ -31,10 +48,8 @@ export function Tabs<T extends string>({ tabs, active, onChange }: TabsProps<T>)
               role="tab"
               aria-selected={isActive}
               onClick={() => onChange(tab.value)}
-              className={`border-b-2 px-1 pb-3 text-sm font-medium transition ${
-                isActive
-                  ? "border-slate text-fg"
-                  : "border-transparent text-ink-soft hover:text-fg"
+              className={`relative z-10 rounded-full px-5 py-1.5 text-sm font-medium transition-colors ${
+                isActive ? "text-fg" : "text-ink-soft hover:text-fg"
               }`}
             >
               {tab.label}
