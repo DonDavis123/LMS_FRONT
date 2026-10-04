@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo } from "react";
-import { Search, X } from "lucide-react";
+import { useMemo, type KeyboardEvent } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { MANAGED_USER_ROLES, type ManagedUser } from "@/features/users/types/user.types";
 import FilterBar, { type FilterCondition, type FilterFieldConfig } from "@/shared/components/FilterBar";
 import SortableHeader from "@/shared/components/SortableHeader";
@@ -12,10 +13,10 @@ import { formatDateTime } from "@/shared/utils/formatDate";
 
 interface UserListProps {
   users: ManagedUser[];
+  /** Id of the signed-in user, used to mark their own row with "You". */
+  currentUserId: string | null;
   isLoading: boolean;
   error: string | null;
-  search: string;
-  onSearchChange: (search: string) => void;
   filters: FilterCondition[];
   onFiltersChange: (filters: FilterCondition[]) => void;
   sort: SortState | null;
@@ -24,18 +25,23 @@ interface UserListProps {
   pagination: PaginationMeta;
   onPageChange: (page: number) => void;
   onPageSizeChange: (pageSize: number) => void;
+  onRetry: () => void;
 }
 
+const ROLE_LABELS: Record<string, string> = {
+  ADMIN: "Admin",
+  SUPERADMIN: "Superadmin",
+};
+
 function roleLabel(role: string): string {
-  return role.replace(/[\s_-]+/g, " ").toLowerCase().replace(/^\w/, (c) => c.toUpperCase());
+  return ROLE_LABELS[role.toUpperCase()] ?? role;
 }
 
 export default function UserList({
   users,
+  currentUserId,
   isLoading,
   error,
-  search,
-  onSearchChange,
   filters,
   onFiltersChange,
   sort,
@@ -44,74 +50,70 @@ export default function UserList({
   pagination,
   onPageChange,
   onPageSizeChange,
+  onRetry,
 }: UserListProps) {
+  const router = useRouter();
+
+  // The backend filters users on name, email, role and is_active only —
+  // `created_at` is sortable but rejected as a filter, so it isn't offered here.
   const fields = useMemo<FilterFieldConfig[]>(
     () => [
+      { field: "name", label: "Name", type: "text" },
+      { field: "email", label: "Email", type: "text" },
       {
         field: "role",
         label: "Role",
         type: "choice",
-        choices: MANAGED_USER_ROLES.map((r) => ({ value: r, label: roleLabel(r) })),
+        choices: MANAGED_USER_ROLES.map((role) => ({ value: role, label: roleLabel(role) })),
       },
-      { field: "is_active", label: "Active", type: "boolean" },
+      { field: "is_active", label: "Status", type: "boolean" },
     ],
     []
   );
 
-  const hasFilters = filters.length > 0 || search.trim() !== "";
+  function openUser(id: string) {
+    router.push(`/dashboard/users/${id}`);
+  }
+
+  function handleRowKeyDown(event: KeyboardEvent<HTMLTableRowElement>, id: string) {
+    // Ignore keys pressed on the inner name link so it keeps its own behaviour.
+    if (event.target !== event.currentTarget) return;
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      openUser(id);
+    }
+  }
 
   return (
     <div className="lp-card overflow-hidden">
       <div className="flex flex-col gap-3 border-b border-line bg-surface/80 p-5 backdrop-blur-sm">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="font-serif text-xl text-fg">Manage Users</h1>
-            <p className="text-sm text-ink-soft">
-              {pagination.total} total {pagination.total === 1 ? "user" : "users"}
-            </p>
-          </div>
-
-          <label className="relative block w-full sm:w-72">
-            <span className="sr-only">Search users by name or email</span>
-            <Search size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-soft" />
-            <input
-              type="text"
-              value={search}
-              onChange={(event) => onSearchChange(event.target.value)}
-              placeholder="Search name or email"
-              className="w-full rounded-md border border-line bg-paper py-2 pl-9 pr-8 text-sm text-fg outline-none transition focus:border-slate focus:bg-surface focus:ring-2 focus:ring-slate-light"
-            />
-            {search && (
-              <button
-                type="button"
-                onClick={() => onSearchChange("")}
-                aria-label="Clear search"
-                className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-0.5 text-ink-soft hover:text-fg"
-              >
-                <X size={14} />
-              </button>
-            )}
-          </label>
+        <div>
+          <h1 className="font-serif text-xl text-fg">Manage Users</h1>
+          <p className="text-sm text-ink-soft">
+            {pagination.total} total {pagination.total === 1 ? "user" : "users"}
+          </p>
         </div>
 
         <FilterBar fields={fields} filters={filters} onChange={onFiltersChange} />
       </div>
 
-      {error && <p className="border-b border-line bg-danger-soft px-4 py-3 text-sm text-danger">{error}</p>}
+      {error && (
+        <div className="flex items-center justify-between gap-3 border-b border-line bg-danger-soft px-4 py-3 text-sm text-danger">
+          <p>{error}</p>
+          <button
+            type="button"
+            onClick={onRetry}
+            className="shrink-0 rounded-md border border-danger/30 px-2.5 py-1 text-xs font-semibold transition hover:bg-surface"
+          >
+            Retry
+          </button>
+        </div>
+      )}
 
       {isLoading ? (
-        <div className="space-y-3 p-4">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="h-10 animate-shimmer rounded-md" />
-          ))}
-        </div>
+        <UserListSkeleton />
       ) : users.length === 0 ? (
-        <div className="flex flex-col items-center gap-3 px-4 py-16 text-center animate-scale-in">
-          <p className="font-serif text-lg text-fg">{hasFilters ? "No users match your search" : "No users yet"}</p>
-          {hasFilters && (
-            <p className="max-w-sm text-sm text-ink-soft">Try a different search term, or remove a filter.</p>
-          )}
-        </div>
+        <EmptyState hasError={Boolean(error)} />
       ) : (
         <>
           <div className="overflow-x-auto">
@@ -127,9 +129,31 @@ export default function UserList({
               </thead>
               <tbody>
                 {users.map((user) => (
-                  <tr key={user.id} className="border-b border-line last:border-0 hover:bg-paper">
-                    <td className="px-4 py-3 font-medium text-fg">{user.name || "(No name)"}</td>
-                    <td className="px-4 py-3 text-ink-soft">{user.email}</td>
+                  <tr
+                    key={user.id}
+                    tabIndex={0}
+                    onClick={() => openUser(user.id)}
+                    onKeyDown={(event) => handleRowKeyDown(event, user.id)}
+                    aria-label={`Open ${user.name || user.email}`}
+                    className="group cursor-pointer border-b border-line outline-none last:border-0 hover:bg-paper hover:shadow-[inset_2px_0_0_var(--color-amber)] focus-visible:bg-paper focus-visible:shadow-[inset_2px_0_0_var(--color-amber)]"
+                  >
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        <Link
+                          href={`/dashboard/users/${user.id}`}
+                          onClick={(event) => event.stopPropagation()}
+                          className="font-medium text-slate hover:underline"
+                        >
+                          {user.name || "(No name)"}
+                        </Link>
+                        {currentUserId !== null && user.id === currentUserId && (
+                          <span className="rounded-full border border-line bg-paper px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-ink-soft">
+                            You
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-ink-soft">{user.email || "-"}</td>
                     <td className="px-4 py-3">
                       <span className="rounded-full bg-slate-light px-2.5 py-1 text-xs font-medium text-slate">
                         {roleLabel(user.role)}
@@ -141,10 +165,10 @@ export default function UserList({
                           user.is_active ? "bg-success-soft text-success" : "bg-danger-soft text-danger"
                         }`}
                       >
-                        {user.is_active ? "Active" : "Inactive"}
+                        {user.is_active ? "Active" : "Blocked"}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-ink-soft">{formatDateTime(user.created_at) || "—"}</td>
+                    <td className="px-4 py-3 text-ink-soft">{formatDateTime(user.created_at) || "-"}</td>
                   </tr>
                 ))}
               </tbody>
@@ -159,6 +183,28 @@ export default function UserList({
           />
         </>
       )}
+    </div>
+  );
+}
+
+function UserListSkeleton() {
+  return (
+    <div className="space-y-3 p-4">
+      {Array.from({ length: 5 }).map((_, i) => (
+        <div key={i} className="h-10 animate-shimmer rounded-md" />
+      ))}
+    </div>
+  );
+}
+
+function EmptyState({ hasError }: { hasError: boolean }) {
+  // When the request failed, the error banner already explains why — don't
+  // also claim that no users match.
+  if (hasError) return null;
+  return (
+    <div className="flex flex-col items-center gap-3 px-4 py-16 text-center animate-scale-in">
+      <p className="font-serif text-lg text-fg">No users match these filters</p>
+      <p className="max-w-sm text-sm text-ink-soft">Try a different filter, or remove one.</p>
     </div>
   );
 }

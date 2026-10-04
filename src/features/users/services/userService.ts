@@ -11,10 +11,9 @@ export const userService = {
   },
 
   /**
-   * GET /users/ — superadmin-only paginated list for "Manage Users".
-   * Supports page, page_size, filters (role / is_active), search
-   * (name + email) and sort_by/sort_direction. Soft-deleted users are
-   * never returned by the backend.
+   * GET /users/ — superadmin-only paginated list. Accepts the same
+   * page / page_size / filters / sort_by / sort_direction contract as the
+   * Lead list. Filterable fields: name, email, role, is_active.
    */
   async getUsersPage(params: ListQueryParams = {}): Promise<PaginatedResponse<ManagedUser>> {
     const { data } = await apiClient.get<PaginatedResponse<ManagedUser>>("/users/", {

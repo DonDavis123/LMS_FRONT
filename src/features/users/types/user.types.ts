@@ -17,22 +17,18 @@ export interface CreateUserPayload {
   role: UserRole;
 }
 
-/**
- * One row of GET /users/ (superadmin-only "Manage Users" list).
- * Distinct from `User` above, which mirrors the older lead-owners shape.
- */
+/** One row of GET /users/ (superadmin-only users list). */
 export interface ManagedUser {
   id: string;
   name: string;
   email: string;
   /** Backend role, e.g. "ADMIN" | "SUPERADMIN". */
   role: UserRole;
+  /** `false` means the account is blocked. */
   is_active: boolean;
-  created_at: string;
+  created_at: string | null;
 }
 
-/** Backend sort keys accepted by GET /users/. */
-export type ManagedUserSortField = "name" | "email" | "role" | "is_active" | "created_at";
-
+/** Roles the backend accepts for the `role` filter. */
 export const MANAGED_USER_ROLES = ["ADMIN", "SUPERADMIN"] as const;
 

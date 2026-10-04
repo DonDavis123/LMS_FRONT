@@ -1,19 +1,18 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
+import { CheckCircle2 } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
 import UserList from "@/features/users/components/UserList";
 import { userService } from "@/features/users/services/userService";
 import type { ManagedUser } from "@/features/users/types/user.types";
-import { authService } from "@/features/auth/services/authService";
-import { isSuperAdmin } from "@/features/auth/types/auth.types";
+import { useRequireSuperAdmin } from "@/features/auth/hooks/useRequireSuperAdmin";
 import type { FilterCondition } from "@/shared/components/FilterBar";
 import type { PaginationMeta } from "@/shared/types/pagination";
 import type { SortState } from "@/shared/types/sort";
 import { extractApiError } from "@/shared/utils/apiError";
 
 const DEFAULT_PAGE_SIZE = 10;
-const SEARCH_DEBOUNCE_MS = 300;
 const EMPTY_PAGINATION: PaginationMeta = {
   page: 1,
   page_size: DEFAULT_PAGE_SIZE,
@@ -21,15 +20,11 @@ const EMPTY_PAGINATION: PaginationMeta = {
   total_pages: 0,
 };
 
-export default function UsersPage() {
+function UsersPageInner() {
   const router = useRouter();
-  // Superadmin-only screen: the backend enforces it (403), this just avoids
-  // showing a broken page to other roles.
-  const [allowed] = useState(() => isSuperAdmin(authService.getSessionUser()));
-
+  const searchParams = useSearchParams();
+  const { user: currentUser, isAllowed } = useRequireSuperAdmin();
   const [users, setUsers] = useState<ManagedUser[]>([]);
-  const [searchInput, setSearchInput] = useState("");
-  const [search, setSearch] = useState("");
   const [filters, setFilters] = useState<FilterCondition[]>([]);
   const [sort, setSort] = useState<SortState | null>(null);
   const [page, setPage] = useState(1);
@@ -37,30 +32,17 @@ export default function UsersPage() {
   const [pagination, setPagination] = useState<PaginationMeta>(EMPTY_PAGINATION);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [toast, setToast] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!allowed) router.replace("/dashboard");
-  }, [allowed, router]);
-
-  // Debounce typing so each keystroke doesn't hit the API.
-  useEffect(() => {
-    const next = searchInput.trim();
-    if (next === search) return;
-    const timer = window.setTimeout(() => {
-      setSearch(next);
-      setPage(1);
-    }, SEARCH_DEBOUNCE_MS);
-    return () => window.clearTimeout(timer);
-  }, [searchInput, search]);
-
-  useEffect(() => {
-    if (!allowed) return;
+    if (!isAllowed) return;
     let cancelled = false;
     setIsLoading(true);
     setError(null);
 
     userService
-      .getUsersPage({ page, page_size: pageSize, filters, search, sort })
+      .getUsersPage({ page, page_size: pageSize, filters, sort })
       .then((data) => {
         if (cancelled) return;
         setUsers(data.results);
@@ -69,14 +51,8 @@ export default function UsersPage() {
           setPage(data.pagination.total_pages);
         }
       })
-      .catch((err) => {
-        if (cancelled) return;
-        const status = (err as { response?: { status?: number } })?.response?.status;
-        setError(
-          status === 403
-            ? "You don't have permission to manage users."
-            : extractApiError(err, "Couldn't load users from the server.")
-        );
+      .catch((err: unknown) => {
+        if (!cancelled) setError(extractApiError(err, "Couldn't load users from the server."));
       })
       .finally(() => {
         if (!cancelled) setIsLoading(false);
@@ -85,34 +61,72 @@ export default function UsersPage() {
     return () => {
       cancelled = true;
     };
-  }, [allowed, page, pageSize, filters, search, sort]);
+  }, [isAllowed, page, pageSize, filters, sort, refreshKey]);
 
-  if (!allowed) return null;
+  function showToast(message: string) {
+    setToast(message);
+    window.setTimeout(() => setToast(null), 3000);
+  }
+
+  useEffect(() => {
+    const deletedMessage = searchParams.get("deletedMessage");
+    const message =
+      searchParams.get("updated") === "1"
+        ? "User updated successfully"
+        : deletedMessage
+        ? decodeURIComponent(deletedMessage)
+        : null;
+
+    if (message) {
+      showToast(message);
+      router.replace("/dashboard/users");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
+
+  if (!isAllowed) return null;
 
   return (
-    <UserList
-      users={users}
-      isLoading={isLoading}
-      error={error}
-      search={searchInput}
-      onSearchChange={setSearchInput}
-      filters={filters}
-      onFiltersChange={(next) => {
-        setFilters(next);
-        setPage(1);
-      }}
-      sort={sort}
-      onSortChange={(next) => {
-        setSort(next);
-        setPage(1);
-      }}
-      pageSize={pageSize}
-      pagination={pagination}
-      onPageChange={setPage}
-      onPageSizeChange={(next) => {
-        setPageSize(next);
-        setPage(1);
-      }}
-    />
+    <>
+      <UserList
+        users={users}
+        currentUserId={currentUser?.id ?? null}
+        isLoading={isLoading}
+        error={error}
+        filters={filters}
+        onFiltersChange={(next) => {
+          setFilters(next);
+          setPage(1);
+        }}
+        sort={sort}
+        onSortChange={(next) => {
+          setSort(next);
+          setPage(1);
+        }}
+        pageSize={pageSize}
+        pagination={pagination}
+        onPageChange={setPage}
+        onPageSizeChange={(next) => {
+          setPageSize(next);
+          setPage(1);
+        }}
+        onRetry={() => setRefreshKey((value) => value + 1)}
+      />
+
+      {toast && (
+        <div className="fixed bottom-6 right-6 z-[60] flex items-center gap-2 rounded-md border border-success/30 bg-success-soft px-4 py-3 text-sm font-medium text-success shadow-lg animate-toast-in">
+          <CheckCircle2 size={16} className="shrink-0 animate-pop-in" />
+          {toast}
+        </div>
+      )}
+    </>
+  );
+}
+
+export default function UsersPage() {
+  return (
+    <Suspense fallback={null}>
+      <UsersPageInner />
+    </Suspense>
   );
 }
