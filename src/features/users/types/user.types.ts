@@ -32,3 +32,14 @@ export interface ManagedUser {
 /** Roles the backend accepts for the `role` filter. */
 export const MANAGED_USER_ROLES = ["ADMIN", "SUPERADMIN"] as const;
 
+/** GET /users/{id}/ and the body returned by PATCH / block / unblock. */
+export interface ManagedUserDetail extends ManagedUser {
+  updated_at: string | null;
+}
+
+/** PATCH /users/{id}/ — send only the fields that changed. Role is not editable here. */
+export interface UpdateUserPayload {
+  name?: string;
+  email?: string;
+}
+
