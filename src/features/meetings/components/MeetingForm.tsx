@@ -134,21 +134,22 @@ export default function MeetingForm({ mode, initialMeeting, onSubmit, onCancel }
 
   useEffect(() => {
     let cancelled = false;
-    Promise.all([
-      userService.getLeadOwners().catch(() => [] as LeadOwnerOption[]),
-      userService.getUsers().catch(() => []),
-    ]).then(([ownerRows, users]) => {
-      if (cancelled) return;
-      setOwners(ownerRows);
-      setParticipantUsers(
-        users.map((user) => ({
-          id: user.id,
-          name: user.name,
-          email: user.email ?? null,
-          type: "user",
-        })),
-      );
-    });
+    // One request feeds both the host picker and the participant list.
+    userService
+      .getLeadOwners()
+      .catch(() => [] as LeadOwnerOption[])
+      .then((ownerRows) => {
+        if (cancelled) return;
+        setOwners(ownerRows);
+        setParticipantUsers(
+          ownerRows.map((user) => ({
+            id: user.id,
+            name: user.name,
+            email: user.email ?? null,
+            type: "user",
+          })),
+        );
+      });
 
     if (mode === "create") {
       const currentUser = authService.getSessionUser();

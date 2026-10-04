@@ -1,11 +1,12 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { CheckCircle2 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
+import UserCreateDialog from "@/features/users/components/UserCreateDialog";
 import UserList from "@/features/users/components/UserList";
 import { userService } from "@/features/users/services/userService";
-import type { ManagedUser } from "@/features/users/types/user.types";
+import type { ManagedUser, ManagedUserDetail } from "@/features/users/types/user.types";
 import { useRequireSuperAdmin } from "@/features/auth/hooks/useRequireSuperAdmin";
 import type { FilterCondition } from "@/shared/components/FilterBar";
 import type { PaginationMeta } from "@/shared/types/pagination";
@@ -25,6 +26,7 @@ function UsersPageInner() {
   const searchParams = useSearchParams();
   const { user: currentUser, isAllowed } = useRequireSuperAdmin();
   const [users, setUsers] = useState<ManagedUser[]>([]);
+  const [search, setSearch] = useState("");
   const [filters, setFilters] = useState<FilterCondition[]>([]);
   const [sort, setSort] = useState<SortState | null>(null);
   const [page, setPage] = useState(1);
@@ -34,6 +36,8 @@ function UsersPageInner() {
   const [error, setError] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
   const [toast, setToast] = useState<string | null>(null);
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const toastTimer = useRef<number | null>(null);
 
   useEffect(() => {
     if (!isAllowed) return;
@@ -42,7 +46,7 @@ function UsersPageInner() {
     setError(null);
 
     userService
-      .getUsersPage({ page, page_size: pageSize, filters, sort })
+      .getUsersPage({ page, page_size: pageSize, search, filters, sort })
       .then((data) => {
         if (cancelled) return;
         setUsers(data.results);
@@ -61,11 +65,31 @@ function UsersPageInner() {
     return () => {
       cancelled = true;
     };
-  }, [isAllowed, page, pageSize, filters, sort, refreshKey]);
+  }, [isAllowed, page, pageSize, search, filters, sort, refreshKey]);
 
   function showToast(message: string) {
+    if (toastTimer.current !== null) window.clearTimeout(toastTimer.current);
     setToast(message);
-    window.setTimeout(() => setToast(null), 3000);
+    toastTimer.current = window.setTimeout(() => setToast(null), 3000);
+  }
+
+  useEffect(() => {
+    return () => {
+      if (toastTimer.current !== null) window.clearTimeout(toastTimer.current);
+    };
+  }, []);
+
+  const handleSearchChange = useCallback((next: string) => {
+    setSearch(next);
+    setPage(1);
+  }, []);
+
+  function handleCreated(created: ManagedUserDetail) {
+    setIsCreateOpen(false);
+    showToast(`${created.name || created.email} was created`);
+    // The default order is newest first, so page 1 shows the new account.
+    setPage(1);
+    setRefreshKey((value) => value + 1);
   }
 
   useEffect(() => {
@@ -73,9 +97,7 @@ function UsersPageInner() {
     const message =
       searchParams.get("updated") === "1"
         ? "User updated successfully"
-        : deletedMessage
-        ? decodeURIComponent(deletedMessage)
-        : null;
+        : deletedMessage; // already decoded by `searchParams.get`
 
     if (message) {
       showToast(message);
@@ -93,6 +115,8 @@ function UsersPageInner() {
         currentUserId={currentUser?.id ?? null}
         isLoading={isLoading}
         error={error}
+        search={search}
+        onSearchChange={handleSearchChange}
         filters={filters}
         onFiltersChange={(next) => {
           setFilters(next);
@@ -111,6 +135,13 @@ function UsersPageInner() {
           setPage(1);
         }}
         onRetry={() => setRefreshKey((value) => value + 1)}
+        onCreateClick={() => setIsCreateOpen(true)}
+      />
+
+      <UserCreateDialog
+        isOpen={isCreateOpen}
+        onClose={() => setIsCreateOpen(false)}
+        onCreated={handleCreated}
       />
 
       {toast && (

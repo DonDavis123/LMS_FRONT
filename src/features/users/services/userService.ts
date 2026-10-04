@@ -1,45 +1,62 @@
 import { apiClient } from "@/infrastructure/api/client";
 import type {
   CreateUserPayload,
+  DeleteUserPayload,
   ManagedUser,
   ManagedUserDetail,
+  ReplacementCandidate,
   UpdateUserPayload,
-  User,
+  UserAuditLogEntry,
+  UserAuditLogQuery,
+  UserDeletionPreview,
 } from "@/features/users/types/user.types";
 import type { LeadOwnerOption } from "@/features/auth/types/auth.types";
 import type { PaginatedResponse } from "@/shared/types/pagination";
 import { toListQueryParams, type ListQueryParams } from "@/shared/utils/listQuery";
 
-export const userService = {
-  async getUsers(): Promise<User[]> {
-    const { data } = await apiClient.get<User[]>("/lead-owners/");
-    return data;
-  },
+/**
+ * Manage Users API (see the backend's docs/user-management-api.md).
+ *
+ * Everything here is superadmin-only except `getLeadOwners`. The backend owns
+ * every rule (self-protection, role limits, transfer requirements); this layer
+ * only sends requests and returns typed bodies. Errors are left to propagate
+ * so callers can show the server's own `detail` message via `extractApiError`.
+ */
+function assertPaginated<T>(data: PaginatedResponse<T> | undefined, what: string): PaginatedResponse<T> {
+  if (data && Array.isArray(data.results) && data.pagination) return data;
+  throw new Error(`Invalid ${what} response from the server.`);
+}
 
+export const userService = {
   /**
-   * GET /users/ — superadmin-only paginated list. Accepts the same
-   * page / page_size / filters / sort_by / sort_direction contract as the
-   * Lead list. Filterable fields: name, email, role, is_active.
+   * GET /users/ — paginated list. Supports `search` (name or email),
+   * `filters` (name, email, role, is_active), `sort_by` (name, email, role,
+   * is_active, created_at), `page` and `page_size` (max 50).
    */
   async getUsersPage(params: ListQueryParams = {}): Promise<PaginatedResponse<ManagedUser>> {
     const { data } = await apiClient.get<PaginatedResponse<ManagedUser>>("/users/", {
       params: toListQueryParams(params),
     });
-
-    if (data && Array.isArray(data.results) && data.pagination) {
-      return data;
-    }
-
-    throw new Error("Invalid users response from the server.");
+    return assertPaginated(data, "users");
   },
 
-  /** GET /users/{id}/ — superadmin-only; 404 `{ detail: "User not found." }` if missing. */
+  /** GET /users/{id}/ — 404 `{ detail: "User not found." }` if missing. */
   async getUser(id: string): Promise<ManagedUserDetail> {
     const { data } = await apiClient.get<ManagedUserDetail>(`/users/${id}/`);
     return data;
   },
 
-  /** PATCH /users/{id}/ — partial update of name and/or email. Returns the updated user. */
+  /** POST /users/ — returns the created user (201). */
+  async createUser(payload: CreateUserPayload): Promise<ManagedUserDetail> {
+    const { data } = await apiClient.post<ManagedUserDetail>("/users/", payload);
+    return data;
+  },
+
+  /**
+   * PATCH /users/{id}/ — partial update of name, email and/or role. Unknown
+   * fields are rejected by the backend. Changing the role signs the user out
+   * everywhere.
+   */
   async updateUser(id: string, payload: UpdateUserPayload): Promise<ManagedUserDetail> {
     const { data } = await apiClient.patch<ManagedUserDetail>(`/users/${id}/`, payload);
     return data;
@@ -65,23 +82,45 @@ export const userService = {
     return data;
   },
 
-  async createUser(payload: CreateUserPayload): Promise<User> {
-    const { data } = await apiClient.post<User>("/users/", payload);
+  /** GET /users/{id}/deletion-preview/ — read-only summary of what deleting would do. */
+  async getDeletionPreview(id: string): Promise<UserDeletionPreview> {
+    const { data } = await apiClient.get<UserDeletionPreview>(`/users/${id}/deletion-preview/`);
     return data;
   },
 
-  async deactivateUser(id: string): Promise<User> {
-    const { data } = await apiClient.patch<User>(`/users/${id}/`, { status: "Inactive" });
+  /** GET /users/{id}/replacement-candidates/ — active Admin/Superadmin users, excluding `id`. */
+  async getReplacementCandidates(id: string): Promise<ReplacementCandidate[]> {
+    const { data } = await apiClient.get<ReplacementCandidate[]>(`/users/${id}/replacement-candidates/`);
+    if (!Array.isArray(data)) throw new Error("Invalid replacement candidates response from the server.");
     return data;
-  },
-
-  async deleteUser(id: string): Promise<void> {
-    await apiClient.delete(`/users/${id}/`);
   },
 
   /**
-   * GET /lead-owners/ — list of { id, name, email } used to populate the
-   * "Lead Owner" picker on the create/edit lead forms.
+   * DELETE /users/{id}/ — retires the user (204). Pass a replacement only
+   * when the preview says records must be transferred; with nothing to
+   * transfer the request is sent without a body.
+   */
+  async deleteUser(id: string, payload?: DeleteUserPayload): Promise<void> {
+    await apiClient.delete(`/users/${id}/`, payload?.replacement_user_id ? { data: payload } : undefined);
+  },
+
+  /** GET /users/audit-logs/ — newest first; filter by `user_id` and/or `action`. */
+  async getAuditLogs(query: UserAuditLogQuery = {}): Promise<PaginatedResponse<UserAuditLogEntry>> {
+    const params: Record<string, string | number> = {
+      page: query.page ?? 1,
+      page_size: query.page_size ?? 10,
+    };
+    if (query.user_id) params.user_id = query.user_id;
+    if (query.action) params.action = query.action;
+
+    const { data } = await apiClient.get<PaginatedResponse<UserAuditLogEntry>>("/users/audit-logs/", { params });
+    return assertPaginated(data, "audit log");
+  },
+
+  /**
+   * GET /lead-owners/ — `{ id, name, email }` of active Admin/Superadmin users,
+   * open to any signed-in user. Feeds the owner pickers on Lead / Contact /
+   * Account / Task / Meeting forms.
    */
   async getLeadOwners(): Promise<LeadOwnerOption[]> {
     const { data } = await apiClient.get<LeadOwnerOption[]>("/lead-owners/");

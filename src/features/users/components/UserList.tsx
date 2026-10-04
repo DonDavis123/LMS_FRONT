@@ -1,9 +1,11 @@
 "use client";
 
-import { useMemo, type KeyboardEvent } from "react";
+import { useEffect, useMemo, useState, type KeyboardEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { MANAGED_USER_ROLES, type ManagedUser } from "@/features/users/types/user.types";
+import { Plus, Search } from "lucide-react";
+import { USER_ROLES, type ManagedUser } from "@/features/users/types/user.types";
+import { roleLabel } from "@/features/users/utils/userLabels";
 import FilterBar, { type FilterCondition, type FilterFieldConfig } from "@/shared/components/FilterBar";
 import SortableHeader from "@/shared/components/SortableHeader";
 import ServerPagination from "@/shared/components/ServerPagination";
@@ -17,6 +19,9 @@ interface UserListProps {
   currentUserId: string | null;
   isLoading: boolean;
   error: string | null;
+  /** Applied search text (name or email); the box debounces before calling `onSearchChange`. */
+  search: string;
+  onSearchChange: (search: string) => void;
   filters: FilterCondition[];
   onFiltersChange: (filters: FilterCondition[]) => void;
   sort: SortState | null;
@@ -26,22 +31,20 @@ interface UserListProps {
   onPageChange: (page: number) => void;
   onPageSizeChange: (pageSize: number) => void;
   onRetry: () => void;
+  onCreateClick: () => void;
 }
 
-const ROLE_LABELS: Record<string, string> = {
-  ADMIN: "Admin",
-  SUPERADMIN: "Superadmin",
-};
-
-function roleLabel(role: string): string {
-  return ROLE_LABELS[role.toUpperCase()] ?? role;
-}
+// Backend limit for `search`.
+const SEARCH_MAX_LENGTH = 100;
+const SEARCH_DEBOUNCE_MS = 300;
 
 export default function UserList({
   users,
   currentUserId,
   isLoading,
   error,
+  search,
+  onSearchChange,
   filters,
   onFiltersChange,
   sort,
@@ -51,8 +54,18 @@ export default function UserList({
   onPageChange,
   onPageSizeChange,
   onRetry,
+  onCreateClick,
 }: UserListProps) {
   const router = useRouter();
+  const [searchInput, setSearchInput] = useState(search);
+
+  // Send the search to the server once typing pauses, not on every keystroke.
+  useEffect(() => {
+    const next = searchInput.trim();
+    if (next === search) return;
+    const timer = window.setTimeout(() => onSearchChange(next), SEARCH_DEBOUNCE_MS);
+    return () => window.clearTimeout(timer);
+  }, [searchInput, search, onSearchChange]);
 
   // The backend filters users on name, email, role and is_active only —
   // `created_at` is sortable but rejected as a filter, so it isn't offered here.
@@ -64,7 +77,7 @@ export default function UserList({
         field: "role",
         label: "Role",
         type: "choice",
-        choices: MANAGED_USER_ROLES.map((role) => ({ value: role, label: roleLabel(role) })),
+        choices: USER_ROLES.map((role) => ({ value: role, label: roleLabel(role) })),
       },
       { field: "is_active", label: "Status", type: "boolean" },
     ],
@@ -87,11 +100,35 @@ export default function UserList({
   return (
     <div className="lp-card overflow-hidden">
       <div className="flex flex-col gap-3 border-b border-line bg-surface/80 p-5 backdrop-blur-sm">
-        <div>
-          <h1 className="font-serif text-xl text-fg">Manage Users</h1>
-          <p className="text-sm text-ink-soft">
-            {pagination.total} total {pagination.total === 1 ? "user" : "users"}
-          </p>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h1 className="font-serif text-xl text-fg">Manage Users</h1>
+            <p className="text-sm text-ink-soft">
+              {pagination.total} total {pagination.total === 1 ? "user" : "users"}
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={onCreateClick}
+            className="flex items-center gap-1.5 rounded-md bg-ink px-4 py-2 text-sm font-semibold text-white transition hover:bg-ink-2 active:scale-[0.98]"
+          >
+            <Plus size={16} />
+            New user
+          </button>
+        </div>
+
+        <div className="relative max-w-sm">
+          <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-soft" />
+          <input
+            type="search"
+            value={searchInput}
+            onChange={(event) => setSearchInput(event.target.value)}
+            maxLength={SEARCH_MAX_LENGTH}
+            placeholder="Search by name or email"
+            aria-label="Search users by name or email"
+            className="w-full rounded-md border border-line bg-surface py-2 pl-9 pr-3 text-sm text-fg outline-none transition focus:border-slate focus:ring-2 focus:ring-slate-light"
+          />
         </div>
 
         <FilterBar fields={fields} filters={filters} onChange={onFiltersChange} />
@@ -203,8 +240,8 @@ function EmptyState({ hasError }: { hasError: boolean }) {
   if (hasError) return null;
   return (
     <div className="flex flex-col items-center gap-3 px-4 py-16 text-center animate-scale-in">
-      <p className="font-serif text-lg text-fg">No users match these filters</p>
-      <p className="max-w-sm text-sm text-ink-soft">Try a different filter, or remove one.</p>
+      <p className="font-serif text-lg text-fg">No users match</p>
+      <p className="max-w-sm text-sm text-ink-soft">Try a different search, or remove a filter.</p>
     </div>
   );
 }

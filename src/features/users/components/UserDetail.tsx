@@ -1,11 +1,14 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import Link from "next/link";
+import UserAuditCard from "@/features/users/components/UserAuditCard";
+import UserDeleteDialog from "@/features/users/components/UserDeleteDialog";
 import UserEditProfileCard from "@/features/users/components/UserEditProfileCard";
 import UserResetPasswordCard from "@/features/users/components/UserResetPasswordCard";
 import UserStatusCard from "@/features/users/components/UserStatusCard";
 import type { ManagedUserDetail } from "@/features/users/types/user.types";
+import { roleLabel } from "@/features/users/utils/userLabels";
 import { RecordSection } from "@/shared/components/RecordSection";
 import { formatDateTime } from "@/shared/utils/formatDate";
 
@@ -15,24 +18,21 @@ interface UserDetailProps {
   currentUserId: string | null;
   onUserChange: (user: ManagedUserDetail) => void;
   onNotify: (message: string) => void;
-  /**
-   * Placeholder for the delete flow added in the next step. While it is
-   * omitted the Delete button is disabled.
-   */
-  onDeleteClick?: () => void;
+  /** Called after the user was deleted (or turned out to be deleted already). */
+  onDeleted: (message: string) => void;
 }
 
-const ROLE_LABELS: Record<string, string> = {
-  ADMIN: "Admin",
-  SUPERADMIN: "Superadmin",
-};
+export default function UserDetail({ user, currentUserId, onUserChange, onNotify, onDeleted }: UserDetailProps) {
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  // Every successful change calls `onNotify`, so it doubles as the signal to
+  // reload the activity history.
+  const [historyVersion, setHistoryVersion] = useState(0);
 
-function roleLabel(role: string | null | undefined): string {
-  if (!role) return "-";
-  return ROLE_LABELS[role.toUpperCase()] ?? role;
-}
+  function handleNotify(message: string) {
+    setHistoryVersion((value) => value + 1);
+    onNotify(message);
+  }
 
-export default function UserDetail({ user, currentUserId, onUserChange, onNotify, onDeleteClick }: UserDetailProps) {
   const name = user.name ?? "";
   const email = user.email ?? "";
   const displayName = name || email || "(No name)";
@@ -86,36 +86,48 @@ export default function UserDetail({ user, currentUserId, onUserChange, onNotify
         <InfoItem label="Last updated">{formatDateTime(user.updated_at) || "-"}</InfoItem>
       </RecordSection>
 
-      <UserEditProfileCard user={user} onUserChange={onUserChange} onNotify={onNotify} />
+      <UserEditProfileCard user={user} isSelf={isSelf} onUserChange={onUserChange} onNotify={handleNotify} />
 
-      <UserResetPasswordCard userId={user.id} userLabel={displayName} isSelf={isSelf} onNotify={onNotify} />
+      <UserResetPasswordCard userId={user.id} userLabel={displayName} isSelf={isSelf} onNotify={handleNotify} />
 
       <UserStatusCard
         user={user}
         userLabel={displayName}
         isSelf={isSelf}
         onUserChange={onUserChange}
-        onNotify={onNotify}
+        onNotify={handleNotify}
       />
 
-      {/* Danger zone — the delete flow is connected in the next step. */}
+      <UserAuditCard userId={user.id} refreshKey={historyVersion} />
+
       <div className="rounded-lg border border-danger/30 bg-surface p-6">
         <h3 className="mb-1 text-xs font-semibold uppercase tracking-wide text-danger">Danger zone</h3>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-sm text-ink-soft">Deleting a user removes their account. This can&apos;t be undone.</p>
-          {/* A disabled button swallows hover, so the tooltip sits on the wrapper. */}
-          <span title={onDeleteClick ? undefined : "Added in the next step"} className="shrink-0">
-            <button
-              type="button"
-              onClick={onDeleteClick}
-              disabled={!onDeleteClick}
-              className="rounded-md bg-danger px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              Delete user
-            </button>
-          </span>
+          <p className="text-sm text-ink-soft">
+            {isSelf
+              ? "You can't delete your own account."
+              : "Deleting a user ends their access and transfers their records to another user. You'll review what changes first."}
+          </p>
+          <button
+            type="button"
+            onClick={() => setIsDeleteOpen(true)}
+            disabled={isSelf}
+            className="shrink-0 rounded-md bg-danger px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            Delete user
+          </button>
         </div>
       </div>
+
+      <UserDeleteDialog
+        isOpen={isDeleteOpen}
+        userId={user.id}
+        userLabel={displayName}
+        onClose={() => setIsDeleteOpen(false)}
+        onUserChange={onUserChange}
+        onDeleted={onDeleted}
+        onNotify={handleNotify}
+      />
     </div>
   );
 }

@@ -77,6 +77,11 @@ function UserDetailPageInner() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
+  // The list page shows `deletedMessage` as a toast and reloads itself.
+  function handleDeleted(message: string) {
+    router.replace(`/dashboard/users?deletedMessage=${encodeURIComponent(message)}`);
+  }
+
   if (!isAllowed) return null;
 
   if (loadState === "not-found") {
@@ -130,6 +135,7 @@ function UserDetailPageInner() {
         currentUserId={currentUser?.id ?? null}
         onUserChange={setUser}
         onNotify={showToast}
+        onDeleted={handleDeleted}
       />
       {toast && (
         <div className="fixed bottom-6 right-6 z-[60] flex items-center gap-2 rounded-md border border-success/30 bg-success-soft px-4 py-3 text-sm font-medium text-success shadow-lg animate-toast-in">

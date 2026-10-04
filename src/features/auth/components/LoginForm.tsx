@@ -4,6 +4,7 @@ import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { authService } from "@/features/auth/services/authService";
 import Spinner from "@/shared/components/Spinner";
+import { extractApiError } from "@/shared/utils/apiError";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -124,15 +125,15 @@ export default function LoginForm() {
 }
 
 function resolveErrorMessage(err: unknown): string {
-  if (typeof err === "object" && err !== null && "response" in err) {
-    const response = (err as { response?: { status?: number; data?: { detail?: string } } })
-      .response;
-    if (response?.status === 401 || response?.status === 400) {
-      return response.data?.detail ?? "Incorrect email or password.";
-    }
-    if (response?.status && response.status >= 500) {
-      return "The server ran into a problem. Try again shortly.";
-    }
+  const status = (err as { response?: { status?: number } } | null)?.response?.status;
+
+  // 400 field errors, 401 wrong credentials, 403 blocked/deleted account: the
+  // backend's own message is the accurate one (e.g. "User account is inactive.").
+  if (status === 400 || status === 401 || status === 403) {
+    return extractApiError(err, "Incorrect email or password.");
+  }
+  if (typeof status === "number" && status >= 500) {
+    return "The server ran into a problem. Try again shortly.";
   }
   return "Couldn't reach the server. Check your connection and try again.";
 }

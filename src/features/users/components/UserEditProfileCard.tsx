@@ -2,22 +2,35 @@
 
 import { useEffect, useState, type FormEvent } from "react";
 import { userService } from "@/features/users/services/userService";
-import type { ManagedUserDetail, UpdateUserPayload } from "@/features/users/types/user.types";
+import {
+  ASSIGNABLE_USER_ROLES,
+  type AssignableUserRole,
+  type ManagedUserDetail,
+  type UpdateUserPayload,
+} from "@/features/users/types/user.types";
+import { mapUserFormError } from "@/features/users/utils/userFormErrors";
+import { roleLabel } from "@/features/users/utils/userLabels";
 import { Field, inputClass } from "@/shared/components/FormLayout";
 import { RecordSection } from "@/shared/components/RecordSection";
 import Spinner from "@/shared/components/Spinner";
-import { extractApiError } from "@/shared/utils/apiError";
 
 interface UserEditProfileCardProps {
   user: ManagedUserDetail;
+  /** The backend rejects changing your own role, so the role input is locked. */
+  isSelf: boolean;
   onUserChange: (user: ManagedUserDetail) => void;
   onNotify: (message: string) => void;
 }
 
-interface FieldErrors {
-  name?: string;
-  email?: string;
-}
+type EditField = "name" | "email" | "role";
+type FieldErrors = Partial<Record<EditField, string>>;
+
+const EDIT_FIELDS: readonly EditField[] = ["name", "email", "role"];
+// Business-rule failures arrive as `{ detail }`; attach them to the input they are about.
+const DETAIL_MATCHERS: Partial<Record<EditField, RegExp>> = {
+  email: /email/i,
+  role: /role/i,
+};
 
 const NAME_MAX_LENGTH = 150;
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -32,43 +45,14 @@ function validate(name: string, email: string): FieldErrors {
   return errors;
 }
 
-/** First message of a DRF field error (`{ email: ["..."] }` or `{ email: "..." }`). */
-function readFieldMessage(data: Record<string, unknown>, field: string): string | undefined {
-  const value = data[field];
-  if (typeof value === "string") return value;
-  if (Array.isArray(value) && typeof value[0] === "string") return value[0];
-  return undefined;
-}
-
-/**
- * Maps a failed PATCH onto the form: field errors go under their input
- * (a duplicate email arrives as `{ detail: "User with this email already
- * exists." }`, so a `detail` that mentions the email is shown under it),
- * anything else becomes a form-level message — always the server's own text.
- */
-function mapServerError(error: unknown): { fields: FieldErrors; form: string | null } {
-  const data = (error as { response?: { data?: unknown } } | null)?.response?.data;
-  const fields: FieldErrors = {};
-
-  if (data && typeof data === "object" && !Array.isArray(data)) {
-    const record = data as Record<string, unknown>;
-    fields.name = readFieldMessage(record, "name");
-    fields.email = readFieldMessage(record, "email");
-
-    const detail = typeof record.detail === "string" ? record.detail : null;
-    if (detail && /email/i.test(detail) && !fields.email) fields.email = detail;
-  }
-
-  if (fields.name || fields.email) return { fields, form: null };
-  return { fields, form: extractApiError(error, "Couldn't update this user. Try again.") };
-}
-
-export default function UserEditProfileCard({ user, onUserChange, onNotify }: UserEditProfileCardProps) {
+export default function UserEditProfileCard({ user, isSelf, onUserChange, onNotify }: UserEditProfileCardProps) {
   const savedName = user.name ?? "";
   const savedEmail = user.email ?? "";
+  const savedRole = user.role ?? "";
 
   const [name, setName] = useState(savedName);
   const [email, setEmail] = useState(savedEmail);
+  const [role, setRole] = useState(savedRole);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -78,11 +62,19 @@ export default function UserEditProfileCard({ user, onUserChange, onNotify }: Us
   useEffect(() => {
     setName(savedName);
     setEmail(savedEmail);
-  }, [savedName, savedEmail]);
+    setRole(savedRole);
+  }, [savedName, savedEmail, savedRole]);
+
+  // Accounts with a role that can't be assigned here (e.g. a sales role) keep
+  // it as a no-op choice so the select always shows the real value.
+  const roleOptions: string[] = (ASSIGNABLE_USER_ROLES as readonly string[]).includes(savedRole)
+    ? [...ASSIGNABLE_USER_ROLES]
+    : [savedRole, ...ASSIGNABLE_USER_ROLES];
 
   const payload: UpdateUserPayload = {};
   if (name.trim() !== savedName) payload.name = name.trim();
   if (email.trim() !== savedEmail) payload.email = email.trim();
+  if (role !== savedRole) payload.role = role as AssignableUserRole;
   const hasChanges = Object.keys(payload).length > 0;
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -100,7 +92,7 @@ export default function UserEditProfileCard({ user, onUserChange, onNotify }: Us
       onUserChange(updated);
       onNotify("User updated successfully");
     } catch (error) {
-      const mapped = mapServerError(error);
+      const mapped = mapUserFormError(error, EDIT_FIELDS, DETAIL_MATCHERS, "Couldn't update this user. Try again.");
       setFieldErrors(mapped.fields);
       setFormError(mapped.form);
     } finally {
@@ -139,6 +131,34 @@ export default function UserEditProfileCard({ user, onUserChange, onNotify }: Us
               className={inputClass}
             />
             {fieldErrors.email && <span className="mt-1 block text-xs text-danger">{fieldErrors.email}</span>}
+          </Field>
+
+          <Field label="Role" required>
+            <select
+              value={role}
+              onChange={(event) => {
+                setRole(event.target.value);
+                setFieldErrors((current) => ({ ...current, role: undefined }));
+              }}
+              disabled={isSelf}
+              aria-invalid={Boolean(fieldErrors.role)}
+              className={`${inputClass} disabled:cursor-not-allowed disabled:opacity-60`}
+            >
+              {roleOptions.map((value) => (
+                <option key={value} value={value}>
+                  {roleLabel(value)}
+                </option>
+              ))}
+            </select>
+            {fieldErrors.role ? (
+              <span className="mt-1 block text-xs text-danger">{fieldErrors.role}</span>
+            ) : isSelf ? (
+              <span className="mt-1 block text-xs text-ink-soft">You can&apos;t change your own role.</span>
+            ) : payload.role ? (
+              <span className="mt-1 block text-xs text-ink-soft">
+                Changing the role signs this user out of every session.
+              </span>
+            ) : null}
           </Field>
         </div>
 
