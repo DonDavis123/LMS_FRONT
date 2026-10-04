@@ -11,6 +11,7 @@ import {
   Home,
   Phone,
   Plus,
+  ShieldCheck,
   SquareCheckBig,
   Users as UsersIcon,
 } from "lucide-react";
@@ -191,6 +192,25 @@ export default function Sidebar({ user, isCollapsed }: SidebarProps) {
           ))}
         </nav>
       </div>
+
+      {isSuperAdmin(user) && (
+        <div className="mt-6 px-3">
+          {!isCollapsed && (
+            <p className="px-2 pb-1 text-xs font-semibold uppercase tracking-wide text-ink-soft">
+              Administration
+            </p>
+          )}
+          <nav className="space-y-0.5">
+            <SidebarLink
+              href="/dashboard/users"
+              icon={ShieldCheck}
+              label="Users"
+              isActive={pathname.startsWith("/dashboard/users")}
+              isCollapsed={isCollapsed}
+            />
+          </nav>
+        </div>
+      )}
     </aside>
   );
 }

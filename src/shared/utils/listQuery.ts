@@ -5,6 +5,8 @@ export interface ListQueryParams {
   page?: number;
   page_size?: number;
   filters?: FilterCondition[];
+  /** Free-text search, sent as `search`. Blank/whitespace is omitted. */
+  search?: string;
   /** `null`/omitted keeps the backend default: newest records first. */
   sort?: SortState | null;
 }
@@ -17,6 +19,11 @@ export function toListQueryParams(params: ListQueryParams): Record<string, strin
 
   if (params.filters && params.filters.length > 0) {
     query.filters = JSON.stringify(params.filters);
+  }
+
+  const search = params.search?.trim();
+  if (search) {
+    query.search = search;
   }
 
   if (params.sort) {
