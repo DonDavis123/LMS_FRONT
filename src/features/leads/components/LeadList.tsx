@@ -83,6 +83,7 @@ export default function LeadList({
       { field: "name", label: "Lead Name", type: "text" },
       { field: "company_name", label: "Company", type: "text" },
       { field: "email", label: "Email", type: "text" },
+      { field: "phone", label: "Phone", type: "text" },
       { field: "city", label: "City", type: "text" },
       { field: "lead_source", label: "Lead Source", type: "choice", choices: toChoices(LEAD_SOURCES) },
       { field: "lead_status", label: "Lead Status", type: "choice", choices: toChoices(LEAD_STATUSES) },
@@ -220,7 +221,7 @@ export default function LeadList({
                     )}
                   </th>
                   <SortableHeader label="Lead Name" field="name" sort={sort} onSortChange={onSortChange} />
-                  <SortableHeader label="Company" field="company_name" sort={sort} onSortChange={onSortChange} />
+                  <SortableHeader label="Phone" field="phone" sort={sort} onSortChange={onSortChange} />
                   <SortableHeader label="Email" field="email" sort={sort} onSortChange={onSortChange} />
                   <SortableHeader label="Lead Source" field="lead_source" sort={sort} onSortChange={onSortChange} />
                   <SortableHeader label="Lead Status" field="lead_status" sort={sort} onSortChange={onSortChange} />
@@ -282,7 +283,7 @@ export default function LeadList({
                         {lead.name || "(No name)"}
                       </Link>
                     </td>
-                    <td className="px-4 py-3 text-ink-soft">{lead.company_name || "—"}</td>
+                    <td className="px-4 py-3 text-ink-soft">{lead.phone || "—"}</td>
                     <td className="px-4 py-3 text-ink-soft">{lead.email || "—"}</td>
                     <td className="px-4 py-3">
                       <span className="rounded-full bg-slate-light px-2.5 py-1 text-xs font-medium text-slate">

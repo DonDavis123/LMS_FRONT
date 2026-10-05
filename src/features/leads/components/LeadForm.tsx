@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, type FormEvent } from "react";
+import { ChevronDown } from "lucide-react";
 import { userService } from "@/features/users/services/userService";
 import type { LeadOwnerOption } from "@/features/auth/types/auth.types";
 import { authService } from "@/features/auth/services/authService";
@@ -124,6 +125,8 @@ export default function LeadForm({
   const [notice, setNotice] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSavingNext, setIsSavingNext] = useState(false);
+  // Create starts with a quick form; edit always shows every field.
+  const [showMore, setShowMore] = useState(mode === "edit");
 
   function defaultOwnerToCurrentUser() {
     const current = authService.getSessionUser();
@@ -267,7 +270,8 @@ export default function LeadForm({
         </p>
       )}
 
-      <Section title="Lead Information">
+      {/* Quick form — the only fields shown when creating a lead. */}
+      <Section title="Lead Information" last={mode === "create"}>
         <Field label="Lead Owner">
           <OwnerPicker
             owners={owners}
@@ -279,21 +283,21 @@ export default function LeadForm({
             }}
           />
         </Field>
-        <Field label="Company">
-          <input
-            value={form.company_name}
-            onChange={(e) => update("company_name", e.target.value)}
-            className={inputClass}
-            placeholder="ABC Technologies Pvt Ltd"
-          />
-        </Field>
-
         <Field label="Name" required>
           <input
             value={form.name}
             onChange={(e) => update("name", e.target.value)}
             className={inputClass}
             placeholder="John Davis"
+          />
+        </Field>
+
+        <Field label="Phone">
+          <input
+            value={form.phone}
+            onChange={(e) => update("phone", e.target.value)}
+            className={inputClass}
+            placeholder="+914412345678"
           />
         </Field>
         <Field label="Email">
@@ -306,60 +310,6 @@ export default function LeadForm({
           />
         </Field>
 
-        <Field label="Title">
-          <input
-            value={form.title}
-            onChange={(e) => update("title", e.target.value)}
-            className={inputClass}
-            placeholder="IT Manager"
-          />
-        </Field>
-        <Field label="Fax">
-          <input
-            value={form.fax}
-            onChange={(e) => update("fax", e.target.value)}
-            className={inputClass}
-          />
-        </Field>
-
-        <Field label="Phone">
-          <input
-            value={form.phone}
-            onChange={(e) => update("phone", e.target.value)}
-            className={inputClass}
-            placeholder="+914412345678"
-          />
-        </Field>
-        <Field label="Website">
-          <input
-            value={form.website}
-            onChange={(e) => update("website", e.target.value)}
-            className={inputClass}
-            placeholder="https://abctech.com"
-          />
-        </Field>
-
-        <Field label="Mobile">
-          <input
-            value={form.mobile_number}
-            onChange={(e) => update("mobile_number", e.target.value)}
-            className={inputClass}
-            placeholder="+919876543210"
-          />
-        </Field>
-        <Field label="Lead Status">
-          <ModernStatusSelect
-            value={form.lead_status}
-            onChange={(value) => update("lead_status", value as LeadStatus)}
-            fullWidth
-            options={LEAD_STATUSES.map((status) => ({
-              value: status,
-              label: status,
-              tone: status === "Contacted" || status === "Pre-Qualified" ? "success" : status === "Junk Lead" || status === "Lost Lead" || status === "Not Qualified" ? "danger" : status === "Attempted to Contact" || status === "Contact in Future" ? "warning" : "neutral",
-            }))}
-          />
-        </Field>
-
         <Field label="Lead Source">
           <Select
             value={form.lead_source}
@@ -368,92 +318,7 @@ export default function LeadForm({
             options={LEAD_SOURCES.map((source) => ({ value: source, label: source }))}
           />
         </Field>
-        <Field label="Rating">
-          <Select
-            value={form.rating}
-            onChange={(next) => update("rating", next as LeadRating)}
-            ariaLabel="Rating"
-            options={LEAD_RATINGS.map((rating) => ({ value: rating, label: rating }))}
-          />
-        </Field>
 
-        <Field label="Industry">
-          <Select
-            value={form.industry}
-            onChange={(next) => update("industry", next as LeadIndustry)}
-            ariaLabel="Industry"
-            options={LEAD_INDUSTRIES.map((industry) => ({ value: industry, label: industry }))}
-          />
-        </Field>
-        <Field label="No. of Employees">
-          <input
-            type="number"
-            min="0"
-            value={form.number_of_employees}
-            onChange={(e) => update("number_of_employees", e.target.value)}
-            className={inputClass}
-            placeholder="150"
-          />
-        </Field>
-
-        <Field label="Annual Revenue">
-          <input
-            type="number"
-            min="0"
-            value={form.annual_revenue}
-            onChange={(e) => update("annual_revenue", e.target.value)}
-            className={inputClass}
-            placeholder="10000000"
-          />
-        </Field>
-      </Section>
-
-      <Section title="Address Information">
-        <Field label="Country / Region">
-          <input
-            value={form.country}
-            onChange={(e) => update("country", e.target.value)}
-            className={inputClass}
-            placeholder="India"
-          />
-        </Field>
-        <Field label="City">
-          <input
-            value={form.city}
-            onChange={(e) => update("city", e.target.value)}
-            className={inputClass}
-            placeholder="Chennai"
-          />
-        </Field>
-
-        <Field label="Address" fullWidth>
-          <input
-            value={form.address}
-            onChange={(e) => update("address", e.target.value)}
-            className={inputClass}
-            placeholder="12 MG Road"
-          />
-        </Field>
-
-        <Field label="State / Province">
-          <input
-            value={form.state}
-            onChange={(e) => update("state", e.target.value)}
-            className={inputClass}
-            placeholder="Tamil Nadu"
-          />
-        </Field>
-        <Field label="Zip / Postal Code">
-          <input
-            value={form.postal_code}
-            onChange={(e) => update("postal_code", e.target.value)}
-            className={inputClass}
-            placeholder="600001"
-          />
-        </Field>
-      </Section>
-
-      <Section title="Description Information" last>
         <Field label="Description" fullWidth>
           <textarea
             value={form.description}
@@ -463,6 +328,162 @@ export default function LeadForm({
           />
         </Field>
       </Section>
+
+      {mode === "create" && (
+        <button
+          type="button"
+          onClick={() => setShowMore((value) => !value)}
+          aria-expanded={showMore}
+          className="mt-4 flex items-center gap-1 text-sm font-medium text-slate hover:text-fg"
+        >
+          {showMore ? "Show less" : "Show more"}
+          <ChevronDown size={14} className={`transition ${showMore ? "rotate-180" : ""}`} />
+        </button>
+      )}
+
+      {/* Everything else — shown on edit, or after "Show more" on create. */}
+      {showMore && (
+        <div className="animate-fade-in">
+          <Section title="More Information">
+            <Field label="Company">
+              <input
+                value={form.company_name}
+                onChange={(e) => update("company_name", e.target.value)}
+                className={inputClass}
+                placeholder="ABC Technologies Pvt Ltd"
+              />
+            </Field>
+            <Field label="Title">
+              <input
+                value={form.title}
+                onChange={(e) => update("title", e.target.value)}
+                className={inputClass}
+                placeholder="IT Manager"
+              />
+            </Field>
+
+            <Field label="Fax">
+              <input
+                value={form.fax}
+                onChange={(e) => update("fax", e.target.value)}
+                className={inputClass}
+              />
+            </Field>
+            <Field label="Website">
+              <input
+                value={form.website}
+                onChange={(e) => update("website", e.target.value)}
+                className={inputClass}
+                placeholder="https://abctech.com"
+              />
+            </Field>
+
+            <Field label="Mobile">
+              <input
+                value={form.mobile_number}
+                onChange={(e) => update("mobile_number", e.target.value)}
+                className={inputClass}
+                placeholder="+919876543210"
+              />
+            </Field>
+            <Field label="Lead Status">
+              <ModernStatusSelect
+                value={form.lead_status}
+                onChange={(value) => update("lead_status", value as LeadStatus)}
+                fullWidth
+                options={LEAD_STATUSES.map((status) => ({
+                  value: status,
+                  label: status,
+                  tone: status === "Contacted" || status === "Pre-Qualified" ? "success" : status === "Junk Lead" || status === "Lost Lead" || status === "Not Qualified" ? "danger" : status === "Attempted to Contact" || status === "Contact in Future" ? "warning" : "neutral",
+                }))}
+              />
+            </Field>
+
+            <Field label="Rating">
+              <Select
+                value={form.rating}
+                onChange={(next) => update("rating", next as LeadRating)}
+                ariaLabel="Rating"
+                options={LEAD_RATINGS.map((rating) => ({ value: rating, label: rating }))}
+              />
+            </Field>
+            <Field label="Industry">
+              <Select
+                value={form.industry}
+                onChange={(next) => update("industry", next as LeadIndustry)}
+                ariaLabel="Industry"
+                options={LEAD_INDUSTRIES.map((industry) => ({ value: industry, label: industry }))}
+              />
+            </Field>
+
+            <Field label="No. of Employees">
+              <input
+                type="number"
+                min="0"
+                value={form.number_of_employees}
+                onChange={(e) => update("number_of_employees", e.target.value)}
+                className={inputClass}
+                placeholder="150"
+              />
+            </Field>
+            <Field label="Annual Revenue">
+              <input
+                type="number"
+                min="0"
+                value={form.annual_revenue}
+                onChange={(e) => update("annual_revenue", e.target.value)}
+                className={inputClass}
+                placeholder="10000000"
+              />
+            </Field>
+          </Section>
+
+          <Section title="Address Information" last>
+            <Field label="Country / Region">
+              <input
+                value={form.country}
+                onChange={(e) => update("country", e.target.value)}
+                className={inputClass}
+                placeholder="India"
+              />
+            </Field>
+            <Field label="City">
+              <input
+                value={form.city}
+                onChange={(e) => update("city", e.target.value)}
+                className={inputClass}
+                placeholder="Chennai"
+              />
+            </Field>
+
+            <Field label="Address" fullWidth>
+              <input
+                value={form.address}
+                onChange={(e) => update("address", e.target.value)}
+                className={inputClass}
+                placeholder="12 MG Road"
+              />
+            </Field>
+
+            <Field label="State / Province">
+              <input
+                value={form.state}
+                onChange={(e) => update("state", e.target.value)}
+                className={inputClass}
+                placeholder="Tamil Nadu"
+              />
+            </Field>
+            <Field label="Zip / Postal Code">
+              <input
+                value={form.postal_code}
+                onChange={(e) => update("postal_code", e.target.value)}
+                className={inputClass}
+                placeholder="600001"
+              />
+            </Field>
+          </Section>
+        </div>
+      )}
     </form>
   );
 }
