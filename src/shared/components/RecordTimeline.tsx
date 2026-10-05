@@ -322,7 +322,9 @@ export default function RecordTimeline({ module, recordId, showLeadOrigin = fals
                             ))}
                             {leadOrigin && sourceLeadId && (
                               <Link
-                                href={`/dashboard/leads/${sourceLeadId}?tab=timeline`}
+                                // `from`/`fromId` let the (read-only) lead history page link back to
+                                // the exact Contact/Account the user came from.
+                                href={`/dashboard/leads/${sourceLeadId}?from=${module}&fromId=${encodeURIComponent(recordId)}`}
                                 className="ml-4 whitespace-nowrap text-sm text-fg underline underline-offset-4 transition hover:text-indigo-600"
                               >
                                 View Lead History

@@ -16,7 +16,13 @@ export default function EditLeadPage() {
     let cancelled = false;
     LeadService.getLead(params.id)
       .then((data) => {
-        if (!cancelled) setLead(data);
+        if (cancelled) return;
+        // Converted leads are read-only: send them to the history page.
+        if (data.is_converted) {
+          router.replace(`/dashboard/leads/${params.id}`);
+          return;
+        }
+        setLead(data);
       })
       .catch(() => {
         if (!cancelled) setError("Couldn't load this lead.");
@@ -24,7 +30,7 @@ export default function EditLeadPage() {
     return () => {
       cancelled = true;
     };
-  }, [params.id]);
+  }, [params.id, router]);
 
   async function handleSubmit(payload: CreateLeadPayload) {
     await LeadService.updateLead(params.id, payload);

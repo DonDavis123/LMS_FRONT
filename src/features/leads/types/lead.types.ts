@@ -115,6 +115,8 @@ export interface Lead {
   postal_code: string | null;
   description: string | null;
   owner: LeadOwner;
+  /** True once the lead has been converted — it is then read-only history. */
+  is_converted?: boolean;
   created_at: string;
   updated_at: string;
 }

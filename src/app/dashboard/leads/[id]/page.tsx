@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { CheckCircle2 } from "lucide-react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import LeadDetail from "@/features/leads/components/LeadDetail";
+import ConvertedLeadHistory from "@/features/leads/components/ConvertedLeadHistory";
 import { LeadService } from "@/features/leads/services/LeadService";
 import type { Lead } from "@/features/leads/types/lead.types";
 
@@ -64,7 +65,12 @@ function LeadDetailPageInner() {
 
   return (
     <>
-      <LeadDetail lead={lead} onLeadChange={setLead} />
+      {/* Converted leads are history only — never render the editable view. */}
+      {lead.is_converted ? (
+        <ConvertedLeadHistory lead={lead} />
+      ) : (
+        <LeadDetail lead={lead} onLeadChange={setLead} />
+      )}
       {toast && (
         <div className="fixed bottom-6 right-6 z-[60] flex items-center gap-2 rounded-md border border-success/30 bg-success-soft px-4 py-3 text-sm font-medium text-success shadow-lg animate-toast-in">
           <CheckCircle2 size={16} className="shrink-0 animate-pop-in" />
