@@ -135,7 +135,7 @@ export default function ContactList({
 
   return (
     <div className="lp-card overflow-hidden">
-      <div className="flex flex-col gap-3 border-b border-line bg-surface/80 p-5 backdrop-blur-sm">
+      <div className="flex flex-col gap-3 border-b border-line bg-surface/80 p-3 backdrop-blur-sm sm:p-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="font-serif text-xl text-fg">Contacts</h1>

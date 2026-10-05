@@ -23,15 +23,15 @@ export default function ServerPagination({
   const end = Math.min(safePage * pageSize, total);
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line px-4 py-3 text-sm text-ink-soft">
+    <div className="flex flex-wrap items-center justify-between gap-2 border-t border-line px-3 py-2.5 text-sm text-ink-soft sm:gap-3 sm:px-4 sm:py-3">
       <span>
         {start} to {end} of {total}
       </span>
 
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center gap-2 sm:gap-3">
         <label className="flex items-center gap-2">
           <span className="sr-only">Rows per page</span>
-          <div className="w-32">
+          <div className="w-28 sm:w-32">
             <Select
               size="sm"
               value={String(pageSize)}

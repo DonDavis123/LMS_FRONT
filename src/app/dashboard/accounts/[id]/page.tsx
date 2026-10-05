@@ -61,7 +61,7 @@ function AccountDetailPageInner() {
 
   if (isEditing) {
     return (
-      <div className="mx-auto max-w-4xl rounded-lg border border-line bg-surface p-5">
+      <div className="mx-auto max-w-4xl rounded-lg border border-line bg-surface p-3 sm:p-5">
         <AccountForm
           mode="edit"
           initialAccount={account}

@@ -29,12 +29,12 @@ export default function DashboardHeader({
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-40 flex items-center justify-between gap-4 border-b border-line bg-surface/85 px-4 py-3 shadow-[0_6px_25px_rgba(18,33,58,0.035)] backdrop-blur-xl">
+    <header className="sticky top-0 z-40 flex items-center justify-between gap-2 border-b border-line bg-surface/85 px-2.5 py-2 shadow-[0_6px_25px_rgba(18,33,58,0.035)] backdrop-blur-xl sm:gap-4 sm:px-4 sm:py-3">
       <div className="flex flex-1 items-center gap-3">
         <button
           onClick={onToggleSidebar}
-          aria-label={isSidebarCollapsed ? "Expand sidebar" : "Minimize sidebar"}
-          title={isSidebarCollapsed ? "Expand sidebar" : "Minimize sidebar"}
+          aria-label={isSidebarCollapsed ? "Open sidebar" : "Close sidebar"}
+          title={isSidebarCollapsed ? "Open sidebar" : "Close sidebar"}
           className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-transparent text-ink-soft transition hover:border-line hover:bg-paper hover:text-fg active:scale-90"
         >
           {isSidebarCollapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
@@ -42,19 +42,19 @@ export default function DashboardHeader({
 
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1 sm:gap-2">
         <NotificationBell />
         <ThemeToggle />
 
         <div className="relative">
           <button
             onClick={() => setIsMenuOpen((v) => !v)}
-            className="flex items-center gap-2 rounded-xl border border-transparent px-2 py-1.5 transition hover:border-line hover:bg-paper active:scale-[0.98]"
+            className="flex items-center gap-2 rounded-xl border border-transparent p-1 transition sm:px-2 sm:py-1.5 hover:border-line hover:bg-paper active:scale-[0.98]"
           >
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-slate-light to-paper text-sm font-bold text-slate shadow-sm">
               {user.name.slice(0, 1).toUpperCase()}
             </div>
-            <div className="text-left">
+            <div className="hidden text-left sm:block">
               <p className="text-sm font-medium leading-tight text-fg">{user.name}</p>
               <p className="text-xs leading-tight text-ink-soft">{user.role}</p>
             </div>

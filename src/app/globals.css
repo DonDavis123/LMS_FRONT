@@ -420,3 +420,95 @@ button, a, input, select, textarea {
 @keyframes curtain-backdrop-out { from { opacity: 1; } to { opacity: 0; } }
 .curtain-backdrop[data-state="open"]    { animation: curtain-backdrop-in 0.25s ease-out both; }
 .curtain-backdrop[data-state="closing"] { animation: curtain-backdrop-out 0.17s ease-in both; pointer-events: none; }
+
+/* ── Theme switch: circular reveal ─────────────────────────────────────
+   ThemeToggle runs the switch inside document.startViewTransition() and
+   animates the NEW snapshot with a growing clip-path circle centred on
+   the toggle button (see ThemeToggle.tsx). The browser's default
+   cross-fade is turned off so only the reveal is visible. While the
+   transition runs, `.theme-switching` suppresses per-element colour
+   transitions so nothing double-fades underneath the reveal. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+::view-transition-old(root) {
+  z-index: 1;
+}
+::view-transition-new(root) {
+  z-index: 2;
+}
+.theme-switching *,
+.theme-switching *::before,
+.theme-switching *::after {
+  transition: none !important;
+}
+
+/* Toggle icon: the incoming sun/moon turns into place. */
+@keyframes theme-icon-in {
+  from {
+    opacity: 0;
+    transform: rotate(-90deg) scale(0.4);
+  }
+  to {
+    opacity: 1;
+    transform: rotate(0deg) scale(1);
+  }
+}
+.animate-theme-icon {
+  animation: theme-icon-in 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+/* ── Progressive disclosure (ShowMoreFields) ──────────────────────────
+   Height animates 0fr -> 1fr, so the panel opens and closes smoothly
+   without measuring content. `visibility` flips after the close finishes
+   so hidden inputs can't be tabbed to. */
+.lp-reveal {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  visibility: hidden;
+  transition: grid-template-rows 0.36s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.28s ease, visibility 0s linear 0.36s;
+}
+.lp-reveal[data-open="true"] {
+  grid-template-rows: 1fr;
+  opacity: 1;
+  visibility: visible;
+  transition: grid-template-rows 0.36s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.28s ease 0.05s, visibility 0s;
+}
+.lp-reveal > .lp-reveal-inner {
+  min-height: 0;
+  overflow: hidden;
+}
+/* Once fully open, let dropdowns (pickers, date popovers) escape. */
+.lp-reveal[data-open="true"][data-settled="true"] > .lp-reveal-inner {
+  overflow: visible;
+}
+
+/* ── Small screens: use the space ─────────────────────────────────────
+   Tables keep their horizontal scroll, but cells are tightened so more
+   columns are visible per screen. */
+@media (max-width: 639px) {
+  .lp-card table th,
+  .lp-card table td {
+    padding-left: 0.625rem;
+    padding-right: 0.625rem;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+  }
+  .lp-card:hover {
+    transform: none;
+  }
+}
+
+/* Drawer backdrop (mobile sidebar) */
+@keyframes drawer-backdrop-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.animate-drawer-backdrop {
+  animation: drawer-backdrop-in 0.25s ease-out both;
+}

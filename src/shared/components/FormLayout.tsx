@@ -13,7 +13,7 @@ import type { ReactNode } from "react";
  */
 
 export const inputClass =
-  "w-full rounded-md border border-line bg-surface px-3 py-2.5 text-sm text-fg outline-none transition focus:border-slate focus:ring-2 focus:ring-slate-light";
+  "w-full rounded-md border border-line bg-surface px-3 py-2.5 text-base text-fg outline-none transition focus:border-slate focus:ring-2 focus:ring-slate-light sm:text-sm";
 
 interface SectionProps {
   title: string;
@@ -24,11 +24,11 @@ interface SectionProps {
 
 export function Section({ title, children, last = false }: SectionProps) {
   return (
-    <div className={`mt-6 ${last ? "" : "border-b border-line pb-6"}`}>
-      <h3 className="mb-4 text-xs font-semibold uppercase tracking-wide text-ink-soft">
+    <div className={`mt-4 sm:mt-6 ${last ? "" : "border-b border-line pb-4 sm:pb-6"}`}>
+      <h3 className="mb-3 text-xs font-semibold uppercase tracking-wide sm:mb-4 text-ink-soft">
         {title}
       </h3>
-      <div className="grid grid-cols-1 gap-x-8 gap-y-4 sm:grid-cols-2">{children}</div>
+      <div className="grid grid-cols-1 gap-x-8 gap-y-3 sm:grid-cols-2 sm:gap-y-4">{children}</div>
     </div>
   );
 }

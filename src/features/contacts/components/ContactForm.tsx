@@ -13,6 +13,7 @@ import { inputClass, Section, Field } from "@/shared/components/FormLayout";
 import { LEAD_SOURCES, type LeadSource } from "@/features/leads/types/lead.types";
 import type { Contact, CreateContactPayload } from "@/features/contacts/types/contact.types";
 import Select from "@/shared/components/Select";
+import ShowMoreFields from "@/shared/components/ShowMoreFields";
 
 interface ContactFormProps {
   mode: "create" | "edit";
@@ -125,6 +126,8 @@ export default function ContactForm({ mode, initialContact, onSubmit, onCancel }
   const [owners, setOwners] = useState<LeadOwnerOption[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // Create starts with the six essentials; edit opens with everything visible.
+  const [showMore, setShowMore] = useState(mode === "edit");
   const router = useRouter();
 
   useEffect(() => {
@@ -190,16 +193,21 @@ export default function ContactForm({ mode, initialContact, onSubmit, onCancel }
   }
 
   return (
-    <form onSubmit={handleSubmit}>
-      <div className="sticky top-0 z-10 -mx-5 -mt-5 flex items-center justify-between rounded-t-[7px] border-b border-line bg-surface px-5 py-3">
-        <h1 className="font-serif text-2xl text-fg">
+    <form
+      onSubmit={handleSubmit}
+      // A hidden field with an invalid value (e.g. secondary email) would
+      // otherwise block submit silently — open the extra fields so it shows.
+      onInvalidCapture={() => setShowMore(true)}
+    >
+      <div className="sticky top-0 z-10 -mx-3 -mt-3 flex items-center justify-between gap-2 rounded-t-[7px] border-b border-line bg-surface px-3 py-2.5 sm:-mx-5 sm:-mt-5 sm:px-5 sm:py-3">
+        <h1 className="font-serif text-xl text-fg sm:text-2xl">
           {mode === "create" ? "Create Contact" : "Edit Contact"}
         </h1>
-        <div className="flex gap-3">
+        <div className="flex gap-2 sm:gap-3">
           <button
             type="button"
             onClick={onCancel}
-            className="rounded-md border border-line px-4 py-2 text-sm font-medium text-fg hover:bg-paper"
+            className="rounded-md border border-line px-3 py-2 text-sm font-medium text-fg hover:bg-paper sm:px-4"
           >
             Cancel
           </button>
@@ -220,7 +228,7 @@ export default function ContactForm({ mode, initialContact, onSubmit, onCancel }
         </p>
       )}
 
-      <Section title="Contact Information">
+      <Section title="Contact Information" last>
         <Field label="Contact Owner">
           <OwnerPicker
             owners={owners}
@@ -232,6 +240,55 @@ export default function ContactForm({ mode, initialContact, onSubmit, onCancel }
             }}
           />
         </Field>
+        <Field label="Name" required>
+          <input
+            value={form.name}
+            onChange={(e) => update("name", e.target.value)}
+            className={inputClass}
+            placeholder="Don Davis"
+          />
+        </Field>
+        <Field label="Email">
+          <input
+            type="email"
+            value={form.email}
+            onChange={(e) => update("email", e.target.value)}
+            className={inputClass}
+            placeholder="don.davis@abctech.com"
+          />
+        </Field>
+        <Field label="Phone">
+          <input
+            value={form.phone}
+            onChange={(e) => update("phone", e.target.value)}
+            className={inputClass}
+          />
+        </Field>
+        <Field label="Lead Source">
+          <Select
+            value={form.lead_source}
+            onChange={(next) => update("lead_source", next as LeadSource)}
+            ariaLabel="Lead source"
+            options={[{ value: "", label: "-None-" }, ...LEAD_SOURCES.map((source) => ({ value: source, label: source }))]}
+          />
+        </Field>
+        <Field label="Description" fullWidth>
+          <textarea
+            value={form.description}
+            onChange={(e) => update("description", e.target.value)}
+            className={`${inputClass} min-h-[88px] resize-y`}
+          />
+        </Field>
+      </Section>
+
+      <ShowMoreFields
+        id="contact-more-fields"
+        expanded={showMore}
+        onToggle={() => setShowMore((v) => !v)}
+        moreLabel="Show more fields"
+        lessLabel="Show fewer fields"
+      >
+        <Section title="More Details">
         <Field label="Account Name">
           <RecordPicker
             kind="account"
@@ -246,31 +303,12 @@ export default function ContactForm({ mode, initialContact, onSubmit, onCancel }
             placeholder="No account"
           />
         </Field>
-
-        <Field label="Name" required>
-          <input
-            value={form.name}
-            onChange={(e) => update("name", e.target.value)}
-            className={inputClass}
-            placeholder="Don Davis"
-          />
-        </Field>
         <Field label="Title">
           <input
             value={form.title}
             onChange={(e) => update("title", e.target.value)}
             className={inputClass}
             placeholder="IT Manager"
-          />
-        </Field>
-
-        <Field label="Email">
-          <input
-            type="email"
-            value={form.email}
-            onChange={(e) => update("email", e.target.value)}
-            className={inputClass}
-            placeholder="don.davis@abctech.com"
           />
         </Field>
         <Field label="Secondary Email">
@@ -281,14 +319,6 @@ export default function ContactForm({ mode, initialContact, onSubmit, onCancel }
             className={inputClass}
           />
         </Field>
-
-        <Field label="Phone">
-          <input
-            value={form.phone}
-            onChange={(e) => update("phone", e.target.value)}
-            className={inputClass}
-          />
-        </Field>
         <Field label="Mobile">
           <input
             value={form.mobile}
@@ -296,7 +326,6 @@ export default function ContactForm({ mode, initialContact, onSubmit, onCancel }
             className={inputClass}
           />
         </Field>
-
         <Field label="Home Phone">
           <input
             value={form.home_phone}
@@ -311,7 +340,6 @@ export default function ContactForm({ mode, initialContact, onSubmit, onCancel }
             className={inputClass}
           />
         </Field>
-
         <Field label="Department">
           <input
             value={form.department}
@@ -319,15 +347,6 @@ export default function ContactForm({ mode, initialContact, onSubmit, onCancel }
             className={inputClass}
           />
         </Field>
-        <Field label="Lead Source">
-          <Select
-            value={form.lead_source}
-            onChange={(next) => update("lead_source", next as LeadSource)}
-            ariaLabel="Lead source"
-            options={[{ value: "", label: "-None-" }, ...LEAD_SOURCES.map((source) => ({ value: source, label: source }))]}
-          />
-        </Field>
-
         <Field label="Vendor Name">
           <input
             value={form.vendor_name}
@@ -342,7 +361,6 @@ export default function ContactForm({ mode, initialContact, onSubmit, onCancel }
             ariaLabel="Date of birth"
           />
         </Field>
-
         <Field label="Assistant">
           <input
             value={form.assistant}
@@ -357,7 +375,6 @@ export default function ContactForm({ mode, initialContact, onSubmit, onCancel }
             className={inputClass}
           />
         </Field>
-
         <Field label="Reporting To">
           <RecordPicker
             kind="contact"
@@ -383,9 +400,9 @@ export default function ContactForm({ mode, initialContact, onSubmit, onCancel }
             <label htmlFor="email_opt_out">Don&apos;t send this contact marketing emails</label>
           </div>
         </Field>
-      </Section>
+        </Section>
 
-      <Section title="Address Information">
+        <Section title="Address Information" last>
         <Field label="Mailing Address" fullWidth>
           <input
             value={form.mailing_address}
@@ -428,17 +445,8 @@ export default function ContactForm({ mode, initialContact, onSubmit, onCancel }
             className={inputClass}
           />
         </Field>
-      </Section>
-
-      <Section title="Description Information" last>
-        <Field label="Description" fullWidth>
-          <textarea
-            value={form.description}
-            onChange={(e) => update("description", e.target.value)}
-            className={`${inputClass} min-h-[88px] resize-y`}
-          />
-        </Field>
-      </Section>
+        </Section>
+      </ShowMoreFields>
     </form>
   );
 }

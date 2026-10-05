@@ -59,7 +59,7 @@ export default function DashboardStats({ leads }: DashboardStatsProps) {
   ];
 
   return (
-    <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+    <div className="grid grid-cols-2 gap-2.5 sm:gap-4 lg:grid-cols-4">
       {cards.map((card, i) => (
         <StatCard key={card.label} {...card} delay={i * 60} />
       ))}
@@ -82,7 +82,7 @@ function StatCard({
 
   return (
     <div
-      className="lp-card animate-fade-in-up relative cursor-default overflow-hidden p-5"
+      className="lp-card animate-fade-in-up relative cursor-default overflow-hidden p-3.5 sm:p-5"
       style={{ borderLeft: `3px solid ${accent}`, animationDelay: `${delay}ms` }}
     >
       <p className="text-xs font-medium uppercase tracking-wide text-ink-soft">{label}</p>

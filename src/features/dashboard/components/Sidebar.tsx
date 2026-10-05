@@ -22,7 +22,12 @@ import type { Teamspace } from "@/features/teamspace/types/teamspace.types";
 
 interface SidebarProps {
   user: AuthUser;
+  /** Icon-rail mode. Only ever true on desktop (the parent guarantees it). */
   isCollapsed: boolean;
+  /** md+ viewport: docked beside the content. Otherwise: off-canvas drawer. */
+  isDesktop: boolean;
+  isMobileOpen: boolean;
+  onCloseMobile: () => void;
 }
 
 const NAV_ITEMS = [
@@ -43,7 +48,13 @@ const ACTIVITY_ITEMS = [
  * `isCollapsed` shrinks it to an icon-only rail (see DashboardHeader's
  * toggle button) instead of hiding it entirely.
  */
-export default function Sidebar({ user, isCollapsed }: SidebarProps) {
+export default function Sidebar({
+  user,
+  isCollapsed,
+  isDesktop,
+  isMobileOpen,
+  onCloseMobile,
+}: SidebarProps) {
   const pathname = usePathname();
   const [teamspaces, setTeamspaces] = useState<Teamspace[]>([]);
   const [active, setActive] = useState<Teamspace | null>(null);
@@ -79,12 +90,29 @@ export default function Sidebar({ user, isCollapsed }: SidebarProps) {
   }
 
   return (
+    <>
+      {/* Mobile only: dims the page behind the open drawer; tap to dismiss. */}
+      {!isDesktop && isMobileOpen && (
+        <div
+          onClick={onCloseMobile}
+          aria-hidden="true"
+          className="animate-drawer-backdrop fixed inset-0 z-[45] bg-black/45 backdrop-blur-[2px]"
+        />
+      )}
     <aside
-      className={`flex h-full shrink-0 flex-col overflow-hidden border-r border-line bg-surface/95 shadow-[8px_0_30px_rgba(18,33,58,0.035)] backdrop-blur-xl transition-[width] duration-300 ease-out ${
-        isCollapsed ? "w-16" : "w-64"
+      aria-label="Main navigation"
+      inert={!isDesktop && !isMobileOpen}
+      className={`flex shrink-0 flex-col overflow-y-auto overflow-x-hidden border-r border-line bg-surface shadow-[8px_0_30px_rgba(18,33,58,0.035)] ${
+        isDesktop
+          ? `h-full bg-surface/95 backdrop-blur-xl transition-[width] duration-300 ease-out ${
+              isCollapsed ? "w-16" : "w-64"
+            }`
+          : `fixed inset-y-0 left-0 z-50 w-[17rem] max-w-[85vw] transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+              isMobileOpen ? "translate-x-0" : "-translate-x-full"
+            }`
       }`}
     >
-      <div className={`flex items-center px-5 py-5 ${isCollapsed ? "justify-center px-0" : ""}`}>
+      <div className={`flex items-center px-5 py-4 md:py-5 ${isCollapsed ? "justify-center px-0" : ""}`}>
         <div className={`flex items-center gap-2.5 ${isCollapsed ? "" : ""}`}><span className="grid h-9 w-9 place-items-center rounded-xl bg-ink text-sm font-black text-white shadow-md animate-soft-glow">L</span>{!isCollapsed && <div><span className="block font-serif text-xl leading-none text-fg">LeadPulse</span><span className="mt-1 block text-[9px] font-bold uppercase tracking-[0.2em] text-ink-soft">CRM workspace</span></div>}</div>
       </div>
 
@@ -98,7 +126,7 @@ export default function Sidebar({ user, isCollapsed }: SidebarProps) {
         />
       </nav>
 
-      <div className="mt-6 px-3">
+      <div className="mt-4 px-3 md:mt-6">
         {!isCollapsed && (
           <div className="relative">
             <button
@@ -173,7 +201,7 @@ export default function Sidebar({ user, isCollapsed }: SidebarProps) {
         </nav>
       </div>
 
-      <div className="mt-6 px-3">
+      <div className="mt-4 px-3 md:mt-6">
         {!isCollapsed && (
           <p className="px-2 pb-1 text-xs font-semibold uppercase tracking-wide text-ink-soft">
             Activities
@@ -194,7 +222,7 @@ export default function Sidebar({ user, isCollapsed }: SidebarProps) {
       </div>
 
       {isSuperAdmin(user) && (
-        <div className="mt-6 px-3">
+        <div className="mt-4 px-3 md:mt-6">
           {!isCollapsed && (
             <p className="px-2 pb-1 text-xs font-semibold uppercase tracking-wide text-ink-soft">
               Administration
@@ -212,6 +240,7 @@ export default function Sidebar({ user, isCollapsed }: SidebarProps) {
         </div>
       )}
     </aside>
+    </>
   );
 }
 

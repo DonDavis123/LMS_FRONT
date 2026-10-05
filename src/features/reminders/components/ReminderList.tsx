@@ -32,7 +32,7 @@ export default function ReminderList({
 }: ReminderListProps) {
   return (
     <div className="lp-card mx-auto max-w-3xl overflow-hidden">
-      <div className="flex flex-col gap-3 border-b border-line bg-surface/80 p-5 backdrop-blur-sm sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 border-b border-line bg-surface/80 p-3 backdrop-blur-sm sm:p-5 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
           <h1 className="font-serif text-xl text-fg">Reminders</h1>
           <p className="text-sm text-ink-soft">
