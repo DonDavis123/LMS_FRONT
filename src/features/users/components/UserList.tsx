@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState, type KeyboardEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Plus, Search } from "lucide-react";
+import { History, Plus, Search } from "lucide-react";
 import { USER_ROLES, type ManagedUser } from "@/features/users/types/user.types";
 import { roleLabel } from "@/features/users/utils/userLabels";
 import FilterBar, { type FilterCondition, type FilterFieldConfig } from "@/shared/components/FilterBar";
@@ -108,14 +108,23 @@ export default function UserList({
             </p>
           </div>
 
-          <button
-            type="button"
-            onClick={onCreateClick}
-            className="flex items-center gap-1.5 rounded-md bg-ink px-4 py-2 text-sm font-semibold text-white transition hover:bg-ink-2 active:scale-[0.98]"
-          >
-            <Plus size={16} />
-            New user
-          </button>
+          <div className="flex items-center gap-2">
+            <Link
+              href="/dashboard/users/audit-logs"
+              className="flex items-center gap-1.5 rounded-md border border-line px-3 py-2 text-sm font-medium text-fg transition hover:bg-paper"
+            >
+              <History size={16} />
+              Activity log
+            </Link>
+            <button
+              type="button"
+              onClick={onCreateClick}
+              className="flex items-center gap-1.5 rounded-md bg-ink px-4 py-2 text-sm font-semibold text-white transition hover:bg-ink-2 active:scale-[0.98]"
+            >
+              <Plus size={16} />
+              New user
+            </button>
+          </div>
         </div>
 
         <div className="relative max-w-sm">

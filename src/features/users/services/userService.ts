@@ -10,6 +10,12 @@ import type {
   UserAuditLogQuery,
   UserDeletionPreview,
 } from "@/features/users/types/user.types";
+import {
+  toAuditLogEntry,
+  toManagedUser,
+  toManagedUserDetail,
+  toReplacementCandidate,
+} from "@/features/users/mappers/userMappers";
 import type { LeadOwnerOption } from "@/features/auth/types/auth.types";
 import type { PaginatedResponse } from "@/shared/types/pagination";
 import { toListQueryParams, type ListQueryParams } from "@/shared/utils/listQuery";
@@ -27,6 +33,14 @@ function assertPaginated<T>(data: PaginatedResponse<T> | undefined, what: string
   throw new Error(`Invalid ${what} response from the server.`);
 }
 
+/** Backend cap for `page_size` on every list endpoint. */
+const MAX_PAGE_SIZE = 50;
+
+function clampPageSize(pageSize: number | undefined, fallback: number): number {
+  const size = pageSize ?? fallback;
+  return Math.min(Math.max(1, Math.floor(size)), MAX_PAGE_SIZE);
+}
+
 export const userService = {
   /**
    * GET /users/ — paginated list. Supports `search` (name or email),
@@ -35,21 +49,22 @@ export const userService = {
    */
   async getUsersPage(params: ListQueryParams = {}): Promise<PaginatedResponse<ManagedUser>> {
     const { data } = await apiClient.get<PaginatedResponse<ManagedUser>>("/users/", {
-      params: toListQueryParams(params),
+      params: toListQueryParams({ ...params, page_size: clampPageSize(params.page_size, 10) }),
     });
-    return assertPaginated(data, "users");
+    const page = assertPaginated(data, "users");
+    return { ...page, results: page.results.map(toManagedUser) };
   },
 
   /** GET /users/{id}/ — 404 `{ detail: "User not found." }` if missing. */
   async getUser(id: string): Promise<ManagedUserDetail> {
     const { data } = await apiClient.get<ManagedUserDetail>(`/users/${id}/`);
-    return data;
+    return toManagedUserDetail(data);
   },
 
   /** POST /users/ — returns the created user (201). */
   async createUser(payload: CreateUserPayload): Promise<ManagedUserDetail> {
     const { data } = await apiClient.post<ManagedUserDetail>("/users/", payload);
-    return data;
+    return toManagedUserDetail(data);
   },
 
   /**
@@ -59,7 +74,7 @@ export const userService = {
    */
   async updateUser(id: string, payload: UpdateUserPayload): Promise<ManagedUserDetail> {
     const { data } = await apiClient.patch<ManagedUserDetail>(`/users/${id}/`, payload);
-    return data;
+    return toManagedUserDetail(data);
   },
 
   /**
@@ -73,13 +88,13 @@ export const userService = {
   /** POST /users/{id}/block/ — returns the updated user (`is_active: false`). */
   async blockUser(id: string): Promise<ManagedUserDetail> {
     const { data } = await apiClient.post<ManagedUserDetail>(`/users/${id}/block/`);
-    return data;
+    return toManagedUserDetail(data);
   },
 
   /** POST /users/{id}/unblock/ — returns the updated user (`is_active: true`). */
   async unblockUser(id: string): Promise<ManagedUserDetail> {
     const { data } = await apiClient.post<ManagedUserDetail>(`/users/${id}/unblock/`);
-    return data;
+    return toManagedUserDetail(data);
   },
 
   /** GET /users/{id}/deletion-preview/ — read-only summary of what deleting would do. */
@@ -92,7 +107,7 @@ export const userService = {
   async getReplacementCandidates(id: string): Promise<ReplacementCandidate[]> {
     const { data } = await apiClient.get<ReplacementCandidate[]>(`/users/${id}/replacement-candidates/`);
     if (!Array.isArray(data)) throw new Error("Invalid replacement candidates response from the server.");
-    return data;
+    return data.map(toReplacementCandidate);
   },
 
   /**
@@ -108,13 +123,14 @@ export const userService = {
   async getAuditLogs(query: UserAuditLogQuery = {}): Promise<PaginatedResponse<UserAuditLogEntry>> {
     const params: Record<string, string | number> = {
       page: query.page ?? 1,
-      page_size: query.page_size ?? 10,
+      page_size: clampPageSize(query.page_size, 10),
     };
     if (query.user_id) params.user_id = query.user_id;
     if (query.action) params.action = query.action;
 
     const { data } = await apiClient.get<PaginatedResponse<UserAuditLogEntry>>("/users/audit-logs/", { params });
-    return assertPaginated(data, "audit log");
+    const page = assertPaginated(data, "audit log");
+    return { ...page, results: page.results.map(toAuditLogEntry) };
   },
 
   /**

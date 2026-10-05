@@ -1,3 +1,5 @@
+import { normalizeEnumValue } from "@/shared/utils/enumValue";
+
 /**
  * Role comes straight from the backend's `role` field (e.g. "SUPERADMIN").
  * Kept as a plain string rather than a strict union since the exact set of
@@ -13,12 +15,17 @@ export interface AuthUser {
   role: UserRole;
 }
 
+function normalizeRole(role: string | null | undefined): string {
+  // Also tolerates the "UserRole.ADMIN" shape the backend can emit for enums.
+  return normalizeEnumValue(role).replace(/[\s_-]/g, "");
+}
+
 export function isSuperAdmin(user: AuthUser | null): boolean {
-  return user?.role?.replace(/[\s_-]/g, "").toUpperCase() === "SUPERADMIN";
+  return normalizeRole(user?.role) === "SUPERADMIN";
 }
 
 export function isAdmin(user: AuthUser | null): boolean {
-  const normalized = user?.role?.replace(/[\s_-]/g, "").toUpperCase();
+  const normalized = normalizeRole(user?.role);
   return normalized === "SUPERADMIN" || normalized === "ADMIN";
 }
 

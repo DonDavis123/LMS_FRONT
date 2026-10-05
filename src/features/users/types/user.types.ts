@@ -99,14 +99,18 @@ export interface DeleteUserPayload {
   replacement_user_id?: string;
 }
 
-export type UserAuditAction =
-  | "USER_CREATED"
-  | "USER_UPDATED"
-  | "USER_ROLE_CHANGED"
-  | "USER_BLOCKED"
-  | "USER_UNBLOCKED"
-  | "USER_PASSWORD_RESET"
-  | "USER_RETIRED";
+/** Every audit action the backend records; also drives the activity-log filter. */
+export const USER_AUDIT_ACTIONS = [
+  "USER_CREATED",
+  "USER_UPDATED",
+  "USER_ROLE_CHANGED",
+  "USER_BLOCKED",
+  "USER_UNBLOCKED",
+  "USER_PASSWORD_RESET",
+  "USER_RETIRED",
+] as const;
+
+export type UserAuditAction = (typeof USER_AUDIT_ACTIONS)[number];
 
 /** One row of GET /users/audit-logs/ (newest first). */
 export interface UserAuditLogEntry {

@@ -1,4 +1,5 @@
 import type { UserAuditLogEntry } from "@/features/users/types/user.types";
+import { normalizeEnumValue } from "@/shared/utils/enumValue";
 
 const ROLE_LABELS: Record<string, string> = {
   SUPERADMIN: "Superadmin",
@@ -10,7 +11,8 @@ const ROLE_LABELS: Record<string, string> = {
 /** Display label for a backend role value; unknown roles are shown as-is. */
 export function roleLabel(role: string | null | undefined): string {
   if (!role) return "-";
-  return ROLE_LABELS[role.toUpperCase()] ?? role;
+  const normalized = normalizeEnumValue(role);
+  return ROLE_LABELS[normalized] ?? role;
 }
 
 const AUDIT_ACTION_LABELS: Record<string, string> = {
@@ -24,7 +26,7 @@ const AUDIT_ACTION_LABELS: Record<string, string> = {
 };
 
 export function auditActionLabel(action: string): string {
-  return AUDIT_ACTION_LABELS[action] ?? action;
+  return AUDIT_ACTION_LABELS[normalizeEnumValue(action)] ?? action;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -39,7 +41,7 @@ export function describeAuditMetadata(entry: UserAuditLogEntry): string | null {
   const metadata = entry.metadata;
   if (!isRecord(metadata)) return null;
 
-  switch (entry.action) {
+  switch (normalizeEnumValue(entry.action)) {
     case "USER_CREATED":
       return typeof metadata.role === "string" ? `Role: ${roleLabel(metadata.role)}` : null;
 
