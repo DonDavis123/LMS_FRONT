@@ -24,14 +24,6 @@ interface UserDetailProps {
 
 export default function UserDetail({ user, currentUserId, onUserChange, onNotify, onDeleted }: UserDetailProps) {
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-  // Every successful change calls `onNotify`, so it doubles as the signal to
-  // reload the activity history.
-  const [historyVersion, setHistoryVersion] = useState(0);
-
-  function handleNotify(message: string) {
-    setHistoryVersion((value) => value + 1);
-    onNotify(message);
-  }
 
   const name = user.name ?? "";
   const email = user.email ?? "";
@@ -86,19 +78,19 @@ export default function UserDetail({ user, currentUserId, onUserChange, onNotify
         <InfoItem label="Last updated">{formatDateTime(user.updated_at) || "-"}</InfoItem>
       </RecordSection>
 
-      <UserEditProfileCard user={user} isSelf={isSelf} onUserChange={onUserChange} onNotify={handleNotify} />
+      <UserEditProfileCard user={user} isSelf={isSelf} onUserChange={onUserChange} onNotify={onNotify} />
 
-      <UserResetPasswordCard userId={user.id} userLabel={displayName} isSelf={isSelf} onNotify={handleNotify} />
+      <UserResetPasswordCard userId={user.id} userLabel={displayName} isSelf={isSelf} onNotify={onNotify} />
 
       <UserStatusCard
         user={user}
         userLabel={displayName}
         isSelf={isSelf}
         onUserChange={onUserChange}
-        onNotify={handleNotify}
+        onNotify={onNotify}
       />
 
-      <UserAuditCard userId={user.id} refreshKey={historyVersion} />
+      <UserAuditCard userId={user.id} userLabel={displayName} />
 
       <div className="rounded-lg border border-danger/30 bg-surface p-6">
         <h3 className="mb-1 text-xs font-semibold uppercase tracking-wide text-danger">Danger zone</h3>
@@ -126,7 +118,7 @@ export default function UserDetail({ user, currentUserId, onUserChange, onNotify
         onClose={() => setIsDeleteOpen(false)}
         onUserChange={onUserChange}
         onDeleted={onDeleted}
-        onNotify={handleNotify}
+        onNotify={onNotify}
       />
     </div>
   );

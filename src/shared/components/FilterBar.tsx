@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { ListFilter, Plus, SlidersHorizontal, X } from "lucide-react";
+import Select from "@/shared/components/Select";
 
 export type FilterFieldType = "text" | "choice" | "number" | "boolean" | "date" | "datetime" | "uuid";
 
@@ -358,17 +359,7 @@ function FieldSelect({
   return (
     <label className="block">
       <span className="mb-1 block text-xs font-medium text-ink-soft">{label}</span>
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-md border border-line bg-paper px-2.5 py-2 text-sm text-fg outline-none transition focus:border-slate focus:bg-surface focus:ring-2 focus:ring-slate-light"
-      >
-        {options.map((opt) => (
-          <option key={opt.value} value={opt.value}>
-            {opt.label}
-          </option>
-        ))}
-      </select>
+      <Select value={value} onChange={onChange} options={options} ariaLabel={label} size="sm" />
     </label>
   );
 }
@@ -445,23 +436,26 @@ function FilterValueInput({
 
   if (config.type === "boolean") {
     return (
-      <select value={value || "true"} onChange={(e) => onValueChange(e.target.value)} className={inputClass}>
-        <option value="true">Yes</option>
-        <option value="false">No</option>
-      </select>
+      <Select
+        value={value || "true"}
+        onChange={onValueChange}
+        ariaLabel="Filter value"
+        options={[
+          { value: "true", label: "Yes" },
+          { value: "false", label: "No" },
+        ]}
+      />
     );
   }
 
   if ((config.type === "choice" || config.type === "uuid") && config.choices) {
     return (
-      <select value={value} onChange={(e) => onValueChange(e.target.value)} className={inputClass}>
-        <option value="">Select…</option>
-        {config.choices.map((choice) => (
-          <option key={choice.value} value={choice.value}>
-            {choice.label}
-          </option>
-        ))}
-      </select>
+      <Select
+        value={value}
+        onChange={onValueChange}
+        ariaLabel="Filter value"
+        options={[{ value: "", label: "Select…" }, ...config.choices.map((choice) => ({ value: choice.value, label: choice.label }))]}
+      />
     );
   }
 

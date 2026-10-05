@@ -13,6 +13,7 @@ import { roleLabel } from "@/features/users/utils/userLabels";
 import { Field, inputClass } from "@/shared/components/FormLayout";
 import { RecordSection } from "@/shared/components/RecordSection";
 import Spinner from "@/shared/components/Spinner";
+import Select from "@/shared/components/Select";
 
 interface UserEditProfileCardProps {
   user: ManagedUserDetail;
@@ -134,22 +135,17 @@ export default function UserEditProfileCard({ user, isSelf, onUserChange, onNoti
           </Field>
 
           <Field label="Role" required>
-            <select
+            <Select
               value={role}
-              onChange={(event) => {
-                setRole(event.target.value);
+              onChange={(next) => {
+                setRole(next);
                 setFieldErrors((current) => ({ ...current, role: undefined }));
               }}
               disabled={isSelf}
-              aria-invalid={Boolean(fieldErrors.role)}
-              className={`${inputClass} disabled:cursor-not-allowed disabled:opacity-60`}
-            >
-              {roleOptions.map((value) => (
-                <option key={value} value={value}>
-                  {roleLabel(value)}
-                </option>
-              ))}
-            </select>
+              ariaLabel="Role"
+              ariaInvalid={Boolean(fieldErrors.role)}
+              options={roleOptions.map((value) => ({ value, label: roleLabel(value) }))}
+            />
             {fieldErrors.role ? (
               <span className="mt-1 block text-xs text-danger">{fieldErrors.role}</span>
             ) : isSelf ? (

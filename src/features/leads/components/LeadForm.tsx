@@ -20,6 +20,7 @@ import {
   type LeadSource,
   type LeadStatus,
 } from "@/features/leads/types/lead.types";
+import Select from "@/shared/components/Select";
 
 interface LeadFormProps {
   mode: "create" | "edit";
@@ -360,44 +361,29 @@ export default function LeadForm({
         </Field>
 
         <Field label="Lead Source">
-          <select
+          <Select
             value={form.lead_source}
-            onChange={(e) => update("lead_source", e.target.value as LeadSource)}
-            className={inputClass}
-          >
-            {LEAD_SOURCES.map((source) => (
-              <option key={source} value={source}>
-                {source}
-              </option>
-            ))}
-          </select>
+            onChange={(next) => update("lead_source", next as LeadSource)}
+            ariaLabel="Lead source"
+            options={LEAD_SOURCES.map((source) => ({ value: source, label: source }))}
+          />
         </Field>
         <Field label="Rating">
-          <select
+          <Select
             value={form.rating}
-            onChange={(e) => update("rating", e.target.value as LeadRating)}
-            className={inputClass}
-          >
-            {LEAD_RATINGS.map((rating) => (
-              <option key={rating} value={rating}>
-                {rating}
-              </option>
-            ))}
-          </select>
+            onChange={(next) => update("rating", next as LeadRating)}
+            ariaLabel="Rating"
+            options={LEAD_RATINGS.map((rating) => ({ value: rating, label: rating }))}
+          />
         </Field>
 
         <Field label="Industry">
-          <select
+          <Select
             value={form.industry}
-            onChange={(e) => update("industry", e.target.value as LeadIndustry)}
-            className={inputClass}
-          >
-            {LEAD_INDUSTRIES.map((industry) => (
-              <option key={industry} value={industry}>
-                {industry}
-              </option>
-            ))}
-          </select>
+            onChange={(next) => update("industry", next as LeadIndustry)}
+            ariaLabel="Industry"
+            options={LEAD_INDUSTRIES.map((industry) => ({ value: industry, label: industry }))}
+          />
         </Field>
         <Field label="No. of Employees">
           <input

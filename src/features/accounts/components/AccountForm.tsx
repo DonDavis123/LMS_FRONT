@@ -14,6 +14,7 @@ import {
   type AccountOwnership,
   type CreateAccountPayload,
 } from "@/features/accounts/types/account.types";
+import Select from "@/shared/components/Select";
 
 interface AccountFormProps {
   mode: "create" | "edit";
@@ -239,17 +240,12 @@ export default function AccountForm({ mode, initialAccount, onSubmit, onCancel }
           />
         </Field>
         <Field label="Ownership">
-          <select
+          <Select
             value={form.ownership}
-            onChange={(e) => update("ownership", e.target.value as AccountOwnership)}
-            className={inputClass}
-          >
-            {ACCOUNT_OWNERSHIP_OPTIONS.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
+            onChange={(next) => update("ownership", next as AccountOwnership)}
+            ariaLabel="Ownership"
+            options={ACCOUNT_OWNERSHIP_OPTIONS.map((option) => ({ value: option, label: option }))}
+          />
         </Field>
 
         <Field label="Website">
@@ -269,32 +265,20 @@ export default function AccountForm({ mode, initialAccount, onSubmit, onCancel }
         </Field>
 
         <Field label="Industry">
-          <select
+          <Select
             value={form.industry}
-            onChange={(e) => update("industry", e.target.value as LeadIndustry)}
-            className={inputClass}
-          >
-            <option value="">-None-</option>
-            {LEAD_INDUSTRIES.map((industry) => (
-              <option key={industry} value={industry}>
-                {industry}
-              </option>
-            ))}
-          </select>
+            onChange={(next) => update("industry", next as LeadIndustry)}
+            ariaLabel="Industry"
+            options={[{ value: "", label: "-None-" }, ...LEAD_INDUSTRIES.map((industry) => ({ value: industry, label: industry }))]}
+          />
         </Field>
         <Field label="Rating">
-          <select
+          <Select
             value={form.rating}
-            onChange={(e) => update("rating", e.target.value as LeadRating)}
-            className={inputClass}
-          >
-            <option value="">-None-</option>
-            {LEAD_RATINGS.map((rating) => (
-              <option key={rating} value={rating}>
-                {rating}
-              </option>
-            ))}
-          </select>
+            onChange={(next) => update("rating", next as LeadRating)}
+            ariaLabel="Rating"
+            options={[{ value: "", label: "-None-" }, ...LEAD_RATINGS.map((rating) => ({ value: rating, label: rating }))]}
+          />
         </Field>
 
         <Field label="No. of Employees">

@@ -11,6 +11,7 @@ import Spinner from "@/shared/components/Spinner";
 import { inputClass, Section, Field } from "@/shared/components/FormLayout";
 import { LEAD_SOURCES, type LeadSource } from "@/features/leads/types/lead.types";
 import type { Contact, CreateContactPayload } from "@/features/contacts/types/contact.types";
+import Select from "@/shared/components/Select";
 
 interface ContactFormProps {
   mode: "create" | "edit";
@@ -318,18 +319,12 @@ export default function ContactForm({ mode, initialContact, onSubmit, onCancel }
           />
         </Field>
         <Field label="Lead Source">
-          <select
+          <Select
             value={form.lead_source}
-            onChange={(e) => update("lead_source", e.target.value as LeadSource)}
-            className={inputClass}
-          >
-            <option value="">-None-</option>
-            {LEAD_SOURCES.map((source) => (
-              <option key={source} value={source}>
-                {source}
-              </option>
-            ))}
-          </select>
+            onChange={(next) => update("lead_source", next as LeadSource)}
+            ariaLabel="Lead source"
+            options={[{ value: "", label: "-None-" }, ...LEAD_SOURCES.map((source) => ({ value: source, label: source }))]}
+          />
         </Field>
 
         <Field label="Vendor Name">

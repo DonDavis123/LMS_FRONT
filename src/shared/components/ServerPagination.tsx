@@ -1,6 +1,7 @@
 "use client";
 
 import type { PaginationMeta } from "@/shared/types/pagination";
+import Select from "@/shared/components/Select";
 
 interface ServerPaginationProps {
   pagination: PaginationMeta;
@@ -30,17 +31,15 @@ export default function ServerPagination({
       <div className="flex items-center gap-3">
         <label className="flex items-center gap-2">
           <span className="sr-only">Rows per page</span>
-          <select
-            value={pageSize}
-            onChange={(event) => onPageSizeChange(Number(event.target.value))}
-            className="rounded border border-line bg-surface px-2 py-1 text-sm text-fg"
-          >
-            {[10, 20, 50].map((size) => (
-              <option key={size} value={size}>
-                {size} / page
-              </option>
-            ))}
-          </select>
+          <div className="w-32">
+            <Select
+              size="sm"
+              value={String(pageSize)}
+              onChange={(next) => onPageSizeChange(Number(next))}
+              ariaLabel="Rows per page"
+              options={[10, 20, 50].map((size) => ({ value: String(size), label: `${size} / page` }))}
+            />
+          </div>
         </label>
 
         <span>

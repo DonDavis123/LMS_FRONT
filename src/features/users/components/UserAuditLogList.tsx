@@ -7,6 +7,7 @@ import { auditActionLabel, describeAuditMetadata } from "@/features/users/utils/
 import ServerPagination from "@/shared/components/ServerPagination";
 import type { PaginationMeta } from "@/shared/types/pagination";
 import { formatDateTime } from "@/shared/utils/formatDate";
+import Select from "@/shared/components/Select";
 
 interface UserAuditLogListProps {
   entries: UserAuditLogEntry[];
@@ -56,18 +57,17 @@ export default function UserAuditLogList({
 
           <label className="block">
             <span className="mb-1 block text-xs font-medium text-ink-soft">Action</span>
-            <select
+            <Select
               value={action}
-              onChange={(event) => onActionChange(event.target.value as UserAuditAction | "")}
-              className="rounded-md border border-line bg-surface px-3 py-2 text-sm text-fg outline-none transition focus:border-slate focus:ring-2 focus:ring-slate-light"
-            >
-              <option value="">All actions</option>
-              {USER_AUDIT_ACTIONS.map((value) => (
-                <option key={value} value={value}>
-                  {auditActionLabel(value)}
-                </option>
-              ))}
-            </select>
+              onChange={(next) => onActionChange(next as UserAuditAction | "")}
+              ariaLabel="Filter by action"
+              size="sm"
+              className="min-w-48"
+              options={[
+                { value: "", label: "All actions" },
+                ...USER_AUDIT_ACTIONS.map((value) => ({ value, label: auditActionLabel(value) })),
+              ]}
+            />
           </label>
         </div>
 

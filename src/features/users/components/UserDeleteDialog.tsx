@@ -8,10 +8,10 @@ import type {
   UserDeletionPreview,
 } from "@/features/users/types/user.types";
 import { roleLabel } from "@/features/users/utils/userLabels";
-import { inputClass } from "@/shared/components/FormLayout";
 import Modal from "@/shared/components/Modal";
 import Spinner from "@/shared/components/Spinner";
 import { extractApiError } from "@/shared/utils/apiError";
+import Select from "@/shared/components/Select";
 
 interface UserDeleteDialogProps {
   isOpen: boolean;
@@ -39,6 +39,8 @@ type CandidatesState =
 type PendingAction = "block" | "delete" | null;
 
 const ALREADY_DELETED = /already been deleted/i;
+const REPLACEMENT_REQUIRED = /replacement user is required/i;
+const REPLACEMENT_REJECTED = /^replacement user/i;
 
 function readStatus(error: unknown): number | null {
   const status = (error as { response?: { status?: number } } | null)?.response?.status;
@@ -191,6 +193,18 @@ function DeleteUserFlow({
       if (readStatus(err) === 400 && ALREADY_DELETED.test(message)) {
         onDeleted(message);
         return;
+      }
+      if (readStatus(err) === 400 && REPLACEMENT_REQUIRED.test(message)) {
+        // Records were added after the preview loaded, so a replacement is
+        // now needed. Reload the preview to reveal the picker.
+        setActionError("This user's records changed since you opened this dialog. Review the update and try again.");
+        setPreviewKey((value) => value + 1);
+        return;
+      }
+      if (readStatus(err) !== null && REPLACEMENT_REJECTED.test(message)) {
+        // The chosen replacement is no longer valid (e.g. it was blocked).
+        setReplacementId("");
+        setCandidatesKey((value) => value + 1);
       }
       // A 500 is a rolled-back transaction: nothing changed, so retrying is safe.
       setActionError(readStatus(err) === 500 ? `${message} Nothing was changed — you can try again.` : message);
@@ -406,19 +420,18 @@ function ReplacementPicker({ state, value, disabled, hasNoCandidates, onChange, 
       <span className="mb-1.5 block text-sm font-medium text-fg">
         Replacement user<span className="text-danger"> *</span>
       </span>
-      <select
+      <Select
         value={value}
-        onChange={(event) => onChange(event.target.value)}
+        onChange={onChange}
         disabled={disabled}
-        className={inputClass}
-      >
-        <option value="">Select a user…</option>
-        {state.items.map((candidate) => (
-          <option key={candidate.id} value={candidate.id}>
-            {candidate.name || candidate.email} ({candidate.email}) — {roleLabel(candidate.role)}
-          </option>
-        ))}
-      </select>
+        placeholder="Select a user…"
+        ariaLabel="Replacement user"
+        options={state.items.map((candidate) => ({
+          value: candidate.id,
+          label: `${candidate.name || candidate.email} — ${roleLabel(candidate.role)}`,
+          description: candidate.email,
+        }))}
+      />
     </label>
   );
 }

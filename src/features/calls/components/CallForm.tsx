@@ -18,6 +18,7 @@ import {
   type CallStatus,
   type CreateCallPayload,
 } from "@/features/calls/types/call.types";
+import Select from "@/shared/components/Select";
 
 interface CallFormProps {
   mode: "create" | "edit";
@@ -181,31 +182,21 @@ export default function CallForm({ mode, initialCall, onSubmit, onCancel }: Call
           </Field>
 
           <Field label="Call Type">
-            <select
+            <Select
               value={form.call_type}
-              onChange={(e) => update("call_type", e.target.value as CallType)}
-              className={inputClass}
-            >
-              {CALL_TYPES.map((t) => (
-                <option key={t} value={t}>
-                  {t}
-                </option>
-              ))}
-            </select>
+              onChange={(next) => update("call_type", next as CallType)}
+              ariaLabel="Call type"
+              options={CALL_TYPES.map((t) => ({ value: t, label: t }))}
+            />
           </Field>
 
           <Field label="Call Status">
-            <select
+            <Select
               value={form.call_status}
-              onChange={(e) => update("call_status", e.target.value as CallStatus)}
-              className={inputClass}
-            >
-              {CALL_STATUSES.map((s) => (
-                <option key={s} value={s}>
-                  {s}
-                </option>
-              ))}
-            </select>
+              onChange={(next) => update("call_status", next as CallStatus)}
+              ariaLabel="Call status"
+              options={CALL_STATUSES.map((s) => ({ value: s, label: s }))}
+            />
           </Field>
 
           <Field label="Call Start Time">

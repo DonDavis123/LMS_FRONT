@@ -17,6 +17,7 @@ import {
   type MeetingParticipantType,
   type CreateMeetingPayload,
 } from "@/features/meetings/types/meeting.types";
+import Select from "@/shared/components/Select";
 
 interface Props {
   mode: "create" | "edit";
@@ -501,19 +502,22 @@ export default function MeetingForm({ mode, initialMeeting, onSubmit, onCancel }
       {showParticipants && (
         <OverlayPanel title="Add Participants" onClose={() => setShowParticipants(false)} wide>
           <div className="flex items-center gap-2">
-            <select
-              value={participantCategory}
-              onChange={(event) => {
-                setParticipantCategory(event.target.value as ParticipantCategory);
-                setParticipantSearch("");
-              }}
-              className="h-9 rounded-md border border-line bg-surface px-2 text-sm"
-              aria-label="Participant type"
-            >
-              <option value="user">Users</option>
-              <option value="lead">Leads</option>
-              <option value="contact">Contacts</option>
-            </select>
+            <div className="w-32 shrink-0">
+              <Select
+                size="sm"
+                value={participantCategory}
+                onChange={(next) => {
+                  setParticipantCategory(next as ParticipantCategory);
+                  setParticipantSearch("");
+                }}
+                ariaLabel="Participant type"
+                options={[
+                  { value: "user", label: "Users" },
+                  { value: "lead", label: "Leads" },
+                  { value: "contact", label: "Contacts" },
+                ]}
+              />
+            </div>
             <div className="flex flex-1 items-center rounded-md border border-line px-2">
               <Search size={14} className="text-ink-soft" />
               <input

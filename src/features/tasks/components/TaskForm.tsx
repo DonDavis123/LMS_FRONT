@@ -24,6 +24,7 @@ import {
   type TaskStatus,
   type CreateTaskPayload,
 } from "@/features/tasks/types/task.types";
+import Select from "@/shared/components/Select";
 
 interface TaskFormProps {
   mode: "create" | "edit";
@@ -213,17 +214,12 @@ export default function TaskForm({ mode, initialTask, onSubmit, onCancel, initia
           </Field>
 
           <Field label="Priority">
-            <select
+            <Select
               value={form.priority}
-              onChange={(e) => update("priority", e.target.value as TaskPriority)}
-              className={inputClass}
-            >
-              {TASK_PRIORITIES.map((p) => (
-                <option key={p} value={p}>
-                  {p}
-                </option>
-              ))}
-            </select>
+              onChange={(next) => update("priority", next as TaskPriority)}
+              ariaLabel="Priority"
+              options={TASK_PRIORITIES.map((p) => ({ value: p, label: p }))}
+            />
           </Field>
 
           <Field label="Status">

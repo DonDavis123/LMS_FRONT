@@ -14,6 +14,7 @@ import { roleLabel } from "@/features/users/utils/userLabels";
 import { Field, inputClass } from "@/shared/components/FormLayout";
 import Modal from "@/shared/components/Modal";
 import Spinner from "@/shared/components/Spinner";
+import Select from "@/shared/components/Select";
 
 interface UserCreateDialogProps {
   isOpen: boolean;
@@ -172,21 +173,16 @@ function CreateUserForm({ onClose, onCreated }: Omit<UserCreateDialogProps, "isO
         </Field>
 
         <Field label="Role" required>
-          <select
+          <Select
             value={role}
-            onChange={(event) => {
-              setRole(event.target.value as AssignableUserRole);
+            onChange={(next) => {
+              setRole(next as AssignableUserRole);
               clearFieldError("role");
             }}
-            aria-invalid={Boolean(fieldErrors.role)}
-            className={inputClass}
-          >
-            {ASSIGNABLE_USER_ROLES.map((value) => (
-              <option key={value} value={value}>
-                {roleLabel(value)}
-              </option>
-            ))}
-          </select>
+            ariaLabel="Role"
+            ariaInvalid={Boolean(fieldErrors.role)}
+            options={ASSIGNABLE_USER_ROLES.map((value) => ({ value, label: roleLabel(value) }))}
+          />
           {fieldErrors.role && <span className="mt-1 block text-xs text-danger">{fieldErrors.role}</span>}
         </Field>
 
