@@ -8,6 +8,8 @@ interface FloatingPopoverProps {
   onClose: () => void;
   width: number;
   ariaLabel: string;
+  /** Raise above other portaled layers (e.g. the filter popover at z-100). */
+  zIndex?: number;
   children: ReactNode;
 }
 
@@ -24,7 +26,7 @@ interface Position {
  * the viewport (mobile safe), flips above the field when there is no room
  * below, and closes on outside click or Escape.
  */
-export default function FloatingPopover({ anchorRef, onClose, width, ariaLabel, children }: FloatingPopoverProps) {
+export default function FloatingPopover({ anchorRef, onClose, width, ariaLabel, zIndex = 65, children }: FloatingPopoverProps) {
   const popoverRef = useRef<HTMLDivElement>(null);
   const [position, setPosition] = useState<Position | null>(null);
 
@@ -91,7 +93,9 @@ export default function FloatingPopover({ anchorRef, onClose, width, ariaLabel, 
       ref={popoverRef}
       role="dialog"
       aria-label={ariaLabel}
+      data-floating-popover=""
       style={{
+        zIndex,
         position: "fixed",
         top: position?.top ?? 0,
         left: position?.left ?? 0,
@@ -99,7 +103,7 @@ export default function FloatingPopover({ anchorRef, onClose, width, ariaLabel, 
         transformOrigin: position?.above ? "bottom left" : "top left",
         visibility: position ? "visible" : "hidden",
       }}
-      className={`z-[65] rounded-2xl border border-line bg-surface p-4 shadow-2xl ${
+      className={`rounded-2xl border border-line bg-surface p-4 shadow-2xl ${
         position ? (position.above ? "animate-popover-up" : "animate-popover-down") : ""
       }`}
     >

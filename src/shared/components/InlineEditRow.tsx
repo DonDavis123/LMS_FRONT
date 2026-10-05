@@ -3,6 +3,23 @@
 import { useEffect, useState } from "react";
 import { Check, Pencil, X } from "lucide-react";
 import ModernStatusSelect from "@/shared/components/ModernStatusSelect";
+import DateInput, { DateTimeInput } from "@/shared/components/DateInput";
+
+/** Friendly read-only text for date values; 12-hour clock for date-times. */
+function formatForDisplay(raw: string, type: string): string | null {
+  if (!raw.trim()) return null;
+  if (type === "date") {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(raw);
+    if (!m) return null;
+    return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  }
+  if (type === "datetime-local") {
+    const d = new Date(raw);
+    if (Number.isNaN(d.getTime())) return null;
+    return d.toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit", hour12: true });
+  }
+  return null;
+}
 
 export interface InlineEditOption { value: string; label: string }
 
@@ -67,7 +84,7 @@ export default function InlineEditRow({
       {!editing ? (
         <div className="flex min-h-7 items-center justify-between gap-2">
           <p className="min-w-0 max-w-full flex-1 whitespace-pre-wrap break-words text-sm text-fg">
-            {displayValue ?? (normalized.trim() ? normalized : "—")}
+            {displayValue ?? formatForDisplay(normalized, type) ?? (normalized.trim() ? normalized : "—")}
           </p>
           {editable && onSave && (
             <button type="button" onClick={() => setEditing(true)} aria-label={`Edit ${label}`}
@@ -92,6 +109,14 @@ export default function InlineEditRow({
                   tone: /completed|contacted|qualified/i.test(option.label) ? "success" : /lost|junk|not qualified|waiting/i.test(option.label) ? "danger" : /progress|future|attempted|deferred/i.test(option.label) ? "warning" : "neutral",
                 }))}
               />
+            </div>
+          ) : type === "date" ? (
+            <div className="min-w-0 flex-1">
+              <DateInput value={draft} onChange={setDraft} ariaLabel={label} />
+            </div>
+          ) : type === "datetime-local" ? (
+            <div className="min-w-0 flex-1">
+              <DateTimeInput value={draft} onChange={setDraft} ariaLabel={label} />
             </div>
           ) : (
             <input autoFocus type={type} value={draft} onChange={e => setDraft(e.target.value)} className={editClass} />

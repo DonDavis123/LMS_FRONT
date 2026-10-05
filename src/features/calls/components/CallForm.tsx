@@ -1,5 +1,6 @@
 "use client";
 
+import { DateTimeInput } from "@/shared/components/DateInput";
 import { useEffect, useState, type FormEvent } from "react";
 import { userService } from "@/features/users/services/userService";
 import type { LeadOwnerOption } from "@/features/auth/types/auth.types";
@@ -200,11 +201,10 @@ export default function CallForm({ mode, initialCall, onSubmit, onCancel }: Call
           </Field>
 
           <Field label="Call Start Time">
-            <input
-              type="datetime-local"
+            <DateTimeInput
               value={form.call_start_time}
-              onChange={(e) => update("call_start_time", e.target.value)}
-              className={inputClass}
+              onChange={(value) => update("call_start_time", value)}
+              ariaLabel="Call start time"
             />
           </Field>
 

@@ -1,5 +1,6 @@
 "use client";
 
+import DateInput from "@/shared/components/DateInput";
 import { useEffect, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { userService } from "@/features/users/services/userService";
@@ -335,11 +336,10 @@ export default function ContactForm({ mode, initialContact, onSubmit, onCancel }
           />
         </Field>
         <Field label="Date of Birth">
-          <input
-            type="date"
+          <DateInput
             value={form.date_of_birth}
-            onChange={(e) => update("date_of_birth", e.target.value)}
-            className={inputClass}
+            onChange={(value) => update("date_of_birth", value)}
+            ariaLabel="Date of birth"
           />
         </Field>
 

@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { ListFilter, Plus, SlidersHorizontal, X } from "lucide-react";
 import Select from "@/shared/components/Select";
+import DateInput, { DateTimeInput } from "@/shared/components/DateInput";
+import { formatLocalDateTime } from "@/shared/utils/dateTime";
 
 export type FilterFieldType = "text" | "choice" | "number" | "boolean" | "date" | "datetime" | "uuid";
 
@@ -84,6 +86,16 @@ function toApiDatetime(localValue: string): string {
   return localValue ? new Date(localValue).toISOString() : localValue;
 }
 
+function formatDateValue(value: string, type?: FilterFieldType): string {
+  if (!value) return "?";
+  if (type === "datetime") return formatLocalDateTime(value) || value;
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(value);
+  if (!m) return value;
+  return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])).toLocaleDateString("en-US", {
+    month: "short", day: "numeric", year: "numeric",
+  });
+}
+
 function describeFilter(condition: FilterCondition, fields: FilterFieldConfig[]): string {
   const config = fields.find((f) => f.field === condition.field);
   const label = config?.label ?? condition.field;
@@ -94,7 +106,7 @@ function describeFilter(condition: FilterCondition, fields: FilterFieldConfig[])
   let valueLabel: string;
   if (condition.operator === "between" && condition.value && typeof condition.value === "object") {
     const { from, to } = condition.value as { from?: string; to?: string };
-    valueLabel = `${from ?? "?"} – ${to ?? "?"}`;
+    valueLabel = `${formatDateValue(from ?? "", config?.type)} – ${formatDateValue(to ?? "", config?.type)}`;
   } else if (Array.isArray(condition.value)) {
     valueLabel = condition.value
       .map((v) => config?.choices?.find((c) => c.value === String(v))?.label ?? String(v))
@@ -103,6 +115,8 @@ function describeFilter(condition: FilterCondition, fields: FilterFieldConfig[])
     valueLabel = config.choices.find((c) => c.value === condition.value)?.label ?? String(condition.value);
   } else if (typeof condition.value === "boolean") {
     valueLabel = condition.value ? "Yes" : "No";
+  } else if (config?.type === "date" || config?.type === "datetime") {
+    valueLabel = formatDateValue(String(condition.value), config.type);
   } else {
     valueLabel = String(condition.value);
   }
@@ -153,6 +167,8 @@ export default function FilterBar({ fields, filters, onChange }: FilterBarProps)
       const target = event.target as Node;
       if (triggerRef.current?.contains(target)) return;
       if (popoverRef.current?.contains(target)) return;
+      // Calendar / time popovers are portaled separately; clicks there are not "outside".
+      if (target instanceof Element && target.closest("[data-floating-popover]")) return;
       setIsOpen(false);
     }
     function handleKeyDown(event: KeyboardEvent) {
@@ -390,14 +406,14 @@ function FilterValueInput({
   if (!config) return null;
   const inputClass =
     "w-full rounded-md border border-line bg-paper px-2.5 py-2 text-sm text-fg outline-none transition focus:border-slate focus:bg-surface focus:ring-2 focus:ring-slate-light";
-  const dateInputType = config.type === "datetime" ? "datetime-local" : "date";
+  const isDateTime = config.type === "datetime";
+  const DateField = isDateTime ? DateTimeInput : DateInput;
 
-  if (operator === "between") {
+  if (operator === "between" && (config.type === "date" || isDateTime)) {
     return (
-      <div className="flex items-center gap-2">
-        <input type={dateInputType} value={from} onChange={(e) => onFromChange(e.target.value)} className={inputClass} />
-        <span className="text-xs text-ink-soft">to</span>
-        <input type={dateInputType} value={to} onChange={(e) => onToChange(e.target.value)} className={inputClass} />
+      <div className="space-y-2">
+        <DateField value={from} onChange={onFromChange} ariaLabel="From" placeholder="From" popoverZIndex={110} />
+        <DateField value={to} onChange={onToChange} ariaLabel="To" placeholder="To" popoverZIndex={110} />
       </div>
     );
   }
@@ -464,7 +480,7 @@ function FilterValueInput({
   }
 
   if (config.type === "date" || config.type === "datetime") {
-    return <input type={dateInputType} value={value} onChange={(e) => onValueChange(e.target.value)} className={inputClass} />;
+    return <DateField value={value} onChange={onValueChange} ariaLabel="Filter value" popoverZIndex={110} />;
   }
 
   return (

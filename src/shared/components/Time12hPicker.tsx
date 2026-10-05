@@ -179,7 +179,15 @@ function TimePanel({ value, onApply, onCancel }: TimePanelProps) {
   );
 }
 
-export default function Time12hPicker({ value, onChange }: { value: string; onChange: (value: string) => void }) {
+export default function Time12hPicker({
+  value,
+  onChange,
+  popoverZIndex,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  popoverZIndex?: number;
+}) {
   const anchorRef = useRef<HTMLDivElement>(null);
   const [isOpen, setIsOpen] = useState(false);
   const display = value ? to12Hour(value) : null;
@@ -201,7 +209,7 @@ export default function Time12hPicker({ value, onChange }: { value: string; onCh
       </button>
 
       {isOpen && (
-        <FloatingPopover anchorRef={anchorRef} onClose={() => setIsOpen(false)} width={272} ariaLabel="Choose time">
+        <FloatingPopover anchorRef={anchorRef} onClose={() => setIsOpen(false)} width={272} ariaLabel="Choose time" zIndex={popoverZIndex}>
           <TimePanel
             value={value}
             onCancel={() => setIsOpen(false)}
