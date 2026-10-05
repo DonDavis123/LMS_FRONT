@@ -38,8 +38,14 @@ function timeLabel(value: string): string {
 }
 
 /** Groups consecutive entries under one chip per calendar day, keeping their order. */
-function groupByDay(entries: UserAuditLogEntry[]): { label: string; items: UserAuditLogEntry[] }[] {
-  const groups: { key: string; label: string; items: UserAuditLogEntry[] }[] = [];
+interface DayGroup {
+  key: string;
+  label: string;
+  items: UserAuditLogEntry[];
+}
+
+function groupByDay(entries: UserAuditLogEntry[]): DayGroup[] {
+  const groups: DayGroup[] = [];
   for (const entry of entries) {
     const key = parseDate(entry.created_at)?.toDateString() ?? entry.created_at;
     const current = groups[groups.length - 1];
