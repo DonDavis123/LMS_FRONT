@@ -1,0 +1,225 @@
+/*
+ * Login experience motion.
+ * Scoped under `lp-login-*` so nothing leaks into the rest of the app, and it
+ * only reads the existing theme tokens from globals.css (--color-amber, etc).
+ *
+ * One orchestrated page-load sequence:
+ *   1. the pulse line draws across the pipeline        (0s  -> 2.2s)
+ *   2. each stage node lights up as the line reaches it (staggered via --i)
+ *   3. a single amber "lead" begins travelling the line (loops, slow)
+ *   4. the form fields settle in, one after the other   (staggered via --i)
+ */
+
+/* ── Pulse line ─────────────────────────────────────────────────────── */
+.lp-login-trace {
+  stroke-dasharray: 1000;
+  stroke-dashoffset: 1000;
+  animation: lp-login-draw 2.2s cubic-bezier(0.65, 0, 0.35, 1) 0.25s forwards;
+}
+
+@keyframes lp-login-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* A short dash on the same path (pathLength=1000) reads as a dot moving
+   along the line — no offset-path support needed. */
+.lp-login-lead {
+  stroke-dasharray: 0.1 1000;
+  stroke-dashoffset: 0;
+  opacity: 0;
+  animation:
+    lp-login-lead-fade 0.4s ease-out 2.5s forwards,
+    lp-login-lead-run 5.5s cubic-bezier(0.45, 0, 0.55, 1) 2.5s infinite;
+}
+
+@keyframes lp-login-lead-fade {
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes lp-login-lead-run {
+  from {
+    stroke-dashoffset: 0;
+  }
+  to {
+    stroke-dashoffset: -1000;
+  }
+}
+
+/* ── Stage nodes ────────────────────────────────────────────────────── */
+.lp-login-node {
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: lp-login-node-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  animation-delay: calc(0.5s + var(--i, 0) * 0.52s);
+}
+
+@keyframes lp-login-node-in {
+  from {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.lp-login-node-ring {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: lp-login-ring 3.2s ease-out infinite;
+  animation-delay: calc(2.6s + var(--i, 0) * 0.5s);
+  opacity: 0;
+}
+
+@keyframes lp-login-ring {
+  0% {
+    opacity: 0.55;
+    transform: scale(1);
+  }
+  70%,
+  100% {
+    opacity: 0;
+    transform: scale(2.6);
+  }
+}
+
+.lp-login-label {
+  opacity: 0;
+  animation: lp-login-fade 0.6s ease-out forwards;
+  animation-delay: calc(0.8s + var(--i, 0) * 0.52s);
+}
+
+@keyframes lp-login-fade {
+  to {
+    opacity: 1;
+  }
+}
+
+/* ── Copy + feature rows beside the pulse ───────────────────────────── */
+.lp-login-rise {
+  opacity: 0;
+  animation: lp-login-rise 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation-delay: calc(0.15s + var(--i, 0) * 0.09s);
+}
+
+@keyframes lp-login-rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ── Brand mark: a quiet heartbeat ──────────────────────────────────── */
+.lp-login-mark {
+  animation: lp-login-beat 2.8s ease-in-out 3s infinite;
+}
+
+@keyframes lp-login-beat {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(226, 163, 59, 0);
+  }
+  12% {
+    box-shadow: 0 0 0 6px rgba(226, 163, 59, 0.22);
+  }
+  24% {
+    box-shadow: 0 0 0 0 rgba(226, 163, 59, 0);
+  }
+  36% {
+    box-shadow: 0 0 0 4px rgba(226, 163, 59, 0.14);
+  }
+}
+
+/* ── Form: staggered settle-in ──────────────────────────────────────── */
+.lp-login-field-in {
+  opacity: 0;
+  animation: lp-login-rise 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation-delay: calc(0.1s + var(--i, 0) * 0.07s);
+}
+
+/* ── Field icon colour follows focus (no JS) ────────────────────────── */
+.lp-login-field:focus-within .lp-login-field-icon {
+  color: var(--color-amber-dark);
+}
+
+.dark .lp-login-field:focus-within .lp-login-field-icon {
+  color: var(--color-amber);
+}
+
+/* ── Submit button ──────────────────────────────────────────────────── */
+.lp-login-submit .lp-login-submit-arrow {
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.lp-login-submit:not(:disabled):hover .lp-login-submit-arrow {
+  transform: translateX(4px);
+}
+
+/* Sheen that sweeps across once on hover — signals the primary action. */
+.lp-login-submit::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    105deg,
+    transparent 35%,
+    rgba(255, 255, 255, 0.16) 50%,
+    transparent 65%
+  );
+  transform: translateX(-120%);
+  pointer-events: none;
+}
+
+.lp-login-submit:not(:disabled):hover::after {
+  transform: translateX(120%);
+  transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Success check draws itself. */
+.lp-login-check {
+  stroke-dasharray: 24;
+  stroke-dashoffset: 24;
+  animation: lp-login-check 0.35s ease-out 0.05s forwards;
+}
+
+@keyframes lp-login-check {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* ── Reduced motion: show the finished state, drop the loops ────────── */
+@media (prefers-reduced-motion: reduce) {
+  .lp-login-trace {
+    stroke-dashoffset: 0;
+    animation: none;
+  }
+  .lp-login-lead,
+  .lp-login-node-ring {
+    display: none;
+  }
+  .lp-login-node,
+  .lp-login-label,
+  .lp-login-rise,
+  .lp-login-field-in {
+    opacity: 1;
+    animation: none;
+  }
+  .lp-login-mark {
+    animation: none;
+  }
+  .lp-login-check {
+    stroke-dashoffset: 0;
+    animation: none;
+  }
+}
