@@ -1,20 +1,232 @@
 /*
- * Login experience motion.
- * Scoped under `lp-login-*` so nothing leaks into the rest of the app, and it
- * only reads the existing theme tokens from globals.css (--color-amber, etc).
+ * Auth screens (sign-in, forgot password, reset password).
+ * Everything is scoped under `lp-login-*`, `lp-brand-*`, `lp-hero-*` or
+ * `lp-plane`, and reads only the theme tokens from globals.css, so nothing
+ * leaks into the dashboard.
  *
- * One orchestrated page-load sequence:
- *   1. the pulse line draws across the pipeline        (0s  -> 2.2s)
- *   2. each stage node lights up as the line reaches it (staggered via --i)
- *   3. a single amber "lead" begins travelling the line (loops, slow)
- *   4. the form fields settle in, one after the other   (staggered via --i)
+ * Contents
+ *   1. Motion tokens          7. Quote rotator
+ *   2. Layout shell           8. Proof points
+ *   3. Brand mark (logo)      9. Compact header + stage rail (< lg)
+ *   4. Brand panel           10. Form card, fields, buttons
+ *   5. Headline reveal       11. Entrance helpers
+ *   6. 3D pipeline hero      12. Reduced motion
+ *
+ * Only transform and opacity are animated in loops and entrances (plus SVG
+ * stroke-dashoffset). Colour/border transitions are limited to user-triggered
+ * states such as focus and hover.
  */
 
-/* ── Pulse line ─────────────────────────────────────────────────────── */
-.lp-login-trace {
-  stroke-dasharray: 1000;
-  stroke-dashoffset: 1000;
-  animation: lp-login-draw 2.2s cubic-bezier(0.65, 0, 0.35, 1) 0.25s forwards;
+/* ── 1. Motion tokens ─────────────────────────────────────────────────── */
+.lp-login-root {
+  /* durations */
+  --lp-dur-fast: 180ms;
+  --lp-dur-base: 420ms;
+  --lp-dur-slow: 800ms;
+  --lp-dur-draw: 900ms;
+  --lp-dur-quote: 1200ms;
+  --lp-dur-ambient: 10s;
+  /* easings */
+  --lp-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --lp-ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --lp-ease-soft: cubic-bezier(0.4, 0, 0.2, 1);
+  /* one stagger step shared by every sequence */
+  --lp-stagger: 70ms;
+  /* entrance choreography: when each group starts (whole sequence ≈ 1.4s) */
+  --lp-delay-logo: 0ms;
+  --lp-delay-form: 250ms;
+  --lp-delay-headline: 300ms;
+  --lp-delay-hero: 450ms;
+  --lp-delay-quote: 800ms;
+  /* idle light starts once the hero has assembled */
+  --lp-delay-ambient: 1700ms;
+
+  /* focus ring colour: AA against both surfaces */
+  --lp-focus: color-mix(in srgb, var(--color-amber-dark) 78%, black);
+}
+.dark .lp-login-root {
+  --lp-focus: var(--color-amber);
+}
+
+/* ── 2. Layout shell ──────────────────────────────────────────────────── */
+.lp-login-root {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto 1fr;
+  min-height: 100dvh;
+  overflow-x: clip;
+}
+.lp-login-panel {
+  display: none;
+}
+@media (min-width: 1024px) {
+  .lp-login-root {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+    grid-template-rows: none;
+  }
+  .lp-login-panel {
+    display: flex;
+  }
+  .lp-login-compact {
+    display: none;
+  }
+}
+
+.lp-login-main {
+  display: flex;
+  /* Below lg the card sits just under the header; centred beside the panel. */
+  align-items: flex-start;
+  justify-content: center;
+  min-width: 0;
+  padding: clamp(1rem, 4vw, 2.5rem);
+  padding-top: clamp(1.25rem, 5dvh, 2.5rem);
+  padding-left: max(clamp(1rem, 4vw, 2.5rem), env(safe-area-inset-left, 0px));
+  padding-right: max(clamp(1rem, 4vw, 2.5rem), env(safe-area-inset-right, 0px));
+  padding-bottom: max(clamp(1rem, 4vw, 2.5rem), env(safe-area-inset-bottom, 0px));
+}
+@media (min-width: 1024px) {
+  .lp-login-main {
+    align-items: center;
+    padding-top: clamp(1rem, 4vw, 2.5rem);
+  }
+}
+@media (min-width: 1024px) and (max-height: 700px) {
+  .lp-login-main {
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+  }
+  .lp-login-footer {
+    margin-top: 0.75rem;
+  }
+}
+.lp-login-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 26rem;
+}
+.lp-login-footer {
+  margin-top: 1.5rem;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: var(--color-ink-soft);
+  text-align: center;
+}
+
+/* Theme toggle floats over the navy header on small screens, over the form
+   column on large ones. */
+.lp-login-toggle {
+  position: absolute;
+  z-index: 20;
+  top: max(0.5rem, env(safe-area-inset-top, 0px));
+  right: max(0.5rem, env(safe-area-inset-right, 0px));
+}
+.lp-login-toggle button {
+  width: 2.75rem;
+  height: 2.75rem;
+  color: rgb(255 255 255 / 0.85);
+}
+.lp-login-toggle button:hover {
+  color: #fff;
+  background-color: rgb(255 255 255 / 0.1);
+}
+.lp-login-toggle button:focus-visible {
+  outline: 2px solid var(--color-amber);
+  outline-offset: 2px;
+}
+@media (min-width: 1024px) {
+  .lp-login-toggle {
+    top: 1rem;
+    right: 1rem;
+  }
+  .lp-login-toggle button {
+    color: var(--color-ink-soft);
+  }
+  .lp-login-toggle button:hover {
+    color: var(--color-fg);
+    background-color: var(--color-paper);
+  }
+  .lp-login-toggle button:focus-visible {
+    outline-color: var(--lp-focus);
+  }
+}
+
+/* ── 3. Brand mark ────────────────────────────────────────────────────── */
+.lp-brand {
+  --lp-brand-accent: var(--color-amber-dark);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5em;
+  color: var(--color-fg);
+  font-size: 1.35rem;
+  line-height: 1;
+}
+.dark .lp-brand,
+.lp-brand[data-tone="inverse"] {
+  --lp-brand-accent: var(--color-amber);
+}
+.lp-brand[data-tone="inverse"] {
+  color: #fff;
+}
+.lp-brand[data-size="sm"] {
+  font-size: 1.125rem;
+}
+.lp-brand[data-size="lg"] {
+  font-size: 1.9rem;
+}
+.lp-brand-glyph {
+  flex: none;
+  overflow: visible;
+}
+.lp-brand-word {
+  display: inline-flex;
+  align-items: baseline;
+}
+.lp-brand-lead {
+  font-family: var(--font-serif);
+  font-weight: 500;
+  letter-spacing: -0.015em;
+}
+.lp-brand-pulse {
+  margin-left: 0.04em;
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: 0.86em;
+  letter-spacing: -0.02em;
+}
+.lp-brand-halo {
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+/* One-time draw-in, then a faint heartbeat every few seconds. */
+.lp-brand--animate .lp-brand-walls,
+.lp-brand--animate .lp-brand-pulse-line {
+  stroke-dasharray: 1 1;
+  stroke-dashoffset: 1;
+  animation: lp-login-draw var(--lp-dur-draw) var(--lp-ease-in-out)
+    var(--lp-delay-logo) forwards;
+}
+.lp-brand--animate .lp-brand-pulse-line {
+  animation-delay: calc(var(--lp-delay-logo) + 160ms);
+}
+.lp-brand--animate .lp-brand-dot {
+  transform-box: fill-box;
+  transform-origin: center;
+  opacity: 0;
+  animation: lp-login-pop var(--lp-dur-base) var(--lp-ease-out)
+    calc(var(--lp-delay-logo) + 760ms) forwards;
+}
+.lp-brand--animate .lp-brand-halo {
+  animation: lp-login-heartbeat 7s var(--lp-ease-soft) 2.6s infinite;
+}
+.lp-brand--animate .lp-brand-word {
+  opacity: 0;
+  animation: lp-login-fade var(--lp-dur-base) var(--lp-ease-out)
+    calc(var(--lp-delay-logo) + 280ms) forwards;
 }
 
 @keyframes lp-login-draw {
@@ -22,204 +234,1021 @@
     stroke-dashoffset: 0;
   }
 }
-
-/* A short dash on the same path (pathLength=1000) reads as a dot moving
-   along the line — no offset-path support needed. */
-.lp-login-lead {
-  stroke-dasharray: 0.1 1000;
-  stroke-dashoffset: 0;
-  opacity: 0;
-  animation:
-    lp-login-lead-fade 0.4s ease-out 2.5s forwards,
-    lp-login-lead-run 5.5s cubic-bezier(0.45, 0, 0.55, 1) 2.5s infinite;
-}
-
-@keyframes lp-login-lead-fade {
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes lp-login-lead-run {
-  from {
-    stroke-dashoffset: 0;
-  }
-  to {
-    stroke-dashoffset: -1000;
-  }
-}
-
-/* ── Stage nodes ────────────────────────────────────────────────────── */
-.lp-login-node {
-  opacity: 0;
-  transform-box: fill-box;
-  transform-origin: center;
-  animation: lp-login-node-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-  animation-delay: calc(0.5s + var(--i, 0) * 0.52s);
-}
-
-@keyframes lp-login-node-in {
+@keyframes lp-login-pop {
   from {
     opacity: 0;
-    transform: scale(0.4);
+    transform: scale(0.3);
   }
   to {
     opacity: 1;
     transform: scale(1);
   }
 }
-
-.lp-login-node-ring {
-  transform-box: fill-box;
-  transform-origin: center;
-  animation: lp-login-ring 3.2s ease-out infinite;
-  animation-delay: calc(2.6s + var(--i, 0) * 0.5s);
-  opacity: 0;
-}
-
-@keyframes lp-login-ring {
-  0% {
-    opacity: 0.55;
-    transform: scale(1);
-  }
-  70%,
-  100% {
-    opacity: 0;
-    transform: scale(2.6);
-  }
-}
-
-.lp-login-label {
-  opacity: 0;
-  animation: lp-login-fade 0.6s ease-out forwards;
-  animation-delay: calc(0.8s + var(--i, 0) * 0.52s);
-}
-
 @keyframes lp-login-fade {
   to {
     opacity: 1;
   }
 }
-
-/* ── Copy + feature rows beside the pulse ───────────────────────────── */
-.lp-login-rise {
-  opacity: 0;
-  animation: lp-login-rise 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  animation-delay: calc(0.15s + var(--i, 0) * 0.09s);
+@keyframes lp-login-heartbeat {
+  0%,
+  22%,
+  100% {
+    opacity: 0;
+    transform: scale(1);
+  }
+  4% {
+    opacity: 0.5;
+    transform: scale(1);
+  }
+  16% {
+    opacity: 0;
+    transform: scale(2.6);
+  }
 }
 
-@keyframes lp-login-rise {
-  from {
-    opacity: 0;
-    transform: translateY(14px);
-  }
+/* ── 4. Brand panel (≥ lg) ────────────────────────────────────────────── */
+.lp-login-panel {
+  container-type: inline-size;
+  position: relative;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: clamp(1.25rem, 3dvh, 2.25rem);
+  min-height: 100dvh;
+  padding: clamp(1.75rem, 4.2cqw, 3.5rem);
+  overflow: hidden;
+  color: #fff;
+  background:
+    radial-gradient(120% 70% at 85% -10%, rgb(76 103 133 / 0.38), transparent 62%),
+    var(--color-ink);
+}
+.lp-login-panel-body {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+}
+.lp-login-panel-foot {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(1rem, 2.4dvh, 1.75rem);
+}
+
+.lp-login-headline {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: clamp(1.9rem, 8.4cqw, 3.4rem);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+.lp-login-value {
+  max-width: 24rem;
+  margin: 1rem 0 0;
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  color: rgb(255 255 255 / 0.72);
+}
+
+/* ── 5. Headline line reveal ──────────────────────────────────────────── */
+.lp-login-line {
+  display: block;
+  overflow: hidden;
+  /* room for descenders so the mask doesn't clip them */
+  padding-bottom: 0.14em;
+  margin-bottom: -0.14em;
+}
+.lp-login-line-inner {
+  display: block;
+  transform: translateY(108%);
+  animation: lp-login-line-up var(--lp-dur-slow) var(--lp-ease-out) forwards;
+  animation-delay: calc(
+    var(--lp-delay-headline) + var(--i, 0) * var(--lp-stagger) * 2
+  );
+}
+@keyframes lp-login-line-up {
   to {
-    opacity: 1;
     transform: translateY(0);
   }
 }
 
-/* ── Brand mark: a quiet heartbeat ──────────────────────────────────── */
-.lp-login-mark {
-  animation: lp-login-beat 2.8s ease-in-out 3s infinite;
+/* ── 6. 3D pipeline hero ──────────────────────────────────────────────── */
+.lp-hero {
+  container-type: size;
+  position: relative;
+  /* Takes whatever height the panel has left, between a floor and a ceiling. */
+  flex: 1 1 0;
+  min-height: clamp(11rem, 26dvh, 17rem);
+  max-height: 28rem;
+  margin-top: clamp(0.5rem, 2dvh, 1.5rem);
+  perspective: 1100px;
+  perspective-origin: 50% 30%;
+  pointer-events: none;
 }
-
-@keyframes lp-login-beat {
-  0%,
-  100% {
-    box-shadow: 0 0 0 0 rgba(226, 163, 59, 0);
-  }
-  12% {
-    box-shadow: 0 0 0 6px rgba(226, 163, 59, 0.22);
-  }
-  24% {
-    box-shadow: 0 0 0 0 rgba(226, 163, 59, 0);
-  }
-  36% {
-    box-shadow: 0 0 0 4px rgba(226, 163, 59, 0.14);
-  }
+.lp-hero-tilt {
+  --lp-size: 58cqmin; /* plane edge */
+  --lp-gap: 9cqmin; /* distance between planes */
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  transform: rotateX(var(--lp-tilt-x, 0deg)) rotateY(var(--lp-tilt-y, 0deg));
+  will-change: transform;
 }
-
-/* ── Form: staggered settle-in ──────────────────────────────────────── */
-.lp-login-field-in {
+.lp-hero-iso {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: var(--lp-size);
+  height: var(--lp-size);
+  margin: calc(var(--lp-size) / -2) 0 0 calc(var(--lp-size) / -2);
+  transform-style: preserve-3d;
+  transform: translateY(3cqmin) rotateX(58deg) rotateZ(-30deg);
+}
+.lp-hero-floor {
+  position: absolute;
+  inset: -12%;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgb(0 0 0 / 0.42), transparent);
+  transform: translateZ(calc(var(--lp-gap) * -2.6));
+}
+.lp-plane {
+  position: absolute;
+  inset: 0;
+  border-radius: 5cqmin;
+  border: 1px solid rgb(255 255 255 / calc(0.14 + var(--k) * 0.045));
+  background: linear-gradient(
+    135deg,
+    rgb(255 255 255 / calc(0.07 + var(--k) * 0.02)),
+    rgb(255 255 255 / 0.02)
+  );
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.03);
+  transform: translateZ(calc(var(--lp-gap) * (var(--k) - 2)));
+  transform-style: preserve-3d;
+  will-change: transform, opacity;
+  animation: lp-hero-assemble 700ms var(--lp-ease-out) backwards;
+  animation-delay: calc(var(--lp-delay-hero) + var(--k) * var(--lp-stagger));
+}
+/* Faint grid on the base plane so depth reads without decoration. */
+.lp-plane[data-first="true"] {
+  background-image:
+    linear-gradient(rgb(255 255 255 / 0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(255 255 255 / 0.07) 1px, transparent 1px),
+    linear-gradient(135deg, rgb(255 255 255 / 0.1), rgb(255 255 255 / 0.02));
+  background-size: 10% 10%, 10% 10%, 100% 100%;
+}
+.lp-plane[data-last="true"] {
+  border-color: color-mix(in srgb, var(--color-amber) 70%, transparent);
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--color-amber) 24%, transparent),
+    color-mix(in srgb, var(--color-amber) 6%, transparent)
+  );
+}
+/* Light passing through: an amber wash that peaks as the orb reaches it. */
+.lp-plane::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
   opacity: 0;
-  animation: lp-login-rise 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  animation-delay: calc(0.1s + var(--i, 0) * 0.07s);
+  background: radial-gradient(
+    closest-side,
+    color-mix(in srgb, var(--color-amber) 62%, transparent),
+    transparent
+  );
+  animation: lp-hero-glow var(--lp-dur-ambient) linear infinite;
+  animation-delay: calc(
+    var(--lp-delay-ambient) - 0.2s + var(--k) * 0.675s
+  );
 }
-
-/* ── Field icon colour follows focus (no JS) ────────────────────────── */
-.lp-login-field:focus-within .lp-login-field-icon {
-  color: var(--color-amber-dark);
+.lp-plane-label {
+  position: absolute;
+  left: 5cqmin;
+  bottom: 2.4cqmin;
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: max(0.6875rem, 3.5cqmin);
+  letter-spacing: 0.01em;
+  color: rgb(255 255 255 / 0.82);
 }
-
-.dark .lp-login-field:focus-within .lp-login-field-icon {
+.lp-plane[data-last="true"] .lp-plane-label {
   color: var(--color-amber);
 }
 
-/* ── Submit button ──────────────────────────────────────────────────── */
-.lp-login-submit .lp-login-submit-arrow {
-  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+/* The vertical thread the light travels along. */
+.lp-hero-spine {
+  position: absolute;
+  top: 50%;
+  left: calc(50% - 0.2cqmin);
+  width: 0.4cqmin;
+  height: calc(var(--lp-gap) * 4);
+  border-radius: 1cqmin;
+  background: linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--color-amber) 15%, transparent),
+    color-mix(in srgb, var(--color-amber) 70%, transparent)
+  );
+  transform-origin: 50% 0;
+  transform: translateZ(calc(var(--lp-gap) * -2)) rotateX(90deg);
+  animation: lp-hero-fade-in var(--lp-dur-slow) var(--lp-ease-out) backwards;
+  animation-delay: calc(var(--lp-delay-hero) + 5 * var(--lp-stagger));
+}
+/* The lead: one soft light rising through the stages, then resting. */
+.lp-hero-orb {
+  position: absolute;
+  top: calc(50% - 5cqmin);
+  left: calc(50% - 5cqmin);
+  width: 10cqmin;
+  height: 10cqmin;
+  border-radius: 50%;
+  opacity: 0;
+  background: radial-gradient(
+    closest-side,
+    #fff 0%,
+    var(--color-amber) 28%,
+    color-mix(in srgb, var(--color-amber) 30%, transparent) 62%,
+    transparent 100%
+  );
+  transform: translateZ(calc(var(--lp-gap) * -2));
+  will-change: transform, opacity;
+  animation: lp-hero-travel var(--lp-dur-ambient) linear var(--lp-delay-ambient)
+    infinite;
 }
 
-.lp-login-submit:not(:disabled):hover .lp-login-submit-arrow {
-  transform: translateX(4px);
+/* Pause everything when the tab is hidden or the hero is off-screen. */
+.lp-hero[data-paused="true"] .lp-hero-orb,
+.lp-hero[data-paused="true"] .lp-plane::after {
+  animation-play-state: paused;
 }
 
-/* Sheen that sweeps across once on hover — signals the primary action. */
-.lp-login-submit::after {
+@keyframes lp-hero-assemble {
+  from {
+    opacity: 0;
+    transform: translateZ(calc(var(--lp-gap) * -2));
+  }
+}
+@keyframes lp-hero-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes lp-hero-travel {
+  0% {
+    opacity: 0;
+    transform: translateZ(calc(var(--lp-gap) * -2));
+  }
+  3% {
+    opacity: 1;
+  }
+  30% {
+    opacity: 1;
+    transform: translateZ(calc(var(--lp-gap) * 2));
+  }
+  38%,
+  100% {
+    opacity: 0;
+    transform: translateZ(calc(var(--lp-gap) * 2));
+  }
+}
+@keyframes lp-hero-glow {
+  0% {
+    opacity: 0;
+  }
+  4% {
+    opacity: 0.6;
+  }
+  16%,
+  100% {
+    opacity: 0;
+  }
+}
+
+/* ── 7. Quote rotator ─────────────────────────────────────────────────── */
+.lp-login-quote {
+  border-radius: 0.5rem;
+  outline: none;
+}
+.lp-login-quote:focus-visible {
+  outline: 2px solid var(--color-amber);
+  outline-offset: 6px;
+}
+/* All quotes share one grid cell, so the block is as tall as the longest. */
+.lp-login-quote-stage {
+  display: grid;
+}
+.lp-login-quote-item {
+  grid-area: 1 / 1;
+  margin: 0;
+  opacity: 0;
+  transform: translateY(6px);
+  transition:
+    opacity var(--lp-dur-quote) var(--lp-ease-soft),
+    transform var(--lp-dur-quote) var(--lp-ease-out);
+  pointer-events: none;
+}
+.lp-login-quote-item[data-active="true"] {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+.lp-login-quote-text {
+  max-width: 26rem;
+  text-wrap: balance;
+  margin: 0;
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: clamp(1.25rem, 5.4cqw, 1.75rem);
+  line-height: 1.3;
+  letter-spacing: -0.005em;
+  color: rgb(255 255 255 / 0.94);
+}
+.lp-login-quote-by {
+  margin-top: 0.625rem;
+  font-size: 0.8125rem;
+  color: rgb(255 255 255 / 0.62);
+}
+.lp-login-quote-ticks {
+  display: flex;
+  gap: 0.375rem;
+  margin-top: 1rem;
+}
+.lp-login-quote-tick {
+  width: 1.25rem;
+  height: 2px;
+  border-radius: 1px;
+  background: rgb(255 255 255 / 0.22);
+  transition: background-color var(--lp-dur-base) var(--lp-ease-soft);
+}
+.lp-login-quote-tick[data-active="true"] {
+  background: var(--color-amber);
+}
+
+/* ── 8. Proof points ──────────────────────────────────────────────────── */
+.lp-login-proof {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.lp-login-proof li {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.875rem;
+  color: rgb(255 255 255 / 0.78);
+}
+.lp-login-proof-icon {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.5rem;
+  color: var(--color-amber);
+  background: rgb(255 255 255 / 0.07);
+}
+/* Short laptop screens: keep the quote and hero, drop the secondary copy. */
+@media (min-width: 1024px) and (max-height: 840px) {
+  .lp-login-value {
+    display: none;
+  }
+}
+@media (min-width: 1024px) and (max-height: 760px) {
+  .lp-login-proof {
+    display: none;
+  }
+  .lp-hero {
+    min-height: 10.5rem;
+  }
+}
+
+/* ── 9. Compact header + stage rail (< lg) ────────────────────────────── */
+.lp-login-compact {
+  position: relative;
+  padding: calc(env(safe-area-inset-top, 0px) + 1.125rem)
+    max(1.25rem, env(safe-area-inset-right, 0px)) 1.25rem
+    max(1.25rem, env(safe-area-inset-left, 0px));
+  color: #fff;
+  background:
+    radial-gradient(120% 120% at 90% -30%, rgb(76 103 133 / 0.4), transparent 60%),
+    var(--color-ink);
+}
+.lp-login-compact-inner {
+  width: 100%;
+  max-width: 26rem;
+  margin: 0 auto;
+}
+.lp-login-compact-line {
+  margin: 0.875rem 0 0;
+  font-family: var(--font-serif);
+  font-size: clamp(1.25rem, 5vw, 1.5rem);
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  color: rgb(255 255 255 / 0.94);
+}
+.lp-rail {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  margin: 1.125rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+.lp-rail-track {
+  position: absolute;
+  top: 0.4375rem;
+  left: 10%;
+  right: 10%;
+  height: 2px;
+  overflow: hidden;
+  border-radius: 1px;
+  background: rgb(255 255 255 / 0.16);
+}
+.lp-rail-fill {
+  position: absolute;
+  inset: 0;
+  background: var(--color-amber);
+  transform: scaleX(0);
+  transform-origin: left;
+  animation: lp-rail-fill 1000ms var(--lp-ease-in-out) var(--lp-delay-hero) forwards;
+}
+.lp-rail-sweep {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.85), transparent);
+  transform: translateX(-100%);
+  animation: lp-rail-sweep var(--lp-dur-ambient) var(--lp-ease-in-out)
+    var(--lp-delay-ambient) infinite;
+}
+.lp-rail-step {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.6875rem;
+  line-height: 1;
+  color: rgb(255 255 255 / 0.72);
+}
+.lp-rail-dot {
+  width: 0.875rem;
+  height: 0.875rem;
+  border-radius: 50%;
+  border: 2px solid rgb(255 255 255 / 0.5);
+  background: var(--color-ink);
+  animation: lp-rail-dot 400ms var(--lp-ease-out) backwards;
+  animation-delay: calc(var(--lp-delay-hero) + var(--i) * 200ms);
+}
+.lp-rail-step[data-last="true"] .lp-rail-dot {
+  border-color: var(--color-amber);
+  background: var(--color-amber);
+}
+.lp-rail-step[data-last="true"] {
+  color: var(--color-amber);
+}
+@keyframes lp-rail-fill {
+  to {
+    transform: scaleX(1);
+  }
+}
+@keyframes lp-rail-dot {
+  from {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+}
+@keyframes lp-rail-sweep {
+  0%,
+  45%,
+  100% {
+    opacity: 0;
+    transform: translateX(-100%);
+  }
+  8% {
+    opacity: 1;
+  }
+  38% {
+    opacity: 1;
+    transform: translateX(100%);
+  }
+}
+/* Landscape phones and very short screens: drop the rail, keep the logo. */
+@media (max-height: 520px) {
+  .lp-rail {
+    display: none;
+  }
+  .lp-login-compact {
+    padding-bottom: 0.75rem;
+  }
+  .lp-login-compact-inner {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem 1.5rem;
+    flex-wrap: wrap;
+    padding-right: 3rem;
+  }
+  .lp-login-compact-line {
+    margin: 0;
+    font-size: 1.125rem;
+  }
+}
+@media (max-width: 359px) {
+  .lp-rail-step {
+    font-size: 0.625rem;
+  }
+}
+
+/* ── 10. Form card, fields, buttons ───────────────────────────────────── */
+.lp-login-card {
+  width: 100%;
+  padding: clamp(1.375rem, 5vw, 2.25rem);
+  border: 1px solid var(--color-line);
+  border-radius: 1.25rem;
+  background: var(--color-surface);
+  box-shadow: var(--lp-shadow);
+  transform-origin: 50% 100%;
+  animation: lp-login-card-in var(--lp-dur-slow) var(--lp-ease-out)
+    var(--lp-delay-form) backwards;
+  transition:
+    transform var(--lp-dur-base) var(--lp-ease-out),
+    opacity var(--lp-dur-base) var(--lp-ease-soft);
+}
+.lp-login-card[data-status="success"] {
+  transform: translateY(-4px);
+}
+.lp-login-card[data-status="success"] .lp-login-fields {
+  opacity: 0.55;
+}
+.lp-login-fields {
+  transition: opacity var(--lp-dur-base) var(--lp-ease-soft);
+}
+@keyframes lp-login-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+}
+
+.lp-login-title {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-weight: 500;
+  font-size: clamp(1.75rem, 1.4rem + 1.4vw, 2.25rem);
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  color: var(--color-fg);
+}
+.lp-login-lede {
+  margin: 0.625rem 0 0;
+  text-wrap: pretty;
+  font-size: 0.9375rem;
+  line-height: 1.55;
+  color: var(--color-ink-soft);
+}
+.lp-login-head {
+  margin-bottom: 1.75rem;
+}
+
+.lp-login-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.625rem;
+  margin-bottom: 1.25rem;
+  padding: 0.75rem 0.875rem;
+  border: 1px solid color-mix(in srgb, var(--color-danger) 30%, transparent);
+  border-radius: 0.75rem;
+  font-size: 0.875rem;
+  line-height: 1.45;
+  color: color-mix(in srgb, var(--color-danger) 80%, black);
+  background: var(--color-danger-soft);
+  animation: lp-login-shake 420ms var(--lp-ease-in-out);
+}
+.dark .lp-login-alert {
+  color: color-mix(in srgb, var(--color-danger) 50%, white);
+}
+.lp-login-alert svg {
+  flex: none;
+  margin-top: 1px;
+}
+.lp-login-notice {
+  margin: 0.875rem 0 0;
+  padding: 0.75rem 0.875rem;
+  border: 1px solid color-mix(in srgb, var(--color-success) 30%, transparent);
+  border-radius: 0.75rem;
+  font-size: 0.875rem;
+  line-height: 1.45;
+  color: color-mix(in srgb, var(--color-success) 80%, black);
+  background: var(--color-success-soft);
+}
+.dark .lp-login-notice {
+  color: color-mix(in srgb, var(--color-success) 45%, white);
+}
+@keyframes lp-login-shake {
+  10%,
+  90% {
+    transform: translateX(-1px);
+  }
+  20%,
+  80% {
+    transform: translateX(2px);
+  }
+  30%,
+  50%,
+  70% {
+    transform: translateX(-4px);
+  }
+  40%,
+  60% {
+    transform: translateX(4px);
+  }
+}
+
+.lp-login-field {
+  display: block;
+  margin-bottom: 1rem;
+}
+.lp-login-label {
+  display: block;
+  margin-bottom: 0.375rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-fg);
+}
+.lp-login-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-height: 3.25rem;
+  border: 1px solid var(--color-line);
+  border-radius: 0.875rem;
+  background: var(--color-surface);
+  transition:
+    border-color var(--lp-dur-fast) var(--lp-ease-soft),
+    box-shadow var(--lp-dur-base) var(--lp-ease-out);
+}
+.lp-login-box:focus-within {
+  border-color: var(--lp-focus);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-amber) 24%, transparent);
+}
+.lp-login-box[data-invalid="true"] {
+  border-color: var(--color-danger);
+}
+.lp-login-box[data-invalid="true"]:focus-within {
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-danger) 18%, transparent);
+}
+.lp-login-icon {
+  flex: none;
+  margin-left: 0.875rem;
+  color: var(--color-ink-soft);
+  transition: color var(--lp-dur-fast) var(--lp-ease-soft);
+}
+.lp-login-box:focus-within .lp-login-icon {
+  color: var(--lp-focus);
+}
+.lp-login-box[data-invalid="true"] .lp-login-icon {
+  color: var(--color-danger);
+}
+.lp-login-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 0.75rem 0.875rem 0.75rem 0.625rem;
+  border: 0;
+  outline: none;
+  background: transparent;
+  /* 16px stops iOS Safari zooming the page on focus */
+  font: inherit;
+  font-size: 1rem;
+  color: var(--color-fg);
+}
+.lp-login-input::placeholder {
+  color: color-mix(in srgb, var(--color-ink-soft) 70%, transparent);
+}
+.lp-login-input:disabled {
+  opacity: 0.7;
+}
+.lp-login-trailing {
+  display: flex;
+  flex: none;
+  align-items: center;
+  padding-right: 0.25rem;
+}
+.lp-login-icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.75rem;
+  height: 2.75rem;
+  padding: 0 0.5rem;
+  border: 0;
+  border-radius: 0.625rem;
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-ink-soft);
+  background: transparent;
+  cursor: pointer;
+  transition:
+    background-color var(--lp-dur-fast) var(--lp-ease-soft),
+    color var(--lp-dur-fast) var(--lp-ease-soft),
+    transform var(--lp-dur-fast) var(--lp-ease-out);
+}
+.lp-login-icon-btn:active {
+  transform: scale(0.92);
+}
+.lp-login-icon-btn:focus-visible,
+.lp-login-btn:focus-visible,
+.lp-login-link:focus-visible {
+  outline: 2px solid var(--lp-focus);
+  outline-offset: 2px;
+}
+
+.lp-login-options {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0 1rem;
+  margin: 0.5rem 0 1.25rem;
+}
+.lp-login-remember {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.625rem;
+  min-height: 2.75rem;
+  font-size: 0.875rem;
+  color: var(--color-ink-soft);
+  cursor: pointer;
+}
+.lp-login-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+.lp-login-checkbox {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  border: 1px solid var(--color-ink-soft);
+  border-radius: 0.375rem;
+  color: transparent;
+  background: var(--color-surface);
+  transition:
+    background-color var(--lp-dur-fast) var(--lp-ease-soft),
+    border-color var(--lp-dur-fast) var(--lp-ease-soft);
+}
+.lp-login-checkbox svg {
+  width: 0.75rem;
+  height: 0.75rem;
+}
+.lp-login-sr:checked + .lp-login-checkbox {
+  border-color: var(--color-ink);
+  background: var(--color-ink);
+  color: var(--color-amber);
+}
+.dark .lp-login-sr:checked + .lp-login-checkbox {
+  border-color: var(--color-amber);
+  background: var(--color-amber);
+  color: var(--color-ink);
+}
+.lp-login-sr:focus-visible + .lp-login-checkbox {
+  outline: 2px solid var(--lp-focus);
+  outline-offset: 2px;
+}
+
+.lp-login-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-slate);
+  text-decoration: none;
+}
+.lp-login-link--block {
+  margin-top: 0.5rem;
+}
+.lp-login-link--center {
+  display: flex;
+  justify-content: center;
+  margin-top: 0.5rem;
+}
+.lp-login-title + .lp-login-alert {
+  margin-top: 0.875rem;
+}
+.dark .lp-login-link {
+  color: color-mix(in srgb, var(--color-slate) 55%, white);
+}
+
+.lp-login-btn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  min-height: 3.25rem;
+  overflow: hidden;
+  border: 0;
+  border-radius: 0.875rem;
+  font: inherit;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #fff;
+  background: var(--color-ink);
+  box-shadow: 0 10px 22px -12px rgb(18 33 58 / 0.6);
+  cursor: pointer;
+  transition:
+    background-color var(--lp-dur-fast) var(--lp-ease-soft),
+    transform var(--lp-dur-fast) var(--lp-ease-out);
+}
+.dark .lp-login-btn {
+  color: var(--color-ink);
+  background: var(--color-amber);
+  box-shadow: none;
+}
+.lp-login-btn:active:not(:disabled) {
+  transform: scale(0.985);
+}
+.lp-login-btn:disabled {
+  cursor: progress;
+}
+.lp-login-field + .lp-login-btn {
+  margin-top: 0.5rem;
+}
+/* Spinner (shared component) follows the button's text colour in both themes. */
+.lp-login-btn [role="status"] {
+  border-color: color-mix(in srgb, currentColor 25%, transparent);
+  border-top-color: currentColor;
+}
+.lp-login-btn-arrow {
+  transition: transform var(--lp-dur-base) var(--lp-ease-out);
+}
+/* Progress shimmer while the request is in flight. */
+.lp-login-btn[data-status="submitting"]::before {
   content: "";
   position: absolute;
   inset: 0;
   background: linear-gradient(
-    105deg,
-    transparent 35%,
-    rgba(255, 255, 255, 0.16) 50%,
-    transparent 65%
+    100deg,
+    transparent 30%,
+    rgb(255 255 255 / 0.18) 50%,
+    transparent 70%
   );
-  transform: translateX(-120%);
-  pointer-events: none;
+  transform: translateX(-100%);
+  animation: lp-login-shimmer 1.3s var(--lp-ease-in-out) infinite;
+}
+.dark .lp-login-btn[data-status="submitting"]::before {
+  background: linear-gradient(
+    100deg,
+    transparent 30%,
+    rgb(255 255 255 / 0.32) 50%,
+    transparent 70%
+  );
+}
+@keyframes lp-login-shimmer {
+  to {
+    transform: translateX(100%);
+  }
+}
+@media (hover: hover) {
+  .lp-login-btn:hover:not(:disabled) {
+    background: var(--color-ink-2);
+  }
+  .dark .lp-login-btn:hover:not(:disabled) {
+    background: var(--color-amber-dark);
+  }
+  .lp-login-btn:hover:not(:disabled) .lp-login-field + .lp-login-btn {
+  margin-top: 0.5rem;
+}
+/* Spinner (shared component) follows the button's text colour in both themes. */
+.lp-login-btn [role="status"] {
+  border-color: color-mix(in srgb, currentColor 25%, transparent);
+  border-top-color: currentColor;
+}
+.lp-login-btn-arrow {
+    transform: translateX(4px);
+  }
+  .lp-login-box:hover:not(:focus-within):not([data-invalid="true"]) {
+    border-color: color-mix(in srgb, var(--color-slate) 55%, transparent);
+  }
+  .lp-login-icon-btn:hover {
+    color: var(--color-fg);
+    background: var(--color-paper);
+  }
+  .lp-login-link:hover {
+    color: var(--color-fg);
+  }
 }
 
-.lp-login-submit:not(:disabled):hover::after {
-  transform: translateX(120%);
-  transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-/* Success check draws itself. */
-.lp-login-check {
+.lp-login-check-path {
   stroke-dasharray: 24;
   stroke-dashoffset: 24;
-  animation: lp-login-check 0.35s ease-out 0.05s forwards;
+  animation: lp-login-draw-check 360ms var(--lp-ease-out) 50ms forwards;
 }
-
-@keyframes lp-login-check {
+@keyframes lp-login-draw-check {
   to {
     stroke-dashoffset: 0;
   }
 }
 
-/* ── Reduced motion: show the finished state, drop the loops ────────── */
-@media (prefers-reduced-motion: reduce) {
-  .lp-login-trace {
-    stroke-dashoffset: 0;
-    animation: none;
+.lp-login-help {
+  margin: 1.5rem 0 0;
+  text-wrap: balance;
+  font-size: 0.8125rem;
+  line-height: 1.55;
+  text-align: center;
+  color: var(--color-ink-soft);
+}
+.lp-login-caps {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  margin: -0.25rem 0 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: color-mix(in srgb, var(--color-amber-dark) 80%, black);
+  animation: lp-login-rise var(--lp-dur-base) var(--lp-ease-out) backwards;
+}
+.dark .lp-login-caps {
+  color: var(--color-amber);
+}
+
+/* ── 11. Entrance helpers ─────────────────────────────────────────────── */
+.lp-login-rise {
+  animation: lp-login-rise var(--lp-dur-slow) var(--lp-ease-out) backwards;
+  animation-delay: calc(var(--lp-at, 0ms) + var(--i, 0) * var(--lp-stagger));
+}
+.lp-login-at-headline {
+  --lp-at: calc(var(--lp-delay-headline) + 300ms);
+}
+.lp-login-at-quote {
+  --lp-at: var(--lp-delay-quote);
+}
+.lp-login-at-form {
+  --lp-at: calc(var(--lp-delay-form) + 250ms);
+}
+@keyframes lp-login-rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
   }
-  .lp-login-lead,
-  .lp-login-node-ring {
+}
+
+/* ── 12. Reduced motion: a finished, static composition ───────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .lp-login-root *,
+  .lp-login-root *::before,
+  .lp-login-root *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+  .lp-brand--animate .lp-brand-walls,
+  .lp-brand--animate .lp-brand-pulse-line {
+    stroke-dasharray: none;
+    stroke-dashoffset: 0;
+  }
+  .lp-brand--animate .lp-brand-dot,
+  .lp-brand--animate .lp-brand-word {
+    opacity: 1;
+  }
+  .lp-brand-halo {
     display: none;
   }
-  .lp-login-node,
-  .lp-login-label,
-  .lp-login-rise,
-  .lp-login-field-in {
+  .lp-login-line-inner {
+    transform: none;
+  }
+  /* The light rests on the top stage; nothing travels. */
+  .lp-hero-orb {
     opacity: 1;
-    animation: none;
+    transform: translateZ(calc(var(--lp-gap) * 2));
   }
-  .lp-login-mark {
-    animation: none;
+  .lp-hero-tilt {
+    transform: none;
   }
-  .lp-login-check {
+  .lp-rail-fill {
+    transform: scaleX(1);
+  }
+  .lp-rail-sweep {
+    display: none;
+  }
+  .lp-login-quote-item:not([data-active="true"]) {
+    opacity: 0;
+  }
+  .lp-login-check-path {
     stroke-dashoffset: 0;
-    animation: none;
+  }
+  .lp-login-btn[data-status="submitting"]::before {
+    display: none;
   }
 }
