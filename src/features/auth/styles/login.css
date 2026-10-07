@@ -10,7 +10,8 @@
  *   3. Brand mark (logo)      9. Compact header + stage rail (< lg)
  *   4. Brand panel           10. Form card, fields, buttons
  *   5. Headline reveal       11. Entrance helpers
- *   6. 3D pipeline hero      12. Reduced motion
+ *   6. 3D pipeline hero      11b. Sign-in screen pieces (current components)
+ *                            12. Reduced motion
  *
  * Only transform and opacity are animated in loops and entrances (plus SVG
  * stroke-dashoffset). Colour/border transitions are limited to user-triggered
@@ -53,7 +54,6 @@
   position: relative;
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  grid-template-rows: auto 1fr;
   min-height: 100dvh;
   overflow-x: clip;
 }
@@ -61,9 +61,9 @@
   display: none;
 }
 @media (min-width: 1024px) {
+  /* Five equal tracks: AuthShell's brand panel spans 2, the form column 3. */
   .lp-login-root {
-    grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
-    grid-template-rows: none;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
   }
   .lp-login-panel {
     display: flex;
@@ -865,17 +865,8 @@
   }
 }
 
-.lp-login-field {
-  display: block;
-  margin-bottom: 1rem;
-}
-.lp-login-label {
-  display: block;
-  margin-bottom: 0.375rem;
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--color-fg);
-}
+/* `.lp-login-field` (AuthField's input wrapper) and `.lp-login-label` (a
+   PipelinePulse stage label) are styled in section 11b. */
 .lp-login-box {
   position: relative;
   display: flex;
@@ -1128,15 +1119,8 @@
   .dark .lp-login-btn:hover:not(:disabled) {
     background: var(--color-amber-dark);
   }
-  .lp-login-btn:hover:not(:disabled) .lp-login-field + .lp-login-btn {
-  margin-top: 0.5rem;
-}
-/* Spinner (shared component) follows the button's text colour in both themes. */
-.lp-login-btn [role="status"] {
-  border-color: color-mix(in srgb, currentColor 25%, transparent);
-  border-top-color: currentColor;
-}
-.lp-login-btn-arrow {
+  .lp-login-btn:hover:not(:disabled) .lp-login-btn-arrow,
+  .lp-login-submit:hover:not(:disabled) .lp-login-submit-arrow {
     transform: translateX(4px);
   }
   .lp-login-box:hover:not(:focus-within):not([data-invalid="true"]) {
@@ -1202,6 +1186,147 @@
   from {
     opacity: 0;
     transform: translateY(12px);
+  }
+}
+
+/* ── 11b. Sign-in screen pieces ───────────────────────────────────────── */
+/* Hooks used by LoginForm, AuthField, BrandMark and PipelinePulse. Layout and
+   colour come from Tailwind utilities in those components; this block adds
+   only the motion and focus behaviour utilities can't express. Every base
+   style is the finished, static state, so with animation off (section 12)
+   nothing is left half-drawn or hidden. */
+
+/* Form entrance: one rise per element, staggered through --i. */
+.lp-login-field-in {
+  animation: lp-login-rise var(--lp-dur-base) var(--lp-ease-out) backwards;
+  animation-delay: calc(var(--lp-delay-form) + var(--i, 0) * var(--lp-stagger));
+}
+
+/* AuthField: the leading icon takes the focus colour with its input. */
+.lp-login-field-icon {
+  transition: color var(--lp-dur-fast) var(--lp-ease-soft);
+}
+.lp-login-field:focus-within .lp-login-field-icon {
+  color: var(--lp-focus);
+}
+
+/* BrandMark: a faint halo that swells off the tile every few seconds. */
+.lp-login-mark {
+  position: relative;
+  isolation: isolate;
+}
+.lp-login-mark::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: var(--color-amber);
+  opacity: 0;
+  animation: lp-login-halo 3.6s var(--lp-ease-soft) 1.6s infinite;
+}
+@keyframes lp-login-halo {
+  0% {
+    opacity: 0.4;
+    transform: scale(1);
+  }
+  65%,
+  100% {
+    opacity: 0;
+    transform: scale(1.6);
+  }
+}
+
+/* Sign-in button: the arrow eases right on hover; the check draws on success. */
+.lp-login-submit-arrow {
+  transition: transform var(--lp-dur-base) var(--lp-ease-out);
+}
+.lp-login-check {
+  stroke-dasharray: 24;
+  animation: lp-login-check-draw 360ms var(--lp-ease-out) 50ms backwards;
+}
+@keyframes lp-login-check-draw {
+  from {
+    stroke-dashoffset: 24;
+  }
+}
+
+/* PipelinePulse. Paths use pathLength="1000", so dash values are in 0-1000.
+   Timeline: the line draws (0.4s-2.8s), each stage lights as it is reached,
+   then one lead keeps travelling the route. */
+.lp-login-trace {
+  stroke-dasharray: 1000;
+  animation: lp-login-trace-draw 2.4s var(--lp-ease-in-out) 0.4s backwards;
+}
+@keyframes lp-login-trace-draw {
+  from {
+    stroke-dashoffset: 1000;
+  }
+}
+
+.lp-login-lead {
+  /* a near-zero dash + round caps = a dot that rides the path */
+  stroke-dasharray: 0.01 999.99;
+  opacity: 0;
+  animation: lp-login-lead-run 6s var(--lp-ease-in-out) 3s infinite;
+}
+@keyframes lp-login-lead-run {
+  0% {
+    stroke-dashoffset: 0;
+    opacity: 0;
+  }
+  6% {
+    opacity: 1;
+  }
+  62% {
+    stroke-dashoffset: -1000;
+    opacity: 1;
+  }
+  70%,
+  100% {
+    stroke-dashoffset: -1000;
+    opacity: 0;
+  }
+}
+
+.lp-login-node {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: lp-login-node-in 500ms var(--lp-ease-out) backwards;
+  animation-delay: calc(0.75s + var(--i, 0) * 0.55s);
+}
+@keyframes lp-login-node-in {
+  from {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+}
+
+.lp-login-node-ring {
+  transform-box: fill-box;
+  transform-origin: center;
+  opacity: 0;
+  animation: lp-login-node-ring 1.2s var(--lp-ease-out);
+  animation-delay: calc(0.85s + var(--i, 0) * 0.55s);
+}
+@keyframes lp-login-node-ring {
+  from {
+    opacity: 0.8;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(3.2);
+  }
+}
+
+.lp-login-label {
+  animation: lp-login-label-in var(--lp-dur-base) var(--lp-ease-out) backwards;
+  animation-delay: calc(0.95s + var(--i, 0) * 0.55s);
+}
+@keyframes lp-login-label-in {
+  from {
+    opacity: 0;
   }
 }
 

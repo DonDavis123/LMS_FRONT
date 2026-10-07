@@ -16,8 +16,17 @@ const HIGHLIGHTS: Highlight[] = [
 
 const stagger = (i: number): CSSProperties => ({ ["--i" as string]: i });
 
-/** Brand panel shown beside the sign-in form on large screens. */
-export default function LoginShowcase() {
+interface LoginShowcaseProps {
+  /**
+   * Drop the pipeline graphic and highlight list, keeping the brand,
+   * headline and one-line pitch. For single-task screens such as forgot and
+   * reset password.
+   */
+  compact?: boolean;
+}
+
+/** Brand panel shown beside the auth forms on large screens. */
+export default function LoginShowcase({ compact = false }: LoginShowcaseProps) {
   return (
     <aside className="relative hidden flex-col justify-between overflow-hidden bg-ink p-12 text-white lg:col-span-2 lg:flex xl:p-14">
       <div className="lp-login-rise" style={stagger(0)}>
@@ -39,22 +48,26 @@ export default function LoginShowcase() {
           activities and reminders together.
         </p>
 
-        <PipelinePulse className="mt-10 w-full max-w-lg" />
+        {!compact && (
+          <>
+            <PipelinePulse className="mt-10 w-full max-w-lg" />
 
-        <ul className="mt-8 space-y-3.5">
-          {HIGHLIGHTS.map(({ icon: Icon, text }, i) => (
-            <li
-              key={text}
-              className="lp-login-rise flex items-center gap-3 text-sm text-white/75"
-              style={stagger(i + 3)}
-            >
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/[0.07] text-amber">
-                <Icon size={16} aria-hidden="true" />
-              </span>
-              {text}
-            </li>
-          ))}
-        </ul>
+            <ul className="mt-8 space-y-3.5">
+              {HIGHLIGHTS.map(({ icon: Icon, text }, i) => (
+                <li
+                  key={text}
+                  className="lp-login-rise flex items-center gap-3 text-sm text-white/75"
+                  style={stagger(i + 3)}
+                >
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/[0.07] text-amber">
+                    <Icon size={16} aria-hidden="true" />
+                  </span>
+                  {text}
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
       </div>
 
       <p className="text-xs text-white/40">
