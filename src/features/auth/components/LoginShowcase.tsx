@@ -1,7 +1,7 @@
 import type { CSSProperties } from "react";
 import { Bell, CalendarCheck, Users, type LucideIcon } from "lucide-react";
 import BrandMark from "@/features/auth/components/BrandMark";
-import PipelinePulse from "@/features/auth/components/PipelinePulse";
+import PipelineFlow from "@/features/auth/components/PipelineFlow";
 
 interface Highlight {
   icon: LucideIcon;
@@ -50,7 +50,7 @@ export default function LoginShowcase({ compact = false }: LoginShowcaseProps) {
 
         {!compact && (
           <>
-            <PipelinePulse className="mt-10 w-full max-w-lg" />
+            <PipelineFlow className="mt-10" />
 
             <ul className="mt-8 space-y-3.5">
               {HIGHLIGHTS.map(({ icon: Icon, text }, i) => (

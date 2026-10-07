@@ -866,7 +866,7 @@
 }
 
 /* `.lp-login-field` (AuthField's input wrapper) and `.lp-login-label` (a
-   PipelinePulse stage label) are styled in section 11b. */
+   PipelineFlow stage label) are styled in section 11b. */
 .lp-login-box {
   position: relative;
   display: flex;
@@ -1190,7 +1190,7 @@
 }
 
 /* ── 11b. Sign-in screen pieces ───────────────────────────────────────── */
-/* Hooks used by LoginForm, AuthField, BrandMark and PipelinePulse. Layout and
+/* Hooks used by LoginForm, AuthField, BrandMark and PipelineFlow. Layout and
    colour come from Tailwind utilities in those components; this block adds
    only the motion and focus behaviour utilities can't express. Every base
    style is the finished, static state, so with animation off (section 12)
@@ -1210,30 +1210,56 @@
   color: var(--lp-focus);
 }
 
-/* BrandMark: a faint halo that swells off the tile every few seconds. */
-.lp-login-mark {
+/* BrandMark: three bars grow in, then a soft light sweeps across the tile.
+   Base styles are the finished state, so animation-off shows a complete logo. */
+.lp-logo {
   position: relative;
+  overflow: hidden;
   isolation: isolate;
 }
-.lp-login-mark::after {
+.lp-logo-bar {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: lp-logo-grow 600ms var(--lp-ease-out) backwards;
+  animation-delay: calc(var(--lp-delay-logo, 0ms) + var(--b, 0) * 110ms);
+}
+.lp-logo::after {
   content: "";
   position: absolute;
-  inset: 0;
-  z-index: -1;
-  border-radius: inherit;
-  background: var(--color-amber);
+  inset: -20% 0;
+  z-index: 1;
+  pointer-events: none;
   opacity: 0;
-  animation: lp-login-halo 3.6s var(--lp-ease-soft) 1.6s infinite;
+  background: linear-gradient(
+    105deg,
+    transparent 35%,
+    rgb(255 255 255 / 0.55) 50%,
+    transparent 65%
+  );
+  transform: translateX(-120%);
+  animation: lp-logo-sweep 6s var(--lp-ease-in-out) 1.8s infinite;
 }
-@keyframes lp-login-halo {
-  0% {
-    opacity: 0.4;
-    transform: scale(1);
+@keyframes lp-logo-grow {
+  from {
+    transform: scaleY(0);
   }
-  65%,
+}
+@keyframes lp-logo-sweep {
+  0% {
+    opacity: 0;
+    transform: translateX(-120%);
+  }
+  6% {
+    opacity: 1;
+  }
+  22% {
+    opacity: 1;
+    transform: translateX(120%);
+  }
+  23%,
   100% {
     opacity: 0;
-    transform: scale(1.6);
+    transform: translateX(120%);
   }
 }
 
@@ -1251,82 +1277,150 @@
   }
 }
 
-/* PipelinePulse. Paths use pathLength="1000", so dash values are in 0-1000.
-   Timeline: the line draws (0.4s-2.8s), each stage lights as it is reached,
-   then one lead keeps travelling the route. */
-.lp-login-trace {
-  stroke-dasharray: 1000;
-  animation: lp-login-trace-draw 2.4s var(--lp-ease-in-out) 0.4s backwards;
+/* PipelineFlow: a board of four stage columns with lead cards moving across.
+   All sizes are container-query units of .lp-flow (the board's own width), so
+   the board and its motion scale with the brand panel on every display.
+   Only transform and opacity are animated. */
+.lp-flow {
+  container-type: inline-size;
+  width: 100%;
+  max-width: 32rem;
 }
-@keyframes lp-login-trace-draw {
-  from {
-    stroke-dashoffset: 1000;
-  }
+.lp-flow-head {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin-bottom: clamp(0.375rem, 2cqw, 0.625rem);
 }
-
-.lp-login-lead {
-  /* a near-zero dash + round caps = a dot that rides the path */
-  stroke-dasharray: 0.01 999.99;
-  opacity: 0;
-  animation: lp-login-lead-run 6s var(--lp-ease-in-out) 3s infinite;
+.lp-flow-head span {
+  padding: 0 0.125rem;
+  text-align: center;
+  text-wrap: balance;
+  font-size: clamp(0.625rem, 2.7cqw, 0.75rem);
+  font-weight: 600;
+  line-height: 1.25;
+  color: rgb(255 255 255 / 0.6);
 }
-@keyframes lp-login-lead-run {
+.lp-flow-head span[data-last="true"] {
+  color: var(--color-amber);
+}
+.lp-flow-lanes {
+  position: relative;
+  display: grid;
+  gap: clamp(0.375rem, 2cqw, 0.625rem);
+}
+/* Column dividers behind the lanes. */
+.lp-flow-lanes::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: linear-gradient(270deg, rgb(255 255 255 / 0.1) 1px, transparent 1px);
+  background-size: 25% 100%;
+}
+.lp-flow-lane {
+  position: relative;
+  height: clamp(1.75rem, 8.6cqw, 2.75rem);
+  border-radius: clamp(0.5rem, 2.4cqw, 0.75rem);
+  background: rgb(255 255 255 / 0.05);
+}
+.lp-flow-chip {
+  position: absolute;
+  top: 12%;
+  bottom: 12%;
+  left: 1.2cqw;
+  width: 22.6cqw;
+  display: flex;
+  align-items: center;
+  gap: 2cqw;
+  padding: 0 2.4cqw;
+  overflow: hidden;
+  border: 1px solid rgb(255 255 255 / 0.22);
+  border-radius: clamp(0.375rem, 1.8cqw, 0.625rem);
+  background: rgb(255 255 255 / 0.14);
+  /* finished state: the card rests in the Converted column */
+  transform: translateX(75cqw);
+  will-change: transform, opacity;
+  animation: lp-flow-move 9s var(--lp-ease-in-out) infinite backwards;
+  animation-delay: calc(var(--lp-delay-ambient, 1700ms) + var(--lane, 0) * 1.6s);
+}
+/* Amber wash that fades in as the card reaches Converted. */
+.lp-flow-chip::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: color-mix(in srgb, var(--color-amber) 38%, transparent);
+  animation: lp-flow-won 9s linear infinite backwards;
+  animation-delay: inherit;
+}
+.lp-flow-chip-dot,
+.lp-flow-chip-line {
+  position: relative;
+  flex: none;
+  background: rgb(255 255 255 / 0.85);
+}
+.lp-flow-chip-dot {
+  width: clamp(0.5rem, 2.8cqw, 0.875rem);
+  height: clamp(0.5rem, 2.8cqw, 0.875rem);
+  border-radius: 50%;
+}
+.lp-flow-chip-line {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: clamp(0.1875rem, 1cqw, 0.3125rem);
+  border-radius: 999px;
+  opacity: 0.55;
+}
+@keyframes lp-flow-move {
   0% {
-    stroke-dashoffset: 0;
     opacity: 0;
+    transform: translateX(0) scale(0.92);
   }
-  6% {
+  6%,
+  20% {
     opacity: 1;
+    transform: translateX(0) scale(1);
   }
-  62% {
-    stroke-dashoffset: -1000;
+  30%,
+  44% {
     opacity: 1;
+    transform: translateX(25cqw) scale(1);
   }
-  70%,
+  54%,
+  68% {
+    opacity: 1;
+    transform: translateX(50cqw) scale(1);
+  }
+  78%,
+  90% {
+    opacity: 1;
+    transform: translateX(75cqw) scale(1);
+  }
+  98%,
   100% {
-    stroke-dashoffset: -1000;
     opacity: 0;
+    transform: translateX(75cqw) scale(1);
+  }
+}
+@keyframes lp-flow-won {
+  0%,
+  70% {
+    opacity: 0;
+  }
+  80%,
+  100% {
+    opacity: 1;
   }
 }
 
-.lp-login-node {
-  transform-box: fill-box;
-  transform-origin: center;
-  animation: lp-login-node-in 500ms var(--lp-ease-out) backwards;
-  animation-delay: calc(0.75s + var(--i, 0) * 0.55s);
-}
-@keyframes lp-login-node-in {
-  from {
-    opacity: 0;
-    transform: scale(0.4);
+/* Short laptop screens: the board shrinks to two lanes, then goes away. */
+@media (min-width: 1024px) and (max-height: 820px) {
+  .lp-flow-lane[data-lane="2"] {
+    display: none;
   }
 }
-
-.lp-login-node-ring {
-  transform-box: fill-box;
-  transform-origin: center;
-  opacity: 0;
-  animation: lp-login-node-ring 1.2s var(--lp-ease-out);
-  animation-delay: calc(0.85s + var(--i, 0) * 0.55s);
-}
-@keyframes lp-login-node-ring {
-  from {
-    opacity: 0.8;
-    transform: scale(1);
-  }
-  to {
-    opacity: 0;
-    transform: scale(3.2);
-  }
-}
-
-.lp-login-label {
-  animation: lp-login-label-in var(--lp-dur-base) var(--lp-ease-out) backwards;
-  animation-delay: calc(0.95s + var(--i, 0) * 0.55s);
-}
-@keyframes lp-login-label-in {
-  from {
-    opacity: 0;
+@media (min-width: 1024px) and (max-height: 700px) {
+  .lp-flow {
+    display: none;
   }
 }
 
@@ -1372,6 +1466,16 @@
   }
   .lp-login-check-path {
     stroke-dashoffset: 0;
+  }
+  .lp-logo::after {
+    display: none;
+  }
+  .lp-flow-chip {
+    opacity: 1;
+    transform: translateX(75cqw);
+  }
+  .lp-flow-chip::before {
+    opacity: 1;
   }
   .lp-login-btn[data-status="submitting"]::before {
     display: none;
