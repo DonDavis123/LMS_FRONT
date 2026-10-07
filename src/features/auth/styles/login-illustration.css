@@ -1,0 +1,262 @@
+/*
+ * Login hero illustration (components/LoginIllustration.tsx).
+ *
+ * Motion tokens (--lp-ease-*, --lp-stagger, --lp-delay-hero) come from
+ * .lp-login-root in login.css; fallbacks are given so this file also works
+ * on its own. Loops share one cycle (--lp-ill-cycle) so bars, checks and
+ * rings stay in step, like the reference animation.
+ *
+ * Only transform, opacity and SVG stroke-dashoffset are animated.
+ */
+
+.lp-ill {
+  --lp-ill-cycle: 7s;
+  --lp-ill-tap: 3.5s;
+  position: relative;
+  border-radius: 1.5rem;
+  background:
+    radial-gradient(120% 90% at 50% 0%, #ffffff 0%, #fbfbff 55%, #f3f1ff 100%);
+  padding: 0.25rem 0.5rem 0;
+  overflow: hidden;
+}
+
+.lp-ill-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: min(42dvh, 540px);
+  margin: 0 auto;
+  overflow: visible;
+}
+
+/* Hide the secondary highlight list on short screens so the scene fits. */
+@media (max-height: 1000px) {
+  .lp-ill-hide-short {
+    display: none;
+  }
+}
+
+/* ── Entrance: each group settles in once, staggered ──────────────────── */
+.lp-ill-enter {
+  animation: lp-ill-in 900ms var(--lp-ease-out, cubic-bezier(0.16, 1, 0.3, 1)) backwards;
+  animation-delay: calc(var(--lp-delay-hero, 450ms) + var(--k, 0) * var(--lp-stagger, 70ms) * 2);
+}
+@keyframes lp-ill-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+}
+
+/* ── Idle drift: cubes and panels float, out of phase ─────────────────── */
+.lp-ill-float {
+  animation: lp-ill-float 3.2s var(--lp-ease-in-out, ease-in-out) infinite alternate;
+  animation-delay: calc(var(--d, 0) * -1s);
+}
+.lp-ill-float--slow {
+  animation-duration: 4.6s;
+  animation-name: lp-ill-float-soft;
+}
+@keyframes lp-ill-float {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-9px);
+  }
+}
+@keyframes lp-ill-float-soft {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-4px);
+  }
+}
+
+.lp-ill-breathe {
+  animation: lp-ill-breathe 4s var(--lp-ease-in-out, ease-in-out) infinite alternate;
+}
+@keyframes lp-ill-breathe {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-1.5px);
+  }
+}
+
+/* ── Platform light wave across the grid ──────────────────────────────── */
+.lp-ill-tile {
+  opacity: 0.4;
+  animation: lp-ill-tile var(--lp-ill-cycle) var(--lp-ease-soft, ease) infinite;
+  animation-delay: calc((var(--u, 0) + var(--v, 0)) * 240ms);
+}
+@keyframes lp-ill-tile {
+  0%,
+  22%,
+  100% {
+    opacity: 0.4;
+  }
+  10% {
+    opacity: 1;
+  }
+}
+
+/* ── Bar chart: grow, hold, reset ─────────────────────────────────────── */
+.lp-ill-bar {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: lp-ill-bar var(--lp-ill-cycle) var(--lp-ease-soft, ease) infinite;
+  animation-delay: calc(var(--i, 0) * 140ms);
+}
+@keyframes lp-ill-bar {
+  0% {
+    transform: scaleY(0.08);
+  }
+  22%,
+  78% {
+    transform: scaleY(1);
+  }
+  92%,
+  100% {
+    transform: scaleY(0.08);
+  }
+}
+
+/* ── Checklist: tick each row in turn ─────────────────────────────────── */
+.lp-ill-check {
+  stroke-dasharray: 14;
+  animation: lp-ill-check var(--lp-ill-cycle) var(--lp-ease-soft, ease) infinite;
+  animation-delay: calc(var(--i, 0) * 420ms);
+}
+@keyframes lp-ill-check {
+  0%,
+  6% {
+    stroke-dashoffset: 14;
+  }
+  16%,
+  80% {
+    stroke-dashoffset: 0;
+  }
+  92%,
+  100% {
+    stroke-dashoffset: 14;
+  }
+}
+
+/* ── Rings: draw to their value, hold, reset ──────────────────────────── */
+.lp-ill-arc {
+  stroke-dasharray: 100;
+  animation: lp-ill-arc var(--lp-ill-cycle) var(--lp-ease-soft, ease) infinite;
+  animation-delay: calc(var(--i, 0) * 200ms);
+}
+@keyframes lp-ill-arc {
+  0% {
+    stroke-dashoffset: 100;
+  }
+  26%,
+  80% {
+    stroke-dashoffset: var(--to, 30);
+  }
+  94%,
+  100% {
+    stroke-dashoffset: 100;
+  }
+}
+
+/* ── Small indicators ─────────────────────────────────────────────────── */
+.lp-ill-blink {
+  animation: lp-ill-blink 1.6s var(--lp-ease-soft, ease) infinite;
+  animation-delay: calc(var(--i, 0) * 220ms);
+}
+@keyframes lp-ill-blink {
+  0%,
+  100% {
+    opacity: 0.3;
+  }
+  40% {
+    opacity: 1;
+  }
+}
+
+.lp-ill-colon {
+  animation: lp-ill-colon 1s steps(1, end) infinite;
+}
+@keyframes lp-ill-colon {
+  50% {
+    opacity: 0.15;
+  }
+}
+
+/* ── The tap: arm presses, SET button gives, glow ripples ─────────────── */
+.lp-ill-arm {
+  transform-origin: 258px 220px;
+  animation: lp-ill-point var(--lp-ill-tap) var(--lp-ease-in-out, ease-in-out) infinite;
+}
+@keyframes lp-ill-point {
+  0%,
+  52%,
+  100% {
+    transform: rotate(0deg);
+  }
+  64% {
+    transform: rotate(5deg);
+  }
+  72% {
+    transform: rotate(0.5deg);
+  }
+}
+
+.lp-ill-set-face {
+  animation: lp-ill-press var(--lp-ill-tap) var(--lp-ease-in-out, ease-in-out) infinite;
+}
+@keyframes lp-ill-press {
+  0%,
+  60%,
+  76%,
+  100% {
+    transform: translateY(0);
+  }
+  66% {
+    transform: translateY(4px);
+  }
+}
+
+.lp-ill-set-glow {
+  transform-box: fill-box;
+  transform-origin: center;
+  opacity: 0;
+  animation: lp-ill-glow var(--lp-ill-tap) var(--lp-ease-out, ease-out) infinite;
+}
+@keyframes lp-ill-glow {
+  0%,
+  62% {
+    opacity: 0;
+    transform: scale(1);
+  }
+  68% {
+    opacity: 0.55;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.45);
+  }
+}
+
+/* ── Pause when hidden / off-screen (set by useHeroMotion) ────────────── */
+.lp-ill[data-paused="true"] * {
+  animation-play-state: paused !important;
+}
+
+/* ── Reduced motion: show the finished scene, nothing moving ──────────── */
+@media (prefers-reduced-motion: reduce) {
+  .lp-ill *,
+  .lp-ill *::before,
+  .lp-ill *::after {
+    animation: none !important;
+  }
+  .lp-ill-tile {
+    opacity: 0.6;
+  }
+}
