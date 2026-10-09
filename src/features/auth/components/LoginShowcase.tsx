@@ -28,9 +28,9 @@ interface LoginShowcaseProps {
 /** Brand panel shown beside the auth forms on large screens. */
 export default function LoginShowcase({ compact = false }: LoginShowcaseProps) {
   return (
-    <aside className="relative hidden flex-col justify-between overflow-hidden bg-ink p-12 text-white lg:col-span-2 lg:flex xl:p-14">
+    <aside className="relative hidden flex-col justify-between overflow-hidden border-r border-line bg-surface p-12 text-fg lg:col-span-2 lg:flex xl:p-14 dark:border-transparent dark:bg-ink">
       <div className="lp-login-rise" style={stagger(0)}>
-        <BrandMark textClassName="text-white" />
+        <BrandMark textClassName="text-fg" />
       </div>
 
       <div>
@@ -41,7 +41,7 @@ export default function LoginShowcase({ compact = false }: LoginShowcaseProps) {
           Know where every lead stands.
         </h2>
         <p
-          className="lp-login-rise mt-5 max-w-sm text-[15px] leading-relaxed text-white/60"
+          className="lp-login-rise mt-5 max-w-sm text-[15px] leading-relaxed text-ink-soft"
           style={stagger(2)}
         >
           Follow each lead from first contact to conversion, with its owner,
@@ -56,10 +56,10 @@ export default function LoginShowcase({ compact = false }: LoginShowcaseProps) {
               {HIGHLIGHTS.map(({ icon: Icon, text }, i) => (
                 <li
                   key={text}
-                  className="lp-login-rise flex items-center gap-3 text-sm text-white/75"
+                  className="lp-login-rise flex items-center gap-3 text-sm text-fg/80"
                   style={stagger(i + 3)}
                 >
-                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/[0.07] text-amber">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-fg/[0.06] text-amber-dark dark:text-amber">
                     <Icon size={16} aria-hidden="true" />
                   </span>
                   {text}
@@ -70,7 +70,7 @@ export default function LoginShowcase({ compact = false }: LoginShowcaseProps) {
         )}
       </div>
 
-      <p className="text-xs text-white/40">
+      <p className="text-xs text-ink-soft/80">
         © {new Date().getFullYear()} LeadPulse CRM
       </p>
     </aside>
