@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { AlarmClock, LogOut, PanelLeftClose, PanelLeftOpen, UserRound } from "lucide-react";
+import { AlarmClock, LogOut, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import type { AuthUser } from "@/features/auth/types/auth.types";
 import ThemeToggle from "@/shared/components/ThemeToggle";
 import NotificationBell from "@/features/notifications/components/NotificationBell";
@@ -20,7 +20,7 @@ interface DashboardHeaderProps {
  * always visible beside the content — this button only minimizes it to an
  * icon rail or maximizes it back, it never hides it entirely.
  *
- * The profile control is icon-only; the user's name, email and role live
+ * The profile control shows only the first letter of the user's name; the name, email and role live
  * inside its dropdown together with the Reminder and Log out actions.
  */
 export default function DashboardHeader({
@@ -32,6 +32,8 @@ export default function DashboardHeader({
   const router = useRouter();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  // First letter of the user's name (falls back to email, then "U").
+  const initial = (user.name?.trim() || user.email?.trim() || "U").charAt(0).toUpperCase();
 
   // Close the profile menu on outside click or Escape.
   useEffect(() => {
@@ -85,7 +87,7 @@ export default function DashboardHeader({
             }`}
           >
             <span className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-light text-slate shadow-sm dark:bg-paper dark:text-fg">
-              <UserRound size={17} />
+              <span className="text-sm font-bold leading-none">{initial}</span>
             </span>
           </button>
 
