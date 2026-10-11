@@ -25,10 +25,16 @@ interface LoginShowcaseProps {
   compact?: boolean;
 }
 
-/** Brand panel shown beside the auth forms on large screens. */
+/**
+ * Brand panel shown beside the auth forms on large screens.
+ *
+ * Theme-aware: white with navy text in light mode (the hero animation is
+ * transparent, so it looks exactly like the reference on white) and the brand
+ * navy with light text in dark mode.
+ */
 export default function LoginShowcase({ compact = false }: LoginShowcaseProps) {
   return (
-    <aside className="relative hidden flex-col justify-between overflow-hidden border-r border-line bg-surface p-12 text-fg lg:col-span-2 lg:flex xl:p-14 dark:border-transparent dark:bg-ink">
+    <aside className="relative hidden flex-col justify-between overflow-hidden border-r border-line bg-surface p-12 text-fg dark:border-r-0 dark:bg-ink lg:col-span-2 lg:flex xl:p-14">
       <div className="lp-login-rise" style={stagger(0)}>
         <BrandMark textClassName="text-fg" />
       </div>
@@ -56,10 +62,10 @@ export default function LoginShowcase({ compact = false }: LoginShowcaseProps) {
               {HIGHLIGHTS.map(({ icon: Icon, text }, i) => (
                 <li
                   key={text}
-                  className="lp-login-rise flex items-center gap-3 text-sm text-fg/80"
+                  className="lp-login-rise flex items-center gap-3 text-sm text-fg/75"
                   style={stagger(i + 3)}
                 >
-                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-fg/[0.06] text-amber-dark dark:text-amber">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-ink/[0.06] text-amber-dark dark:bg-white/[0.07] dark:text-amber">
                     <Icon size={16} aria-hidden="true" />
                   </span>
                   {text}

@@ -1,85 +1,33 @@
 /*
- * Login hero (components/LoginIllustration.tsx).
+ * Login hero illustration (components/LoginIllustration.tsx).
  *
- * The scene is a transparent animation, so this file draws nothing around it:
- * no background, border, radius, shadow or clipping. It only sizes the hero,
- * picks the light or dark still, and fades the live canvas in.
+ * The scene is a transparent animated WebP, so there is deliberately no
+ * background, border, radius or clipping here — it must sit straight on the
+ * brand panel in both themes.
  */
 
-.lp-hero {
+.lp-ill {
   position: relative;
-  /* Never wider than the panel, 560px, or what fits the viewport height. */
-  width: min(100%, 560px, calc(46dvh * 1.1));
-  aspect-ratio: 603 / 548;
-  margin-inline: auto;
+  display: flex;
+  justify-content: center;
+}
+
+.lp-ill-img {
+  display: block;
+  width: auto;
+  max-width: 100%;
+  height: auto;
+  /* Keep the whole scene (and the form column) on screen on short displays. */
+  max-height: min(46dvh, 540px);
+  object-fit: contain;
   user-select: none;
-  animation: lp-hero-in 800ms var(--lp-ease-out, cubic-bezier(0.16, 1, 0.3, 1)) backwards;
-  animation-delay: var(--lp-delay-hero, 450ms);
-}
-@keyframes lp-hero-in {
-  from {
-    opacity: 0;
-  }
-}
-
-.lp-hero-still,
-.lp-hero-canvas {
-  position: absolute;
-  inset: 0;
-  display: block;
-  width: 100%;
-  height: 100%;
-  background: none;
-  pointer-events: none;
-}
-
-/* Theme: exactly one still is visible. */
-.lp-hero-still--dark {
-  display: none;
-}
-.dark .lp-hero-still--light {
-  display: none;
-}
-.dark .lp-hero-still--dark {
-  display: block;
-}
-
-/* The live canvas fades in over the still once its first frame is drawn. */
-.lp-hero-canvas {
-  opacity: 0;
-  transition: opacity 240ms ease-out;
-}
-.lp-hero[data-ready="true"] .lp-hero-canvas {
-  opacity: 1;
-}
-/* Once live, the still must go — otherwise it shows through the transparent
-   parts of the animation as a ghost image. */
-.lp-hero[data-ready="true"] .lp-hero-still {
-  visibility: hidden;
-  transition: visibility 0s linear 240ms;
-}
-
-/* Decoding element only — never shown. */
-.lp-hero-source {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  opacity: 0;
+  -webkit-user-drag: none;
   pointer-events: none;
 }
 
 /* Hide the secondary highlight list on short screens so the scene fits. */
 @media (max-height: 1000px) {
   .lp-ill-hide-short {
-    display: none;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .lp-hero {
-    animation: none;
-  }
-  .lp-hero-canvas {
     display: none;
   }
 }
