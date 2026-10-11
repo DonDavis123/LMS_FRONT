@@ -1,13 +1,20 @@
 /**
- * Formats an ISO date string using the browser's locale, falling back to
- * the raw value if it isn't parseable. Extracted from identical private
- * `formatDate` copies in LeadDetail / ContactDetail / AccountDetail.
+ * Formats an ISO date string as a date + 12-hour time (e.g. "Sep 29, 2026,
+ * 10:30 AM"), falling back to the raw value if it isn't parseable. Always
+ * 12-hour with AM/PM, whatever the browser locale is.
  */
 export function formatDateTime(value?: string | null): string {
   if (!value) return "";
   try {
     const date = new Date(value);
-    return Number.isNaN(date.getTime()) ? value : date.toLocaleString();
+    return Number.isNaN(date.getTime()) ? value : date.toLocaleString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    });
   } catch {
     return value;
   }

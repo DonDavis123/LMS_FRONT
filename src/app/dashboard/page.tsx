@@ -34,7 +34,7 @@ export default function HomePage() {
   return (
     <div className="lp-page-bg min-h-full space-y-4 rounded-2xl sm:space-y-6 sm:p-1">
       <div className="relative overflow-hidden rounded-2xl border border-line bg-surface p-4 shadow-sm sm:p-6">
-        <div className="pointer-events-none absolute -right-12 -top-16 h-40 w-40 rounded-full bg-amber/10 blur-3xl" />
+        <div className="pointer-events-none absolute -right-12 -top-16 h-40 w-40 rounded-full bg-amber/10 blur-3xl dark:hidden" />
         <div className="relative">
           <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.2em] text-amber-dark">LeadPulse workspace</p>
           <h1 className="font-serif text-2xl tracking-tight sm:text-3xl text-fg">Good to see you.</h1>

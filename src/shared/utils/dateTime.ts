@@ -49,6 +49,7 @@ export function formatLocalDateTime(iso?: string | null): string {
     day: "numeric",
     hour: "numeric",
     minute: "2-digit",
+    hour12: true,
   });
 }
 
@@ -58,7 +59,7 @@ export function formatLocalDateAndTimeParts(iso?: string | null): { date: string
   if (!d) return null;
   return {
     date: d.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" }),
-    time: d.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" }),
+    time: d.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit", hour12: true }),
   };
 }
 

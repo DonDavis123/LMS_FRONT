@@ -10,6 +10,7 @@ import Modal from "@/shared/components/Modal";
 import CallForm from "@/features/calls/components/CallForm";
 
 import { confirmDelete } from "@/shared/utils/confirmDelete";
+import { formatDateTime } from "@/shared/utils/formatDate";
 
 export default function CallDetailPage() {
   const params = useParams<{ id: string }>();
@@ -66,7 +67,7 @@ export default function CallDetailPage() {
           <Detail label="Owner" value={call.owner_name ?? "—"} />
           <Detail label="Call Type" value={call.call_type} />
           <Detail label="Status" value={call.call_status} />
-          <Detail label="Start Time" value={call.call_start_time ? new Date(call.call_start_time).toLocaleString() : "—"} />
+          <Detail label="Start Time" value={formatDateTime(call.call_start_time) || "—"} />
           <Detail label="Duration" value={call.call_duration_minutes != null ? `${call.call_duration_minutes} min` : "—"} />
           <Detail label="Related To" value={related} />
           <Detail label="Record Type" value={relatedTo ? relatedTo.replace("_id", "") : "—"} />

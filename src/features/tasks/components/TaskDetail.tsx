@@ -9,6 +9,7 @@ import { TaskService } from "@/features/tasks/services/TaskService";
 import { TASK_PRIORITIES, TASK_STATUSES, type Task, type TaskPriority, type TaskStatus } from "@/features/tasks/types/task.types";
 
 import { confirmDelete } from "@/shared/utils/confirmDelete";
+import { formatDateTime } from "@/shared/utils/formatDate";
 import RecordTimeline from "@/shared/components/RecordTimeline";
 import { Tabs } from "@/shared/components/Tabs";
 import { formatLocalDateTime, isoToLocalInputValue } from "@/shared/utils/dateTime";
@@ -111,8 +112,8 @@ export default function TaskDetail({ task, onTaskChange }: Props) {
             <div className="mt-4 rounded-lg border border-line bg-surface p-6">
               <h2 className="mb-4 text-xs font-semibold uppercase tracking-wide text-ink-soft">System Information</h2>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <Row label="Created At" value={task.created_at ? new Date(task.created_at).toLocaleString() : null} editable={false}/>
-                <Row label="Updated At" value={task.updated_at ? new Date(task.updated_at).toLocaleString() : null} editable={false}/>
+                <Row label="Created At" value={formatDateTime(task.created_at) || null} editable={false}/>
+                <Row label="Updated At" value={formatDateTime(task.updated_at) || null} editable={false}/>
               </div>
             </div>
           </>

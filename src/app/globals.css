@@ -357,6 +357,14 @@ button, a, input, select, textarea {
     var(--color-paper);
 }
 
+/* Dark mode: drop the warm amber glow in the top-right corner — on the dark
+   paper colour it reads as a muddy yellow patch. Keep only the cool tint. */
+.dark .lp-page-bg {
+  background:
+    radial-gradient(circle at 15% 20%, rgba(76,103,133,.05), transparent 30%),
+    var(--color-paper);
+}
+
 /* ── Date / time picker popovers ───────────────────────────────────── */
 @keyframes popover-down {
   from { opacity: 0; transform: translateY(-8px) scale(0.96); }

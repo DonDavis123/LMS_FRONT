@@ -14,6 +14,7 @@ import type {
   UpdateMeetingPayload,
 } from "@/features/meetings/types/meeting.types";
 import { confirmDelete } from "@/shared/utils/confirmDelete";
+import { formatDateTime } from "@/shared/utils/formatDate";
 import RecordTimeline from "@/shared/components/RecordTimeline";
 import { Tabs } from "@/shared/components/Tabs";
 
@@ -164,8 +165,8 @@ export default function MeetingDetail({ meeting, onMeetingChange }: Props) {
                   <Row label="Title" value={meeting.title} onSave={(value) => updateField("title", value)} />
                   <Row label="Host" value={meeting.host_name} editable={false} />
                   <Row label="Location" value={meeting.location} onSave={(value) => updateField("location", value)} />
-                  <Row label="From" value={new Date(meeting.start_at).toLocaleString()} editable={false} />
-                  <Row label="To" value={new Date(meeting.end_at).toLocaleString()} editable={false} />
+                  <Row label="From" value={formatDateTime(meeting.start_at)} editable={false} />
+                  <Row label="To" value={formatDateTime(meeting.end_at)} editable={false} />
                   <Row label="All Day" value={meeting.is_all_day ? "Yes" : "No"} editable={false} />
                   <Row label="Related To" value={related} editable={false} />
                   <Row label="Participants" value={participants} editable={false} />
