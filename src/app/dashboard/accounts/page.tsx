@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
 import { CheckCircle2 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import AccountList from "@/features/accounts/components/AccountList";
@@ -22,6 +22,7 @@ function AccountsPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [accounts, setAccounts] = useState<Account[]>([]);
+  const [search, setSearch] = useState("");
   const [filters, setFilters] = useState<FilterCondition[]>([]);
   const [sort, setSort] = useState<SortState | null>(null);
   const [page, setPage] = useState(1);
@@ -33,12 +34,17 @@ function AccountsPageInner() {
   const [toast, setToast] = useState<string | null>(null);
   const [highlightId, setHighlightId] = useState<string | null>(null);
 
+  const handleSearchChange = useCallback((next: string) => {
+    setSearch(next);
+    setPage(1);
+  }, []);
+
   useEffect(() => {
     let cancelled = false;
     setIsLoading(true);
     setError(null);
 
-    AccountService.getAccountsPage({ page, page_size: pageSize, filters, sort })
+    AccountService.getAccountsPage({ page, page_size: pageSize, search, filters, sort })
       .then((data) => {
         if (cancelled) return;
         setAccounts(data.results);
@@ -57,7 +63,7 @@ function AccountsPageInner() {
     return () => {
       cancelled = true;
     };
-  }, [page, pageSize, filters, sort, refreshKey]);
+  }, [page, pageSize, search, filters, sort, refreshKey]);
 
   useEffect(() => {
     const createdId = searchParams.get("created");
@@ -90,6 +96,8 @@ function AccountsPageInner() {
         isLoading={isLoading}
         error={error}
         highlightId={highlightId}
+        search={search}
+        onSearchChange={handleSearchChange}
         filters={filters}
         onFiltersChange={(next) => {
           setFilters(next);

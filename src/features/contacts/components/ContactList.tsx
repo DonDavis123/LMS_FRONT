@@ -11,6 +11,7 @@ import BulkDeleteBar from "@/shared/components/BulkDeleteBar";
 import SelectionIndicator from "@/shared/components/SelectionIndicator";
 import SortableHeader from "@/shared/components/SortableHeader";
 import type { SortState } from "@/shared/types/sort";
+import SearchBox from "@/shared/components/SearchBox";
 import FilterBar, { type FilterCondition, type FilterFieldConfig } from "@/shared/components/FilterBar";
 import type { LeadOwnerOption } from "@/features/auth/types/auth.types";
 
@@ -24,6 +25,8 @@ interface ContactListProps {
   isLoading: boolean;
   error: string | null;
   highlightId?: string | null;
+  search: string;
+  onSearchChange: (search: string) => void;
   filters: FilterCondition[];
   onFiltersChange: (filters: FilterCondition[]) => void;
   sort: SortState | null;
@@ -41,6 +44,8 @@ export default function ContactList({
   isLoading,
   error,
   highlightId,
+  search,
+  onSearchChange,
   filters,
   onFiltersChange,
   sort,
@@ -142,7 +147,8 @@ export default function ContactList({
             {pagination.total} total {contacts.length === 1 ? "contact" : "contacts"}
           </p>
         </div>
-        <div className="order-3 w-full min-w-0 sm:order-2 sm:w-auto sm:flex-1 sm:px-2">
+        <div className="order-3 flex w-full min-w-0 flex-wrap items-center gap-2 sm:order-2 sm:w-auto sm:flex-1 sm:px-2">
+          <SearchBox value={search} onSearchChange={onSearchChange} placeholder="Search by name or email" ariaLabel="Search contacts" />
           <FilterBar
             fields={fields}
             filters={filters}
@@ -173,14 +179,14 @@ export default function ContactList({
       ) : pageItems.length === 0 ? (
         <div className="flex flex-col items-center gap-3 px-4 py-16 text-center animate-scale-in">
           <p className="font-serif text-lg text-fg">
-            {filters.length > 0 ? "No contacts match your search or filters" : "No contacts yet"}
+            {(filters.length > 0 || search.length > 0) ? "No contacts match your search or filters" : "No contacts yet"}
           </p>
           <p className="max-w-sm text-sm text-ink-soft">
-            {filters.length > 0
+            {(filters.length > 0 || search.length > 0)
               ? "Try a different search term, or remove a filter."
               : "Contacts you convert from leads, or add directly, show up here."}
           </p>
-          {!(filters.length > 0) && (
+          {!((filters.length > 0 || search.length > 0)) && (
             <Link
               href="/dashboard/contacts/new"
               className="mt-1 rounded-md bg-ink px-4 py-2 text-sm font-semibold text-white transition hover:bg-ink-2 active:scale-[0.98]"

@@ -20,6 +20,7 @@ import SelectionIndicator from "@/shared/components/SelectionIndicator";
 import ModernStatusSelect from "@/shared/components/ModernStatusSelect";
 import SortableHeader from "@/shared/components/SortableHeader";
 import type { SortState } from "@/shared/types/sort";
+import SearchBox from "@/shared/components/SearchBox";
 import FilterBar, { type FilterCondition, type FilterFieldConfig } from "@/shared/components/FilterBar";
 import type { LeadOwnerOption } from "@/features/auth/types/auth.types";
 
@@ -33,6 +34,8 @@ interface LeadListProps {
   isLoading: boolean;
   error: string | null;
   highlightId?: string | null;
+  search: string;
+  onSearchChange: (search: string) => void;
   filters: FilterCondition[];
   onFiltersChange: (filters: FilterCondition[]) => void;
   sort: SortState | null;
@@ -55,6 +58,8 @@ export default function LeadList({
   isLoading,
   error,
   highlightId,
+  search,
+  onSearchChange,
   filters,
   onFiltersChange,
   sort,
@@ -175,7 +180,8 @@ export default function LeadList({
             {pagination.total} total {leads.length === 1 ? "lead" : "leads"}
           </p>
         </div>
-        <div className="order-3 w-full min-w-0 sm:order-2 sm:w-auto sm:flex-1 sm:px-2">
+        <div className="order-3 flex w-full min-w-0 flex-wrap items-center gap-2 sm:order-2 sm:w-auto sm:flex-1 sm:px-2">
+          <SearchBox value={search} onSearchChange={onSearchChange} placeholder="Search by name, email or company" ariaLabel="Search leads" />
           <FilterBar
             fields={fields}
             filters={filters}
@@ -201,7 +207,7 @@ export default function LeadList({
       {isLoading ? (
         <LeadListSkeleton />
       ) : pageItems.length === 0 ? (
-        <EmptyState hasFilters={filters.length > 0} />
+        <EmptyState hasFilters={filters.length > 0 || search.length > 0} />
       ) : (
         <>
           <div className="lp-table-scroll">
@@ -336,11 +342,11 @@ function EmptyState({ hasFilters }: { hasFilters: boolean }) {
   return (
     <div className="flex flex-col items-center gap-3 px-4 py-16 text-center animate-scale-in">
       <p className="font-serif text-lg text-fg">
-        {hasFilters ? "No leads match your filters" : "No leads yet"}
+        {hasFilters ? "No leads match your search or filters" : "No leads yet"}
       </p>
       <p className="max-w-sm text-sm text-ink-soft">
         {hasFilters
-          ? "Try a different filter, or remove one."
+          ? "Try a different search term, or remove a filter."
           : "Start building your pipeline by creating your first lead."}
       </p>
       {!hasFilters && (
