@@ -182,30 +182,29 @@ export default function TaskList({
   }
 
   return (
-    <div className="lp-card overflow-hidden">
-      <div className="flex flex-col gap-3 border-b border-line bg-surface/80 p-3 backdrop-blur-sm sm:p-5">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="font-serif text-xl text-fg">Tasks</h1>
-            <p className="text-sm text-ink-soft">
-              {pagination.total} total {tasks.length === 1 ? "task" : "tasks"}
-            </p>
-          </div>
-          <div className="flex gap-2">
-            <button
-              onClick={onCreateClick}
-              className="whitespace-nowrap rounded-md bg-amber px-4 py-2 text-sm font-semibold text-fg transition hover:bg-amber-dark active:scale-[0.98]"
-            >
-              + Create Task
-            </button>
-          </div>
+    <div className="lp-card lp-list-page">
+      <div className="lp-list-head flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-line bg-surface px-3 py-2.5 sm:px-4">
+        <div className="order-1 min-w-0">
+          <h1 className="font-serif text-lg leading-tight text-fg">Tasks</h1>
+          <p className="text-xs text-ink-soft">
+            {pagination.total} total {tasks.length === 1 ? "task" : "tasks"}
+          </p>
         </div>
-
-        <FilterBar
-          fields={fields}
-          filters={filters}
-          onChange={onFiltersChange}
-        />
+        <div className="order-3 w-full min-w-0 sm:order-2 sm:w-auto sm:flex-1 sm:px-2">
+          <FilterBar
+            fields={fields}
+            filters={filters}
+            onChange={onFiltersChange}
+          />
+        </div>
+        <div className="order-2 ml-auto flex gap-2 sm:order-3">
+          <button
+            onClick={onCreateClick}
+            className="whitespace-nowrap rounded-md bg-amber px-3 py-1.5 text-sm font-semibold text-fg transition hover:bg-amber-dark active:scale-[0.98]"
+          >
+            + Create Task
+          </button>
+        </div>
       </div>
 
       {error && (
@@ -241,7 +240,7 @@ export default function TaskList({
         </div>
       ) : (
         <>
-          <div className="overflow-x-auto">
+          <div className="lp-table-scroll">
             <table className="w-full min-w-[820px] border-separate border-spacing-0 text-left text-sm">
               <thead>
                 <tr className="border-b border-line text-xs font-semibold uppercase tracking-wide text-ink-soft">

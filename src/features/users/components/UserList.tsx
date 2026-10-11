@@ -98,49 +98,48 @@ export default function UserList({
   }
 
   return (
-    <div className="lp-card overflow-hidden">
-      <div className="flex flex-col gap-3 border-b border-line bg-surface/80 p-3 backdrop-blur-sm sm:p-5">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <h1 className="font-serif text-xl text-fg">Manage Users</h1>
-            <p className="text-sm text-ink-soft">
-              {pagination.total} total {pagination.total === 1 ? "user" : "users"}
-            </p>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <Link
-              href="/dashboard/users/audit-logs"
-              className="flex items-center gap-1.5 rounded-md border border-line px-3 py-2 text-sm font-medium text-fg transition hover:bg-paper"
-            >
-              <History size={16} />
-              Activity log
-            </Link>
-            <button
-              type="button"
-              onClick={onCreateClick}
-              className="flex items-center gap-1.5 rounded-md bg-ink px-4 py-2 text-sm font-semibold text-white transition hover:bg-ink-2 active:scale-[0.98]"
-            >
-              <Plus size={16} />
-              New user
-            </button>
-          </div>
+    <div className="lp-card lp-list-page">
+      <div className="lp-list-head flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-line bg-surface px-3 py-2.5 sm:px-4">
+        <div className="order-1 min-w-0">
+          <h1 className="font-serif text-lg leading-tight text-fg">Manage Users</h1>
+          <p className="text-xs text-ink-soft">
+            {pagination.total} total {pagination.total === 1 ? "user" : "users"}
+          </p>
         </div>
 
-        <div className="relative max-w-sm">
-          <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-soft" />
-          <input
-            type="search"
-            value={searchInput}
-            onChange={(event) => setSearchInput(event.target.value)}
-            maxLength={SEARCH_MAX_LENGTH}
-            placeholder="Search by name or email"
-            aria-label="Search users by name or email"
-            className="w-full rounded-md border border-line bg-surface py-2 pl-9 pr-3 text-sm text-fg outline-none transition focus:border-slate focus:ring-2 focus:ring-slate-light"
-          />
+        <div className="order-3 flex w-full min-w-0 flex-wrap items-center gap-2 sm:order-2 sm:w-auto sm:flex-1 sm:px-2">
+          <div className="relative w-full sm:w-64">
+            <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-soft" />
+            <input
+              type="search"
+              value={searchInput}
+              onChange={(event) => setSearchInput(event.target.value)}
+              maxLength={SEARCH_MAX_LENGTH}
+              placeholder="Search by name or email"
+              aria-label="Search users by name or email"
+              className="w-full rounded-md border border-line bg-surface py-1.5 pl-9 pr-3 text-sm text-fg outline-none transition focus:border-slate focus:ring-2 focus:ring-slate-light"
+            />
+          </div>
+          <FilterBar fields={fields} filters={filters} onChange={onFiltersChange} />
         </div>
 
-        <FilterBar fields={fields} filters={filters} onChange={onFiltersChange} />
+        <div className="order-2 ml-auto flex items-center gap-2 sm:order-3">
+          <Link
+            href="/dashboard/users/audit-logs"
+            className="flex items-center gap-1.5 rounded-md border border-line px-3 py-1.5 text-sm font-medium text-fg transition hover:bg-paper"
+          >
+            <History size={16} />
+            Activity log
+          </Link>
+          <button
+            type="button"
+            onClick={onCreateClick}
+            className="flex items-center gap-1.5 rounded-md bg-ink px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-ink-2 active:scale-[0.98]"
+          >
+            <Plus size={16} />
+            New user
+          </button>
+        </div>
       </div>
 
       {error && (
@@ -162,7 +161,7 @@ export default function UserList({
         <EmptyState hasError={Boolean(error)} />
       ) : (
         <>
-          <div className="overflow-x-auto">
+          <div className="lp-table-scroll">
             <table className="w-full min-w-[720px] text-left text-sm">
               <thead>
                 <tr className="border-b border-line text-xs font-semibold uppercase tracking-wide text-ink-soft">

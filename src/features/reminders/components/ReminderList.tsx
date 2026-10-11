@@ -18,7 +18,7 @@ interface ReminderListProps {
 }
 
 const createButtonClass =
-  "whitespace-nowrap rounded-md bg-amber px-4 py-2 text-sm font-semibold text-fg transition hover:bg-amber-dark active:scale-[0.98]";
+  "whitespace-nowrap rounded-md bg-amber px-3 py-1.5 text-sm font-semibold text-fg transition hover:bg-amber-dark active:scale-[0.98]";
 
 export default function ReminderList({
   reminders,
@@ -31,11 +31,11 @@ export default function ReminderList({
   onDelete,
 }: ReminderListProps) {
   return (
-    <div className="lp-card mx-auto max-w-3xl overflow-hidden">
-      <div className="flex flex-col gap-3 border-b border-line bg-surface/80 p-3 backdrop-blur-sm sm:p-5 sm:flex-row sm:items-center sm:justify-between">
+    <div className="lp-card lp-list-page mx-auto w-full max-w-3xl">
+      <div className="lp-list-head flex items-center justify-between gap-3 border-b border-line bg-surface px-3 py-2.5 sm:px-4">
         <div className="min-w-0">
-          <h1 className="font-serif text-xl text-fg">Reminders</h1>
-          <p className="text-sm text-ink-soft">
+          <h1 className="font-serif text-lg leading-tight text-fg">Reminders</h1>
+          <p className="text-xs text-ink-soft">
             {isLoading ? "Loading…" : `${reminders.length} ${reminders.length === 1 ? "reminder" : "reminders"}`}
           </p>
         </div>
@@ -72,7 +72,7 @@ export default function ReminderList({
           </div>
         )
       ) : (
-        <ul>
+        <ul className="lp-table-scroll">
           {reminders.map((reminder) => {
             const isBusy = busyIds.has(reminder.id);
             return (

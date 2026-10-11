@@ -116,18 +116,18 @@ export default function CallList({
   }
 
   return (
-    <div className="lp-card overflow-hidden">
-      <div className="flex flex-col gap-3 border-b border-line p-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="font-serif text-xl text-fg">Calls</h1>
-          <p className="text-sm text-ink-soft">
+    <div className="lp-card lp-list-page">
+      <div className="lp-list-head flex items-center justify-between gap-3 border-b border-line bg-surface px-3 py-2.5 sm:px-4">
+        <div className="min-w-0">
+          <h1 className="font-serif text-lg leading-tight text-fg">Calls</h1>
+          <p className="text-xs text-ink-soft">
             {filtered.length} total {filtered.length === 1 ? "call" : "calls"}
           </p>
         </div>
         <div className="flex gap-2">
           <button
             onClick={onCreateClick}
-            className="whitespace-nowrap rounded-md bg-amber px-4 py-2 text-sm font-semibold text-fg transition hover:bg-amber-dark active:scale-[0.98]"
+            className="whitespace-nowrap rounded-md bg-amber px-3 py-1.5 text-sm font-semibold text-fg transition hover:bg-amber-dark active:scale-[0.98]"
           >
             + Log a Call
           </button>
@@ -163,7 +163,7 @@ export default function CallList({
         </div>
       ) : (
         <>
-          <div className="overflow-x-auto">
+          <div className="lp-table-scroll">
             <table className="w-full min-w-[820px] border-separate border-spacing-0 text-left text-sm">
               <thead>
                 <tr className="border-b border-line text-xs font-semibold uppercase tracking-wide text-ink-soft">
@@ -260,7 +260,7 @@ export default function CallList({
             </table>
           </div>
 
-          <div className="flex items-center justify-between border-t border-line px-4 py-3 text-sm text-ink-soft">
+          <div className="lp-list-foot flex items-center justify-between border-t border-line px-4 py-2 text-sm text-ink-soft">
             <span>Total Records {filtered.length}</span>
             <div className="flex items-center gap-3">
               <span>

@@ -520,3 +520,83 @@ button, a, input, select, textarea {
 .animate-drawer-backdrop {
   animation: drawer-backdrop-in 0.25s ease-out both;
 }
+
+/* ── List pages: fixed header, scrolling rows ──────────────────────────
+   Pages that render a `.lp-list-page` card (Leads, Contacts, Accounts,
+   Tasks, Meetings, Calls, Users, Reminders, activity log) stop scrolling
+   as a whole page. The title / filter bar and the pagination footer stay
+   put, the column headings stick to the top of the table, and only the
+   rows scroll (`.lp-table-scroll`). Short viewports (e.g. phones in
+   landscape) fall back to normal page scrolling so nothing gets squeezed. */
+@media (min-height: 600px) {
+  .lp-app-shell main:has(.lp-list-page) {
+    overflow: hidden;
+  }
+  /* <main> > padding wrapper (dashboard/layout) > template.tsx wrapper */
+  .lp-app-shell main:has(.lp-list-page) > div,
+  .lp-app-shell main:has(.lp-list-page) > div > div {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+  }
+  .lp-app-shell main:has(.lp-list-page) > div {
+    padding-top: 0.625rem;
+    padding-bottom: 0.625rem;
+  }
+
+  /* Natural height for short lists, shrinks to fit (and scrolls) for long ones. */
+  .lp-list-page {
+    display: flex;
+    flex-direction: column;
+    flex: 0 1 auto;
+    min-height: 0;
+    overflow: hidden;
+  }
+  /* Wrapper variant (back link + card): don't clip the card's shadow. */
+  .lp-list-page.lp-list-wrap {
+    overflow: visible;
+  }
+  /* A card the size of the viewport shouldn't lift/jump on hover. */
+  .lp-list-page.lp-card:hover {
+    transform: none;
+    box-shadow: var(--lp-shadow);
+  }
+
+  .lp-list-head,
+  .lp-list-foot {
+    flex-shrink: 0;
+  }
+  .lp-table-scroll {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: auto;
+    overscroll-behavior: contain;
+  }
+}
+
+/* Column headings stay visible while the rows scroll. */
+.lp-table-scroll thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background-color: var(--color-surface);
+}
+/* A sticky header loses its bottom rule (collapsed-border tables) or never
+   had one (border-separate tables ignore <tr> borders), so draw it on the
+   cells themselves. */
+.lp-table-scroll thead th {
+  box-shadow: inset 0 -1px 0 var(--color-line);
+}
+.lp-table-scroll thead tr {
+  border-bottom-color: transparent;
+}
+/* Denser rows so more records fit on screen. */
+.lp-table-scroll thead th {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+.lp-table-scroll tbody td {
+  padding-top: 0.5625rem;
+  padding-bottom: 0.5625rem;
+}

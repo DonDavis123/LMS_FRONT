@@ -40,23 +40,23 @@ export default function UserAuditLogList({
   onRetry,
 }: UserAuditLogListProps) {
   return (
-    <div className="space-y-3">
-      <Link href="/dashboard/users" className="inline-flex items-center gap-1 text-sm text-slate hover:text-fg">
+    <div className="lp-list-page lp-list-wrap gap-3">
+      <Link href="/dashboard/users" className="inline-flex shrink-0 items-center gap-1 self-start text-sm text-slate hover:text-fg">
         <ArrowLeft size={14} />
         Back to users
       </Link>
 
-      <div className="lp-card overflow-hidden">
-        <div className="flex flex-wrap items-end justify-between gap-3 border-b border-line bg-surface/80 p-3 backdrop-blur-sm sm:p-5">
+      <div className="lp-card lp-list-page">
+        <div className="lp-list-head flex flex-wrap items-center justify-between gap-3 border-b border-line bg-surface px-3 py-2.5 sm:px-4">
           <div>
-            <h1 className="font-serif text-xl text-fg">User activity log</h1>
-            <p className="text-sm text-ink-soft">
+            <h1 className="font-serif text-lg leading-tight text-fg">User activity log</h1>
+            <p className="text-xs text-ink-soft">
               {pagination.total} recorded {pagination.total === 1 ? "change" : "changes"}
             </p>
           </div>
 
-          <label className="block">
-            <span className="mb-1 block text-xs font-medium text-ink-soft">Action</span>
+          <label className="flex items-center gap-2">
+            <span className="text-xs font-medium text-ink-soft">Action</span>
             <Select
               value={action}
               onChange={(next) => onActionChange(next as UserAuditAction | "")}
@@ -101,7 +101,7 @@ export default function UserAuditLogList({
           )
         ) : (
           <>
-            <div className="overflow-x-auto">
+            <div className="lp-table-scroll">
               <table className="w-full min-w-[720px] text-left text-sm">
                 <thead>
                   <tr className="border-b border-line text-xs font-semibold uppercase tracking-wide text-ink-soft">
