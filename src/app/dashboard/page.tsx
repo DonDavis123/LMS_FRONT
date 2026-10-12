@@ -69,7 +69,7 @@ export default function HomePage() {
                   className="group flex items-center justify-between gap-3 px-3 py-3 transition-all sm:px-5 sm:py-3.5 duration-200 hover:bg-paper"
                 >
                   <div>
-                    <p className="text-sm font-semibold text-fg group-hover:translate-x-0.5">{lead.name || "(No name)"}</p>
+                    <p className="text-sm font-semibold text-fg">{lead.name || "(No name)"}</p>
                     <p className="text-xs text-ink-soft">{lead.company_name || "—"}</p>
                   </div>
                   <span className="rounded-full bg-slate-light px-2.5 py-1 text-xs font-medium text-slate">

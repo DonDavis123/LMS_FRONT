@@ -84,7 +84,7 @@ export default function ModernStatusSelect({
           setOpen((v) => !v);
         }}
         onDoubleClick={(event) => event.stopPropagation()}
-        className={`group/status inline-flex items-center gap-2 rounded-full border border-transparent px-2.5 py-1.5 text-xs font-semibold shadow-sm ring-1 ring-black/5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-slate/30 disabled:cursor-wait disabled:opacity-60 ${tone.pill} ${fullWidth ? "w-full justify-between" : "max-w-full"}`}
+        className={`group/status inline-flex items-center gap-2 rounded-full border border-transparent px-2.5 py-1.5 text-xs font-semibold shadow-sm ring-1 ring-black/5 transition-all duration-200 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-slate/30 disabled:cursor-wait disabled:opacity-60 ${tone.pill} ${fullWidth ? "w-full justify-between" : "max-w-full"}`}
       >
         <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${tone.dot} ${disabled ? "animate-pulse" : ""}`} />
         <span className="min-w-0 truncate">{current?.label ?? value}</span>
@@ -111,7 +111,7 @@ export default function ModernStatusSelect({
                 role="option"
                 aria-selected={selected}
                 onClick={() => choose(option.value)}
-                className={`flex w-full items-center gap-3 rounded-xl px-2.5 py-2.5 text-left transition-all duration-150 hover:translate-x-0.5 ${selected ? optionTone.active : "hover:bg-paper"}`}
+                className={`flex w-full items-center gap-3 rounded-xl px-2.5 py-2.5 text-left transition-colors duration-150 ${selected ? optionTone.active : "hover:bg-paper"}`}
               >
                 <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${optionTone.pill}`}>
                   <span className={`h-2 w-2 rounded-full ${optionTone.dot}`} />

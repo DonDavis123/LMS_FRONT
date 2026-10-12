@@ -600,3 +600,25 @@ button, a, input, select, textarea {
   padding-top: 0.5625rem;
   padding-bottom: 0.5625rem;
 }
+
+/* ── Anti-shake: no movement while hovering tables / lists ─────────────
+   A card that lifts (translateY) on hover moves out from under the pointer
+   near its edges, which toggles :hover on/off repeatedly and makes the
+   whole table jitter. Any card that holds a table or list therefore stays
+   still (the shadow/background hover feedback is kept), at every viewport
+   height — the earlier override only applied at min-height: 600px. */
+.lp-card:has(table, .lp-table-scroll, ul, ol):hover,
+.lp-list-page.lp-card:hover {
+  transform: none;
+  box-shadow: var(--lp-shadow);
+}
+/* Rows and cells never move on hover. */
+.lp-table-scroll tbody tr,
+.lp-table-scroll tbody td {
+  transform: none !important;
+}
+/* Reserve the scrollbar's space so it appearing/disappearing (e.g. when a
+   row's hover state or a menu changes content height) can't shift columns. */
+.lp-table-scroll {
+  scrollbar-gutter: stable;
+}
