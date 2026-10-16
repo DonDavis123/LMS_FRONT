@@ -622,3 +622,77 @@ button, a, input, select, textarea {
 .lp-table-scroll {
   scrollbar-gutter: stable;
 }
+
+/* ── Dashboard home (charts, KPI cards, widgets) ───────────────────────
+   Additive only. Charts draw once when they mount (or when their `key`
+   changes) and are fully drawn for users who prefer reduced motion. */
+
+/* Widgets hold charts and lists; they must not shift under the pointer. */
+.lp-widget:hover {
+  transform: none;
+  box-shadow: var(--lp-shadow);
+}
+
+/* KPI cards: a 1px lift and a slightly stronger border, no scaling. */
+.lp-kpi:hover {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--color-slate) 40%, var(--color-line));
+}
+
+/* Sparkline: the line is revealed left to right. (A clip is used instead of
+   stroke-dashoffset because dashes break with `non-scaling-stroke`.) */
+@keyframes lp-reveal-x {
+  from { clip-path: inset(-4px 100% -4px 0); }
+  to   { clip-path: inset(-4px -4px -4px 0); }
+}
+.lp-reveal-x {
+  animation: lp-reveal-x 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Trend chart: the line draws in (path uses pathLength="1"), then the area fades in. */
+@keyframes lp-draw {
+  from { stroke-dashoffset: 1; }
+  to   { stroke-dashoffset: 0; }
+}
+.lp-draw-line {
+  stroke-dasharray: 1;
+  animation: lp-draw 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.lp-fade-area {
+  animation: fade-in 0.5s ease-out 0.45s both;
+}
+
+/* Donut: segments sweep in clockwise from 12 o'clock. Browsers without
+   @property simply show the finished ring. */
+@property --lp-sweep {
+  syntax: "<percentage>";
+  inherits: false;
+  initial-value: 100%;
+}
+@keyframes lp-sweep {
+  from { --lp-sweep: 0%; }
+  to   { --lp-sweep: 100%; }
+}
+.lp-donut-sweep {
+  -webkit-mask-image: conic-gradient(from 0deg, black var(--lp-sweep), transparent 0);
+  mask-image: conic-gradient(from 0deg, black var(--lp-sweep), transparent 0);
+  animation: lp-sweep 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lp-reveal-x,
+  .lp-draw-line,
+  .lp-fade-area,
+  .lp-donut-sweep {
+    animation: none;
+  }
+  .lp-draw-line {
+    stroke-dasharray: none;
+  }
+  .lp-donut-sweep {
+    --lp-sweep: 100%;
+  }
+  .lp-kpi:hover {
+    transform: none;
+  }
+}

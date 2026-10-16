@@ -1,85 +1,90 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import Link from "next/link";
+import { useState } from "react";
 import DashboardStats from "@/features/dashboard/components/dashBoardStats";
-import { LeadService } from "@/features/leads/services/LeadService";
-import type { Lead } from "@/features/leads/types/lead.types";
+import DashboardHero from "@/features/dashboard/components/DashboardHero";
+import LeadPipelineChart from "@/features/dashboard/components/LeadPipelineChart";
+import LeadSourceDonut from "@/features/dashboard/components/LeadSourceDonut";
+import LeadsTrendChart from "@/features/dashboard/components/LeadsTrendChart";
+import MyTasksPanel from "@/features/dashboard/components/MyTasksPanel";
+import RecentLeadsList from "@/features/dashboard/components/RecentLeadsList";
+import UpcomingSchedule from "@/features/dashboard/components/UpcomingSchedule";
+import { useDashboardData } from "@/features/dashboard/hooks/useDashboardData";
+import { authStorage } from "@/infrastructure/auth/tokenStorage";
 
 export default function HomePage() {
-  const [leads, setLeads] = useState<Lead[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    let cancelled = false;
-    LeadService.getLeads()
-      .then((data) => {
-        if (!cancelled) setLeads(data);
-      })
-      .catch(() => {
-        /* stats just render empty — the Leads page surfaces the real error */
-      })
-      .finally(() => {
-        if (!cancelled) setIsLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  const recentLeads = [...leads]
-    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-    .slice(0, 5);
+  // The dashboard layout only renders this page once the session is restored,
+  // so the stored user is available on the first client render.
+  const [user] = useState(() => authStorage.getUser());
+  const dashboard = useDashboardData(user?.id ?? null);
 
   return (
-    <div className="lp-page-bg min-h-full space-y-4 rounded-2xl sm:space-y-6 sm:p-1">
-      <div className="relative overflow-hidden rounded-2xl border border-line bg-surface p-4 shadow-sm sm:p-6">
-        <div className="pointer-events-none absolute -right-12 -top-16 h-40 w-40 rounded-full bg-amber/10 blur-3xl dark:hidden" />
-        <div className="relative">
-          <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.2em] text-amber-dark">LeadPulse workspace</p>
-          <h1 className="font-serif text-2xl tracking-tight sm:text-3xl text-fg">Good to see you.</h1>
-          <p className="mt-1 max-w-xl text-sm text-ink-soft">A focused view of your pipeline, activity and recent opportunities.</p>
+    <div className="lp-page-bg min-h-full space-y-4 rounded-2xl sm:space-y-5 sm:p-1">
+      <DashboardHero
+        user={user}
+        tasks={user ? dashboard.tasks.state : null}
+        schedule={dashboard.schedule.state}
+        completingIds={dashboard.completingIds}
+        updatedAt={dashboard.updatedAt}
+        isRefreshing={dashboard.isRefreshing}
+        onRefresh={dashboard.refreshAll}
+      />
+
+      <DashboardStats
+        stats={dashboard.stats.state}
+        tasks={user ? dashboard.tasks.state : null}
+        completingIds={dashboard.completingIds}
+        range={dashboard.range}
+        onRetryStats={dashboard.stats.reload}
+        onRetryTasks={dashboard.tasks.reload}
+      />
+
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-12 lg:gap-5">
+        <div className="min-w-0 lg:col-span-7">
+          <LeadPipelineChart state={dashboard.stats.state} onRetry={dashboard.stats.reload} delay={240} />
         </div>
-      </div>
 
-      <DashboardStats leads={leads} />
-
-      <div className="lp-card overflow-hidden">
-        <div className="flex items-center justify-between border-b border-line p-3 sm:p-5">
-          <h2 className="font-serif text-lg text-fg">Recent Leads</h2>
-          <Link href="/dashboard/leads" className="text-sm font-medium text-slate hover:text-fg">
-            View all leads →
-          </Link>
-        </div>
-
-        {isLoading ? (
-          <div className="space-y-3 p-4">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="h-10 animate-shimmer rounded-md" />
-            ))}
+        {/* Most actionable block: first after the KPIs on small screens. */}
+        {user && (
+          <div className="order-first min-w-0 lg:order-none lg:col-span-5">
+            <MyTasksPanel
+              state={dashboard.tasks.state}
+              completingIds={dashboard.completingIds}
+              onComplete={dashboard.completeTask}
+              onRetry={dashboard.tasks.reload}
+              delay={240}
+            />
           </div>
-        ) : recentLeads.length === 0 ? (
-          <p className="px-4 py-10 text-center text-sm text-ink-soft">No leads yet.</p>
-        ) : (
-          <ul className="divide-y divide-line">
-            {recentLeads.map((lead) => (
-              <li key={lead.id}>
-                <Link
-                  href={`/dashboard/leads/${lead.id}`}
-                  className="group flex items-center justify-between gap-3 px-3 py-3 transition-all sm:px-5 sm:py-3.5 duration-200 hover:bg-paper"
-                >
-                  <div>
-                    <p className="text-sm font-semibold text-fg">{lead.name || "(No name)"}</p>
-                    <p className="text-xs text-ink-soft">{lead.company_name || "—"}</p>
-                  </div>
-                  <span className="rounded-full bg-slate-light px-2.5 py-1 text-xs font-medium text-slate">
-                    {lead.lead_status}
-                  </span>
-                </Link>
-              </li>
-            ))}
-          </ul>
         )}
+
+        <div className="min-w-0 lg:col-span-7">
+          <LeadsTrendChart
+            state={dashboard.stats.state}
+            range={dashboard.range}
+            onRangeChange={dashboard.setRange}
+            isFetching={dashboard.stats.isFetching}
+            onRetry={dashboard.stats.reload}
+            delay={300}
+          />
+        </div>
+
+        <div className="min-w-0 lg:col-span-5">
+          <LeadSourceDonut
+            state={dashboard.stats.state}
+            range={dashboard.range}
+            isFetching={dashboard.stats.isFetching}
+            onRetry={dashboard.stats.reload}
+            delay={300}
+          />
+        </div>
+
+        <div className="min-w-0 lg:col-span-7">
+          <UpcomingSchedule state={dashboard.schedule.state} onRetry={dashboard.schedule.reload} delay={360} />
+        </div>
+
+        <div className="min-w-0 lg:col-span-5">
+          <RecentLeadsList state={dashboard.recent.state} onRetry={dashboard.recent.reload} delay={360} />
+        </div>
       </div>
     </div>
   );
