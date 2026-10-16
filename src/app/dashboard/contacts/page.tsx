@@ -76,18 +76,23 @@ function ContactsPageInner() {
     if (message) {
       setToast(message);
       router.replace("/dashboard/contacts");
-      const timer = window.setTimeout(() => setToast(null), 3000);
 
       if (createdId && createdId !== "1") {
         setHighlightId(createdId);
         window.setTimeout(() => setHighlightId(null), 2000);
       }
-
-      return () => window.clearTimeout(timer);
     }
-    return undefined;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
+
+  // Dismiss the toast on its own timer. It must not live in the effect above:
+  // router.replace() changes searchParams, which re-runs that effect and would
+  // cancel the timer before it fires, leaving the toast on screen forever.
+  useEffect(() => {
+    if (!toast) return;
+    const timer = window.setTimeout(() => setToast(null), 3000);
+    return () => window.clearTimeout(timer);
+  }, [toast]);
 
   return (
     <>

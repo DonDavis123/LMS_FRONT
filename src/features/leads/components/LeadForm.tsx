@@ -1,5 +1,7 @@
 "use client";
 
+import FormWarning from "@/shared/components/FormWarning";
+import { useNoChangeGuard } from "@/shared/hooks/useNoChangeGuard";
 import { useEffect, useState, type FormEvent } from "react";
 import { ChevronDown } from "lucide-react";
 import { userService } from "@/features/users/services/userService";
@@ -121,6 +123,7 @@ export default function LeadForm({
   const [form, setForm] = useState<FormState>(() =>
     initialLead ? formFromLead(initialLead) : emptyForm()
   );
+  const { warning, isUnchanged } = useNoChangeGuard(form, mode === "edit");
   const [owners, setOwners] = useState<LeadOwnerOption[]>([]);
   const [error, setError, errorRef] = useFormError();
   const [notice, setNotice] = useState<string | null>(null);
@@ -188,6 +191,7 @@ export default function LeadForm({
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
+    if (isUnchanged()) return;
     const payload = buildPayload();
     if (!payload) return;
 
@@ -201,9 +205,10 @@ export default function LeadForm({
   }
 
   async function handleSaveAndNext() {
+    if (!onSaveAndNext) return;
+    if (isUnchanged()) return;
     const payload = buildPayload();
     if (!payload) return;
-    if (!onSaveAndNext) return;
 
     setIsSavingNext(true);
     try {
@@ -265,6 +270,7 @@ export default function LeadForm({
         </p>
       )}
 
+      {warning && <FormWarning message={warning} className="mt-4" />}
       {error && (
         <p ref={errorRef as React.RefObject<HTMLParagraphElement>} className="mt-4 animate-shake rounded-md border border-danger/30 bg-danger-soft px-3 py-2 text-sm text-danger">
           {error}

@@ -1,5 +1,7 @@
 "use client";
 
+import FormWarning from "@/shared/components/FormWarning";
+import { useNoChangeGuard } from "@/shared/hooks/useNoChangeGuard";
 import DateInput from "@/shared/components/DateInput";
 import { useEffect, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
@@ -124,6 +126,7 @@ export default function ContactForm({ mode, initialContact, onSubmit, onCancel }
   const [form, setForm] = useState<FormState>(() =>
     initialContact ? formFromContact(initialContact) : emptyForm()
   );
+  const { warning, isUnchanged } = useNoChangeGuard(form, mode === "edit");
   const [owners, setOwners] = useState<LeadOwnerOption[]>([]);
   const [error, setError, errorRef] = useFormError();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -152,6 +155,7 @@ export default function ContactForm({ mode, initialContact, onSubmit, onCancel }
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
+    if (isUnchanged()) return;
     if (!form.name.trim()) {
       setError("Name is required.");
       return;
@@ -223,6 +227,7 @@ export default function ContactForm({ mode, initialContact, onSubmit, onCancel }
         </div>
       </div>
 
+      {warning && <FormWarning message={warning} className="mt-4" />}
       {error && (
         <p ref={errorRef as React.RefObject<HTMLParagraphElement>} className="mt-4 animate-shake rounded-md border border-danger/30 bg-danger-soft px-3 py-2 text-sm text-danger">
           {error}

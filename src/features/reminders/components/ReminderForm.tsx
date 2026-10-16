@@ -1,5 +1,7 @@
 "use client";
 
+import FormWarning from "@/shared/components/FormWarning";
+import { useNoChangeGuard } from "@/shared/hooks/useNoChangeGuard";
 import { useState, type FormEvent } from "react";
 import Spinner from "@/shared/components/Spinner";
 import Switch from "@/shared/components/Switch";
@@ -47,6 +49,7 @@ export default function ReminderForm({
 }: ReminderFormProps) {
   const isEdit = mode === "edit";
   const [form, setForm] = useState<FormState>(() => initialState(initialReminder));
+  const { warning, isUnchanged } = useNoChangeGuard(form, isEdit);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -56,6 +59,7 @@ export default function ReminderForm({
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
+    if (isUnchanged()) return;
 
     if (!form.subject.trim()) {
       setError("Subject is required.");
@@ -108,6 +112,7 @@ export default function ReminderForm({
         {notice && (
           <p className="mb-4 rounded-md border border-line bg-paper px-3 py-2 text-sm text-ink-soft">{notice}</p>
         )}
+        {warning && <FormWarning message={warning} className="mb-4" />}
         {error && (
           <p
             role="alert"

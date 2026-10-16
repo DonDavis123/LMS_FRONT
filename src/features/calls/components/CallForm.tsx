@@ -1,5 +1,7 @@
 "use client";
 
+import FormWarning from "@/shared/components/FormWarning";
+import { useNoChangeGuard } from "@/shared/hooks/useNoChangeGuard";
 import { DateTimeInput } from "@/shared/components/DateInput";
 import { useEffect, useState, type FormEvent } from "react";
 import { userService } from "@/features/users/services/userService";
@@ -84,6 +86,7 @@ export default function CallForm({ mode, initialCall, onSubmit, onCancel }: Call
   const [form, setForm] = useState<FormState>(() =>
     initialCall ? formFromCall(initialCall) : emptyForm()
   );
+  const { warning, isUnchanged } = useNoChangeGuard(form, mode === "edit");
   const [owners, setOwners] = useState<LeadOwnerOption[]>([]);
   const [error, setError, errorRef] = useFormError();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -109,6 +112,7 @@ export default function CallForm({ mode, initialCall, onSubmit, onCancel }: Call
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
+    if (isUnchanged()) return;
     if (!form.subject.trim()) {
       setError("Subject is required.");
       return;
@@ -154,6 +158,7 @@ export default function CallForm({ mode, initialCall, onSubmit, onCancel }: Call
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
+        {warning && <FormWarning message={warning} className="mb-4" />}
         {error && (
           <p ref={errorRef as React.RefObject<HTMLParagraphElement>} className="mb-4 animate-shake rounded-md border border-danger/30 bg-danger-soft px-3 py-2 text-sm text-danger">
             {error}

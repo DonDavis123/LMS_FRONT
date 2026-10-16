@@ -43,11 +43,18 @@ function LeadDetailPageInner() {
     if (message) {
       setToast(message);
       router.replace(`/dashboard/leads/${params.id}`);
-      const timer = window.setTimeout(() => setToast(null), 3000);
-      return () => window.clearTimeout(timer);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
+
+  // Dismiss the toast on its own timer. It must not live in the effect above:
+  // router.replace() changes searchParams, which re-runs that effect and would
+  // cancel the timer before it fires, leaving the toast on screen forever.
+  useEffect(() => {
+    if (!toast) return;
+    const timer = window.setTimeout(() => setToast(null), 3000);
+    return () => window.clearTimeout(timer);
+  }, [toast]);
 
   if (error) {
     return <p className="text-sm text-danger">{error}</p>;

@@ -1,5 +1,7 @@
 "use client";
 
+import FormWarning from "@/shared/components/FormWarning";
+import { useNoChangeGuard } from "@/shared/hooks/useNoChangeGuard";
 import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react";
 import { Check, ChevronDown, Plus, Search, X } from "lucide-react";
 import { userService } from "@/features/users/services/userService";
@@ -124,6 +126,7 @@ export default function MeetingForm({ mode, initialMeeting, onSubmit, onCancel }
   const [form, setForm] = useState<FormState>(() =>
     initialMeeting ? fromMeeting(initialMeeting) : emptyForm(),
   );
+  const { warning, isUnchanged } = useNoChangeGuard(form, mode === "edit");
   const [owners, setOwners] = useState<LeadOwnerOption[]>([]);
   const [participantUsers, setParticipantUsers] = useState<ParticipantCandidate[]>([]);
   const [error, setError, errorRef] = useFormError();
@@ -273,6 +276,7 @@ export default function MeetingForm({ mode, initialMeeting, onSubmit, onCancel }
 
   async function submit(e: FormEvent) {
     e.preventDefault();
+    if (isUnchanged()) return;
 
     if (!form.title.trim()) return setError("Title is required.");
     if (!form.owner_id) return setError("Host is required.");
@@ -342,6 +346,7 @@ export default function MeetingForm({ mode, initialMeeting, onSubmit, onCancel }
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto px-5 py-2">
+        {warning && <FormWarning message={warning} className="my-3" />}
         {error && (
           <div ref={errorRef as React.RefObject<HTMLDivElement>} className="my-3 rounded-md border border-danger/30 bg-danger-soft px-3 py-2 text-sm text-danger">
             {error}
