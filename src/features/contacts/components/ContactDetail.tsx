@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { getSafeReturnTo, withReturnTo } from "@/shared/utils/returnTo";
 import { ChevronDown, MoreVertical } from "lucide-react";
 import { ContactService } from "@/features/contacts/services/ContactService";
 import type { Contact } from "@/features/contacts/types/contact.types";
@@ -20,6 +21,7 @@ type DetailTab = "overview" | "timeline";
 
 export default function ContactDetail({ contact, onContactChange }: ContactDetailProps) {
   const router = useRouter();
+  const returnTo = getSafeReturnTo(useSearchParams().get("returnTo"));
   const [activeTab, setActiveTab] = useState<DetailTab>("overview");
   const [showDetails, setShowDetails] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -45,7 +47,7 @@ export default function ContactDetail({ contact, onContactChange }: ContactDetai
 
   return (
     <div className="mx-auto max-w-5xl">
-      <Link href="/dashboard/contacts" className="text-sm text-slate hover:text-fg">← Back to Contacts</Link>
+      <Link href={returnTo ?? "/dashboard/contacts"} className="text-sm text-slate hover:text-fg">{returnTo ? "← Back to Lead Conversion" : "← Back to Contacts"}</Link>
 
       <div className="mt-3 flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
@@ -67,7 +69,7 @@ export default function ContactDetail({ contact, onContactChange }: ContactDetai
             </button>
             {isMenuOpen && (
               <div className="absolute right-0 top-full z-20 mt-1 w-36 rounded-md border border-line bg-surface py-1 shadow-lg">
-                <button type="button" onClick={() => router.push(`/dashboard/contacts/${contact.id}?edit=1`)} className="block w-full px-3 py-2 text-left text-sm text-fg hover:bg-paper">Edit</button>
+                <button type="button" onClick={() => router.push(withReturnTo(`/dashboard/contacts/${contact.id}?edit=1`, returnTo))} className="block w-full px-3 py-2 text-left text-sm text-fg hover:bg-paper">Edit</button>
                 <button type="button" onClick={handleDelete} className="block w-full px-3 py-2 text-left text-sm text-danger hover:bg-danger-soft">Delete</button>
               </div>
             )}

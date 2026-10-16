@@ -4,6 +4,7 @@ import { Suspense } from "react";
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { getSafeReturnTo, withReturnTo } from "@/shared/utils/returnTo";
 import AccountDetail from "@/features/accounts/components/AccountDetail";
 import AccountForm from "@/features/accounts/components/AccountForm";
 import { AccountService } from "@/features/accounts/services/AccountService";
@@ -14,6 +15,7 @@ function AccountDetailPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const isEditing = searchParams.get("edit") === "1";
+  const returnTo = getSafeReturnTo(searchParams.get("returnTo"));
 
   const [account, setAccount] = useState<Account | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -41,7 +43,7 @@ function AccountDetailPageInner() {
   
       setAccount(updatedAccount);
   
-      router.push(`/dashboard/accounts/${params.id}`);
+      router.push(withReturnTo(`/dashboard/accounts/${params.id}`, returnTo));
     } catch (error) {
       console.error("Failed to update account:", error);
       setError("Couldn't update this account.");
@@ -66,7 +68,7 @@ function AccountDetailPageInner() {
           mode="edit"
           initialAccount={account}
           onSubmit={handleSubmit}
-          onCancel={() => router.push(`/dashboard/accounts/${params.id}`)}
+          onCancel={() => router.push(withReturnTo(`/dashboard/accounts/${params.id}`, returnTo))}
         />
       </div>
     );

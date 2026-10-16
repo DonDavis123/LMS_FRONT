@@ -4,6 +4,7 @@ import { Suspense } from "react";
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { getSafeReturnTo, withReturnTo } from "@/shared/utils/returnTo";
 import ContactDetail from "@/features/contacts/components/ContactDetail";
 import ContactForm from "@/features/contacts/components/ContactForm";
 import { ContactService } from "@/features/contacts/services/ContactService";
@@ -14,6 +15,7 @@ function ContactDetailPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const isEditing = searchParams.get("edit") === "1";
+  const returnTo = getSafeReturnTo(searchParams.get("returnTo"));
 
   const [contact, setContact] = useState<Contact | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -40,7 +42,7 @@ async function handleSubmit(payload: CreateContactPayload) {
 
     setContact(updatedContact);
 
-    router.push(`/dashboard/contacts/${params.id}`);
+    router.push(withReturnTo(`/dashboard/contacts/${params.id}`, returnTo));
   } catch (error) {
     console.error("Failed to update contact:", error);
     setError("Couldn't update this contact.");
@@ -65,7 +67,7 @@ async function handleSubmit(payload: CreateContactPayload) {
           mode="edit"
           initialContact={contact}
           onSubmit={handleSubmit}
-          onCancel={() => router.push(`/dashboard/contacts/${params.id}`)}
+          onCancel={() => router.push(withReturnTo(`/dashboard/contacts/${params.id}`, returnTo))}
         />
       </div>
     );

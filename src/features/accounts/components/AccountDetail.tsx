@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { getSafeReturnTo, withReturnTo } from "@/shared/utils/returnTo";
 import { ChevronDown, MoreVertical } from "lucide-react";
 import { AccountService } from "@/features/accounts/services/AccountService";
 import type { Account } from "@/features/accounts/types/account.types";
@@ -26,6 +27,7 @@ type DetailTab = "overview" | "timeline";
 
 export default function AccountDetail({ account, onAccountChange }: AccountDetailProps) {
   const router = useRouter();
+  const returnTo = getSafeReturnTo(useSearchParams().get("returnTo"));
   const [activeTab, setActiveTab] = useState<DetailTab>("overview");
   const [showDetails, setShowDetails] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -98,8 +100,8 @@ export default function AccountDetail({ account, onAccountChange }: AccountDetai
 
   return (
     <div className="mx-auto max-w-5xl">
-      <Link href="/dashboard/accounts" className="text-sm text-slate hover:text-fg">
-        ← Back to Accounts
+      <Link href={returnTo ?? "/dashboard/accounts"} className="text-sm text-slate hover:text-fg">
+        {returnTo ? "← Back to Lead Conversion" : "← Back to Accounts"}
       </Link>
 
       <div className="mt-3 flex items-center justify-between gap-4">
@@ -134,7 +136,7 @@ export default function AccountDetail({ account, onAccountChange }: AccountDetai
               <div className="absolute right-0 top-full z-20 mt-1 w-36 rounded-md border border-line bg-surface py-1 shadow-lg">
                 <button
                   type="button"
-                  onClick={() => router.push(`/dashboard/accounts/${account.id}?edit=1`)}
+                  onClick={() => router.push(withReturnTo(`/dashboard/accounts/${account.id}?edit=1`, returnTo))}
                   className="block w-full px-3 py-2 text-left text-sm text-fg hover:bg-paper"
                 >
                   Edit

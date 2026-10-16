@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { withReturnTo } from "@/shared/utils/returnTo";
 import { Building2, CheckCircle2, Contact2, ExternalLink, Info, Minus, Plus, Search, UserRound } from "lucide-react";
 import { LeadService } from "@/features/leads/services/LeadService";
 import Spinner from "@/shared/components/Spinner";
@@ -85,6 +86,8 @@ export default function LeadConvert({ lead }: LeadConvertProps) {
   const router = useRouter();
   const hasCompany = Boolean(lead.company_name && lead.company_name.trim());
   const leadHref = `/dashboard/leads/${lead.id}`;
+  // Where "View Account/Contact" pages should send the user back to.
+  const convertHref = `${leadHref}/convert`;
 
   const [checkResult, setCheckResult] = useState<ConversionCheckResponse | null>(null);
   const [isChecking, setIsChecking] = useState(true);
@@ -254,7 +257,7 @@ export default function LeadConvert({ lead }: LeadConvertProps) {
                   choice={accountChoice}
                   onChoice={changeAccountChoice}
                   emptyText="No possible existing Account was found. You can create a new Account."
-                  getViewHref={(a) => `/dashboard/accounts/${a.id}`}
+                  getViewHref={(a) => withReturnTo(`/dashboard/accounts/${a.id}`, convertHref)}
                   getSearchText={(a) => `${a.account_name} ${a.website ?? ""} ${a.phone ?? ""}`}
                   renderMatch={(a) => (
                     <>
@@ -293,7 +296,7 @@ export default function LeadConvert({ lead }: LeadConvertProps) {
                 choice={contactChoice}
                 onChoice={changeContactChoice}
                 emptyText="No possible existing Contact was found. You can create a new Contact."
-                getViewHref={(c) => `/dashboard/contacts/${c.id}`}
+                getViewHref={(c) => withReturnTo(`/dashboard/contacts/${c.id}`, convertHref)}
                 getSearchText={(c) => `${c.name} ${c.email ?? ""} ${c.phone ?? ""} ${c.mobile ?? ""}`}
                 renderMatch={(c) => (
                   <>
