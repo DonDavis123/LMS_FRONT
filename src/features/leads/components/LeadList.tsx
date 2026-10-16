@@ -96,7 +96,7 @@ export default function LeadList({
       { field: "industry", label: "Industry", type: "choice", choices: toChoices(LEAD_INDUSTRIES) },
       { field: "owner", label: "Lead Owner", type: "uuid", choices: owners.map((o) => ({ value: o.id, label: o.name })) },
       { field: "annual_revenue", label: "Annual Revenue", type: "number" },
-      { field: "created_at", label: "Created", type: "datetime" },
+      { field: "created_at", label: "Created", type: "date" },
     ],
     [owners]
   );
@@ -226,7 +226,7 @@ export default function LeadList({
                     )}
                   </th>
                   <SortableHeader label="Lead Name" field="name" sort={sort} onSortChange={onSortChange} />
-                  <SortableHeader label="Phone" field="phone" sort={sort} onSortChange={onSortChange} />
+                  <th className="px-4 py-3">Phone</th>
                   <SortableHeader label="Email" field="email" sort={sort} onSortChange={onSortChange} />
                   <SortableHeader label="Lead Source" field="lead_source" sort={sort} onSortChange={onSortChange} />
                   <SortableHeader label="Lead Status" field="lead_status" sort={sort} onSortChange={onSortChange} />

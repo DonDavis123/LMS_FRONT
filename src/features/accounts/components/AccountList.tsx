@@ -211,7 +211,7 @@ export default function AccountList({
                   </th>
                   <SortableHeader label="Account Name" field="account_name" sort={sort} onSortChange={onSortChange} />
                   <SortableHeader label="Website" field="website" sort={sort} onSortChange={onSortChange} />
-                  <SortableHeader label="Phone" field="phone" sort={sort} onSortChange={onSortChange} />
+                  <th className="px-4 py-3">Phone</th>
                   <SortableHeader label="Industry" field="industry" sort={sort} onSortChange={onSortChange} />
                   <SortableHeader label="Account Owner" field="account_owner" sort={sort} onSortChange={onSortChange} />
                 </tr>

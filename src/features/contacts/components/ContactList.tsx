@@ -215,7 +215,7 @@ export default function ContactList({
                   <SortableHeader label="Contact Name" field="name" sort={sort} onSortChange={onSortChange} />
                   <SortableHeader label="Account" field="account" sort={sort} onSortChange={onSortChange} />
                   <SortableHeader label="Email" field="email" sort={sort} onSortChange={onSortChange} />
-                  <SortableHeader label="Phone" field="phone" sort={sort} onSortChange={onSortChange} />
+                  <th className="px-4 py-3">Phone</th>
                   <SortableHeader label="Contact Owner" field="contact_owner" sort={sort} onSortChange={onSortChange} />
                 </tr>
               </thead>
