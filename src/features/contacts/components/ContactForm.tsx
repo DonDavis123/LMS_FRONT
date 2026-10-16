@@ -13,6 +13,7 @@ import { inputClass, Section, Field } from "@/shared/components/FormLayout";
 import { LEAD_SOURCES, type LeadSource } from "@/features/leads/types/lead.types";
 import type { Contact, CreateContactPayload } from "@/features/contacts/types/contact.types";
 import Select from "@/shared/components/Select";
+import { useFormError } from "@/shared/hooks/useFormError";
 import ShowMoreFields from "@/shared/components/ShowMoreFields";
 
 interface ContactFormProps {
@@ -124,7 +125,7 @@ export default function ContactForm({ mode, initialContact, onSubmit, onCancel }
     initialContact ? formFromContact(initialContact) : emptyForm()
   );
   const [owners, setOwners] = useState<LeadOwnerOption[]>([]);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError, errorRef] = useFormError();
   const [isSubmitting, setIsSubmitting] = useState(false);
   // Create starts with the six essentials; edit opens with everything visible.
   const [showMore, setShowMore] = useState(mode === "edit");
@@ -223,7 +224,7 @@ export default function ContactForm({ mode, initialContact, onSubmit, onCancel }
       </div>
 
       {error && (
-        <p className="mt-4 animate-shake rounded-md border border-danger/30 bg-danger-soft px-3 py-2 text-sm text-danger">
+        <p ref={errorRef as React.RefObject<HTMLParagraphElement>} className="mt-4 animate-shake rounded-md border border-danger/30 bg-danger-soft px-3 py-2 text-sm text-danger">
           {error}
         </p>
       )}

@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Building2, CheckCircle2, Contact2, ExternalLink, Info, Minus, Plus, Search, UserRound } from "lucide-react";
 import { LeadService } from "@/features/leads/services/LeadService";
 import Spinner from "@/shared/components/Spinner";
+import { useFormError } from "@/shared/hooks/useFormError";
 import type {
   ConversionCheckResponse,
   ConvertLeadPayload,
@@ -91,7 +92,7 @@ export default function LeadConvert({ lead }: LeadConvertProps) {
   const [reloadKey, setReloadKey] = useState(0);
   const [accountChoice, setAccountChoice] = useState<Choice>(null);
   const [contactChoice, setContactChoice] = useState<Choice>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError, errorRef] = useFormError();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const submittingRef = useRef(false);
 
@@ -222,7 +223,7 @@ export default function LeadConvert({ lead }: LeadConvertProps) {
         </div>
 
         {error && (
-          <p role="alert" className="mx-6 mt-5 rounded-md border border-danger/30 bg-danger-soft px-3 py-2 text-sm text-danger">{error}</p>
+          <p ref={errorRef as React.RefObject<HTMLParagraphElement>} role="alert" className="mx-6 mt-5 rounded-md border border-danger/30 bg-danger-soft px-3 py-2 text-sm text-danger">{error}</p>
         )}
 
         {isChecking ? (

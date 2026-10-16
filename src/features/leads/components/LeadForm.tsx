@@ -22,6 +22,7 @@ import {
   type LeadStatus,
 } from "@/features/leads/types/lead.types";
 import Select from "@/shared/components/Select";
+import { useFormError } from "@/shared/hooks/useFormError";
 
 interface LeadFormProps {
   mode: "create" | "edit";
@@ -121,7 +122,7 @@ export default function LeadForm({
     initialLead ? formFromLead(initialLead) : emptyForm()
   );
   const [owners, setOwners] = useState<LeadOwnerOption[]>([]);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError, errorRef] = useFormError();
   const [notice, setNotice] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSavingNext, setIsSavingNext] = useState(false);
@@ -265,7 +266,7 @@ export default function LeadForm({
       )}
 
       {error && (
-        <p className="mt-4 animate-shake rounded-md border border-danger/30 bg-danger-soft px-3 py-2 text-sm text-danger">
+        <p ref={errorRef as React.RefObject<HTMLParagraphElement>} className="mt-4 animate-shake rounded-md border border-danger/30 bg-danger-soft px-3 py-2 text-sm text-danger">
           {error}
         </p>
       )}

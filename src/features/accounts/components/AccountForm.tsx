@@ -15,6 +15,7 @@ import {
   type CreateAccountPayload,
 } from "@/features/accounts/types/account.types";
 import Select from "@/shared/components/Select";
+import { useFormError } from "@/shared/hooks/useFormError";
 
 interface AccountFormProps {
   mode: "create" | "edit";
@@ -104,7 +105,7 @@ export default function AccountForm({ mode, initialAccount, onSubmit, onCancel }
     initialAccount ? formFromAccount(initialAccount) : emptyForm()
   );
   const [owners, setOwners] = useState<LeadOwnerOption[]>([]);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError, errorRef] = useFormError();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
@@ -190,7 +191,7 @@ export default function AccountForm({ mode, initialAccount, onSubmit, onCancel }
       </div>
 
       {error && (
-        <p className="mt-4 animate-shake rounded-md border border-danger/30 bg-danger-soft px-3 py-2 text-sm text-danger">
+        <p ref={errorRef as React.RefObject<HTMLParagraphElement>} className="mt-4 animate-shake rounded-md border border-danger/30 bg-danger-soft px-3 py-2 text-sm text-danger">
           {error}
         </p>
       )}

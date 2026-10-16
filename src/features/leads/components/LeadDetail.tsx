@@ -106,7 +106,7 @@ async function handleStatusClick(status: LeadStatus) {
         <div className="flex items-center gap-2">
           <Link
             href={`/dashboard/leads/${lead.id}/convert`}
-            className="rounded-md bg-slate px-4 py-2 text-sm font-semibold text-white hover:opacity-90"
+            className="rounded-md bg-ink px-4 py-2 text-sm font-semibold text-white hover:bg-ink-2"
           >
             Convert
           </Link>

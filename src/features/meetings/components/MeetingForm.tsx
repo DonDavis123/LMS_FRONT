@@ -18,6 +18,7 @@ import {
   type CreateMeetingPayload,
 } from "@/features/meetings/types/meeting.types";
 import Select from "@/shared/components/Select";
+import { useFormError } from "@/shared/hooks/useFormError";
 
 interface Props {
   mode: "create" | "edit";
@@ -125,7 +126,7 @@ export default function MeetingForm({ mode, initialMeeting, onSubmit, onCancel }
   );
   const [owners, setOwners] = useState<LeadOwnerOption[]>([]);
   const [participantUsers, setParticipantUsers] = useState<ParticipantCandidate[]>([]);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError, errorRef] = useFormError();
   const [saving, setSaving] = useState(false);
   const [showParticipants, setShowParticipants] = useState(false);
   const [participantSearch, setParticipantSearch] = useState("");
@@ -342,7 +343,7 @@ export default function MeetingForm({ mode, initialMeeting, onSubmit, onCancel }
 
       <div className="min-h-0 flex-1 overflow-y-auto px-5 py-2">
         {error && (
-          <div className="my-3 rounded-md border border-danger/30 bg-danger-soft px-3 py-2 text-sm text-danger">
+          <div ref={errorRef as React.RefObject<HTMLDivElement>} className="my-3 rounded-md border border-danger/30 bg-danger-soft px-3 py-2 text-sm text-danger">
             {error}
           </div>
         )}
