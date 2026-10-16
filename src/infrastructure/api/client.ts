@@ -177,9 +177,31 @@ export function refreshAccessToken(): Promise<string | null> {
   return refreshPromise;
 }
 
+/** Exact `detail` the backend sends once a company has been suspended. */
+const COMPANY_SUSPENDED_DETAIL = "Your company account is suspended.";
+
+function isCompanySuspendedResponse(error: AxiosError): boolean {
+  if (error.response?.status !== 403) return false;
+  const data = error.response.data as { detail?: unknown } | undefined;
+  return data?.detail === COMPANY_SUSPENDED_DETAIL;
+}
+
 apiClient.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
+    // A company suspended while its users are signed in: every company
+    // endpoint now answers 403 and refreshing is impossible, so end the
+    // session and explain why on the sign-in page.
+    if (isCompanySuspendedResponse(error)) {
+      authStorage.clear();
+
+      if (typeof window !== "undefined") {
+        window.location.href = "/login?reason=suspended";
+      }
+
+      return Promise.reject(error);
+    }
+
     const originalRequest =
       error.config as RetriableConfig | undefined;
 

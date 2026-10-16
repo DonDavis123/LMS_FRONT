@@ -6,6 +6,7 @@ const ROLE_LABELS: Record<string, string> = {
   ADMIN: "Admin",
   SALES_MANAGER: "Sales Manager",
   SALES_EXECUTIVE: "Sales Executive",
+  PLATFORM_SUPERADMIN: "Platform Admin",
 };
 
 /** Display label for a backend role value; unknown roles are shown as-is. */

@@ -5,7 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import Sidebar from "@/features/dashboard/components/Sidebar";
 import DashboardHeader from "@/features/dashboard/components/DashboardHeader";
 import { authService } from "@/features/auth/services/authService";
-import type { AuthUser } from "@/features/auth/types/auth.types";
+import { isPlatformAdmin, type AuthUser } from "@/features/auth/types/auth.types";
 import LoadingScreen from "@/shared/components/LoadingScreen";
 import { useMediaQuery } from "@/shared/hooks/useMediaQuery";
 
@@ -27,6 +27,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       if (cancelled) return;
       if (!restoredUser) {
         router.replace("/login");
+        return;
+      }
+      // Platform admins have no company data; they use their own workspace.
+      if (isPlatformAdmin(restoredUser)) {
+        router.replace("/platform");
         return;
       }
       setUser(restoredUser);

@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  useEffect,
   useRef,
   useState,
   type CSSProperties,
@@ -21,6 +22,7 @@ import {
 import AuthField from "@/features/auth/components/AuthField";
 import BrandMark from "@/features/auth/components/BrandMark";
 import { authService } from "@/features/auth/services/authService";
+import { getHomePath } from "@/features/auth/types/auth.types";
 import Spinner from "@/shared/components/Spinner";
 import { extractApiError } from "@/shared/utils/apiError";
 import "@/features/auth/styles/login.css";
@@ -54,6 +56,14 @@ export default function LoginForm() {
 
   const isBusy = status !== "idle";
 
+  // The API client sends suspended-company users here (`?reason=suspended`)
+  // when their session is cut off mid-use, so they see why instead of a blank form.
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("reason") === "suspended") {
+      setError({ message: "Your company account is suspended." });
+    }
+  }, []);
+
   function validate(): FormError | null {
     if (!EMAIL_PATTERN.test(email)) {
       return { message: "Enter a valid email address.", field: "email" };
@@ -84,13 +94,14 @@ export default function LoginForm() {
     setError(null);
     setStatus("submitting");
     try {
-      await authService.login({ email, password });
+      const signedInUser = await authService.login({ email, password });
       if (rememberMe) {
         window.localStorage.setItem("crm.last_email", email);
       }
       // Stay in "success" (button locked) while the router takes over.
       setStatus("success");
-      router.push("/dashboard");
+      // One login for everyone: platform admins land in /platform, company users in /dashboard.
+      router.push(getHomePath(signedInUser));
     } catch (err) {
       setStatus("idle");
       fail({ message: resolveErrorMessage(err) });

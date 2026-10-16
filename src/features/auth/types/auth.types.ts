@@ -8,11 +8,23 @@ import { normalizeEnumValue } from "@/shared/utils/enumValue";
  */
 export type UserRole = string;
 
+/**
+ * Company summary returned by GET /users/me/. It is `null` for platform
+ * admins (they belong to no company) and may be missing on older cached
+ * sessions, so treat it as optional.
+ */
+export interface AuthUserCompany {
+  id: string;
+  name: string;
+  status: string;
+}
+
 export interface AuthUser {
   id: string;
   name: string;
   email: string;
   role: UserRole;
+  company?: AuthUserCompany | null;
 }
 
 function normalizeRole(role: string | null | undefined): string {
@@ -27,6 +39,21 @@ export function isSuperAdmin(user: AuthUser | null): boolean {
 export function isAdmin(user: AuthUser | null): boolean {
   const normalized = normalizeRole(user?.role);
   return normalized === "SUPERADMIN" || normalized === "ADMIN";
+}
+
+/**
+ * Platform superadmins run the whole product (companies, their users, the
+ * audit trail) and belong to no company, so they use the separate
+ * `/platform` area instead of `/dashboard`. Deliberately NOT part of
+ * `isSuperAdmin()` / `isAdmin()`, which describe roles *inside* a company.
+ */
+export function isPlatformAdmin(user: AuthUser | null): boolean {
+  return normalizeRole(user?.role) === "PLATFORMSUPERADMIN";
+}
+
+/** Landing page after sign-in: one login for everyone, two separate workspaces. */
+export function getHomePath(user: AuthUser | null): string {
+  return isPlatformAdmin(user) ? "/platform" : "/dashboard";
 }
 
 export interface LoginCredentials {
