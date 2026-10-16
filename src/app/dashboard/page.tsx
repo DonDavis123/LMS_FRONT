@@ -56,13 +56,7 @@ export default function HomePage() {
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-12 lg:gap-5">
         <div className="min-w-0 lg:col-span-7">
-          <LeadsTrendChart
-            state={statsState}
-            range={dashboard.range}
-            onRangeChange={dashboard.setRange}
-            isFetching={dashboard.stats.isFetching}
-            onRetry={dashboard.stats.reload}
-          />
+          <LeadPipelineChart state={statsState} onRetry={dashboard.stats.reload} />
         </div>
 
         {/* Most actionable block: first after the KPIs on small screens. */}
@@ -78,7 +72,13 @@ export default function HomePage() {
         )}
 
         <div className="min-w-0 lg:col-span-7">
-          <LeadPipelineChart state={statsState} onRetry={dashboard.stats.reload} />
+          <LeadsTrendChart
+            state={statsState}
+            range={dashboard.range}
+            onRangeChange={dashboard.setRange}
+            isFetching={dashboard.stats.isFetching}
+            onRetry={dashboard.stats.reload}
+          />
         </div>
 
         <div className="min-w-0 lg:col-span-5">
