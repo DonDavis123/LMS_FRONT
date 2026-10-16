@@ -38,6 +38,15 @@ const NEWEST_FIRST: SortState = { field: "created_at", direction: "desc" };
 /** Remembered after the first 404 so range changes don't re-probe a missing route. */
 let statsEndpointMissing = false;
 
+/** The browser's IANA zone, so the backend buckets days exactly like the old client-side code did. */
+function browserTimeZone(): string | undefined {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 /* ── Narrowing helpers for the optional /dashboard/stats/ response ───── */
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -217,15 +226,20 @@ async function readLocalCalls(): Promise<Call[]> {
 }
 
 export const DashboardService = {
+  /** False once the backend has answered 404 for /dashboard/stats/ (the slow composed fallback is in use). */
+  hasStatsEndpoint(): boolean {
+    return !statsEndpointMissing;
+  },
+
   /**
-   * Prefers GET /dashboard/stats/. While that route doesn't exist (404) or
+   * Prefers GET /dashboard/stats/ (one request, aggregated in the database). While that route doesn't exist (404) or
    * answers with an unrecognised shape, the same numbers are composed from the
    * list endpoints. Any other failure is thrown so the widget can show Retry.
    */
   async getStats(range: DashboardRange, now: Date = new Date()): Promise<DashboardStats> {
     if (!statsEndpointMissing) {
       try {
-        const { data } = await apiClient.get<unknown>("/dashboard/stats/", { params: { range } });
+        const { data } = await apiClient.get<unknown>("/dashboard/stats/", { params: { range, tz: browserTimeZone() } });
         const parsed = parseStatsResponse(data, range, now);
         if (parsed) return parsed;
       } catch (error) {
