@@ -646,7 +646,7 @@ button, a, input, select, textarea {
   to   { clip-path: inset(-4px -4px -4px 0); }
 }
 .lp-reveal-x {
-  animation: lp-reveal-x 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: lp-reveal-x 1.4s cubic-bezier(0.22, 0.61, 0.36, 1) both;
 }
 
 /* Trend chart: the line draws in (path uses pathLength="1"), then the area fades in. */
@@ -656,10 +656,10 @@ button, a, input, select, textarea {
 }
 .lp-draw-line {
   stroke-dasharray: 1;
-  animation: lp-draw 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: lp-draw 1.6s cubic-bezier(0.22, 0.61, 0.36, 1) both;
 }
 .lp-fade-area {
-  animation: fade-in 0.5s ease-out 0.45s both;
+  animation: fade-in 0.9s ease-out 0.9s both;
 }
 
 /* Donut: segments sweep in clockwise from 12 o'clock. Browsers without
@@ -676,7 +676,7 @@ button, a, input, select, textarea {
 .lp-donut-sweep {
   -webkit-mask-image: conic-gradient(from 0deg, black var(--lp-sweep), transparent 0);
   mask-image: conic-gradient(from 0deg, black var(--lp-sweep), transparent 0);
-  animation: lp-sweep 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: lp-sweep 1.6s cubic-bezier(0.22, 0.61, 0.36, 1) both;
 }
 
 @media (prefers-reduced-motion: reduce) {

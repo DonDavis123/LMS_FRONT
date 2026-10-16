@@ -30,7 +30,6 @@ const EMPTY_COPY: Record<TaskTab, { title: string; hint: string }> = {
   upcoming: { title: "No upcoming tasks", hint: "Tasks assigned to you will appear here." },
 };
 
-const MAX_ROWS = 8;
 const BODY_HEIGHT = 340;
 const LEAVE_MS = 200;
 const TOAST_MS = 3500;
@@ -73,8 +72,8 @@ export default function MyTasksPanel({ state, completingIds, onComplete, onRetry
   const firstFilled = TABS.find((tab) => counts[tab.value] > 0)?.value ?? "overdue";
   const tab = chosenTab ?? firstFilled;
   const rows = groups[tab].filter((task) => !hidden.has(task.id));
-  const shownRows = rows.slice(0, MAX_ROWS);
-  const moreCount = Math.max(0, counts[tab] - MAX_ROWS);
+  // Every row is rendered; the list scrolls inside a fixed-height body so the card never grows.
+  const shownRows = rows;
   const hasAnyOpen = counts.overdue + counts.today + counts.upcoming > 0;
 
   useEffect(() => {
@@ -133,7 +132,8 @@ export default function MyTasksPanel({ state, completingIds, onComplete, onRetry
         minHeight={BODY_HEIGHT}
         delay={delay}
       >
-        <div className="px-4 pt-3 sm:px-5">
+        <div className="flex flex-col" style={{ height: BODY_HEIGHT }}>
+        <div className="shrink-0 px-4 pt-3 sm:px-5">
           <div role="tablist" aria-label="Task due date" className="inline-flex max-w-full rounded-full border border-line bg-paper p-1">
             {TABS.map((item, index) => {
               const isActive = item.value === tab;
@@ -168,10 +168,11 @@ export default function MyTasksPanel({ state, completingIds, onComplete, onRetry
           </div>
         </div>
 
-        <div role="tabpanel" id="my-tasks-panel" aria-labelledby={`my-tasks-tab-${tab}`} className="mt-2">
+        <div role="tabpanel" id="my-tasks-panel" aria-labelledby={`my-tasks-tab-${tab}`} className="mt-2 flex min-h-0 flex-1 flex-col">
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
           {shownRows.length === 0 ? (
             <WidgetEmpty
-              minHeight={BODY_HEIGHT - 64}
+              minHeight={BODY_HEIGHT - 110}
               icon={<CheckCircle2 size={22} aria-hidden="true" />}
               title={hasAnyOpen ? EMPTY_COPY[tab].title : "You have no open tasks"}
               hint={hasAnyOpen ? EMPTY_COPY[tab].hint : "You're all caught up."}
@@ -190,21 +191,18 @@ export default function MyTasksPanel({ state, completingIds, onComplete, onRetry
               ))}
             </ul>
           )}
+          </div>
 
-          {(moreCount > 0 || (data && data.total > data.tasks.length)) && (
-            <p className="border-t border-line px-4 py-2.5 text-xs text-ink-soft sm:px-5">
-              {moreCount > 0 && (
-                <>
-                  +{moreCount} more —{" "}
-                  <Link href="/dashboard/tasks" className="font-medium text-slate hover:text-fg">
-                    View all tasks
-                  </Link>
-                  .{" "}
-                </>
-              )}
-              {data && data.total > data.tasks.length && `Showing your first ${data.tasks.length} of ${data.total} open tasks.`}
+          {data && data.total > data.tasks.length && (
+            <p className="shrink-0 border-t border-line px-4 py-2.5 text-xs text-ink-soft sm:px-5">
+              Showing your first {data.tasks.length} of {data.total} open tasks.{" "}
+              <Link href="/dashboard/tasks" className="font-medium text-slate hover:text-fg">
+                View all tasks
+              </Link>
+              .
             </p>
           )}
+        </div>
         </div>
       </WidgetCard>
 

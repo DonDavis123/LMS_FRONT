@@ -2,7 +2,7 @@
 
 import { Fragment, type ReactNode } from "react";
 import Link from "next/link";
-import { RefreshCw, UserPlus } from "lucide-react";
+import { UserPlus } from "lucide-react";
 import type { AuthUser } from "@/features/auth/types/auth.types";
 import type { AsyncState, MyTasksData, ScheduleItem } from "@/features/dashboard/types/dashboard.types";
 import {
@@ -12,16 +12,12 @@ import {
   greetingFor,
   groupTasksByDue,
 } from "@/features/dashboard/utils/dashboardMetrics";
-import { formatDateTime, formatRelativeTime } from "@/shared/utils/formatDate";
 
 interface DashboardHeroProps {
   user: AuthUser | null;
   tasks: AsyncState<MyTasksData> | null;
   schedule: AsyncState<ScheduleItem[]>;
   completingIds: ReadonlySet<string>;
-  updatedAt: number | null;
-  isRefreshing: boolean;
-  onRefresh: () => void;
 }
 
 const GENERIC_SUMMARY = "A focused view of your pipeline, activity and recent opportunities.";
@@ -34,9 +30,8 @@ function withSeparators(parts: string[]): { text: string; separator: string }[] 
   }));
 }
 
-export default function DashboardHero({ user, tasks, schedule, completingIds, updatedAt, isRefreshing, onRefresh }: DashboardHeroProps) {
+export default function DashboardHero({ user, tasks, schedule, completingIds }: DashboardHeroProps) {
   const now = new Date();
-  const updatedIso = updatedAt === null ? null : new Date(updatedAt).toISOString();
 
   let summary: ReactNode = GENERIC_SUMMARY;
   let isSummaryLoading = false;
@@ -71,46 +66,30 @@ export default function DashboardHero({ user, tasks, schedule, completingIds, up
   }
 
   return (
-    <div className="animate-fade-in-up relative overflow-hidden rounded-2xl border border-line bg-surface p-4 shadow-sm sm:p-6">
+    <div className="animate-fade-in-up relative overflow-hidden rounded-2xl border border-line bg-surface px-4 py-3 shadow-sm sm:px-5 sm:py-3.5">
       <div className="pointer-events-none absolute -right-12 -top-16 h-40 w-40 rounded-full bg-amber/10 blur-3xl dark:hidden" />
-      <div className="relative flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+      <div className="relative flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
         <div className="min-w-0">
-          <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.2em] text-amber-dark">LeadPulse workspace</p>
-          <h1 className="font-serif text-2xl tracking-tight text-fg sm:text-3xl">
+          <p className="text-[10px] font-bold uppercase leading-none tracking-[0.2em] text-amber-dark">LeadPulse workspace</p>
+          <h1 className="mt-1 font-serif text-xl leading-tight tracking-tight text-fg sm:text-2xl">
             {greetingFor(now)}, {firstNameOf(user?.name)}.
           </h1>
           {isSummaryLoading ? (
-            <div className="mt-2 h-5 w-full max-w-sm animate-shimmer rounded" aria-busy="true" aria-label="Loading summary" />
+            <div className="mt-1.5 h-4 w-full max-w-sm animate-shimmer rounded" aria-busy="true" aria-label="Loading summary" />
           ) : (
-            <p className="mt-1 max-w-xl text-sm text-ink-soft" aria-live="polite">
+            <p className="mt-0.5 max-w-xl text-sm text-ink-soft" aria-live="polite">
               {summary}
             </p>
           )}
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-          <Link
-            href="/dashboard/leads/new"
-            className="inline-flex h-10 items-center gap-2 rounded-xl bg-ink px-4 text-sm font-medium text-white outline-none transition hover:bg-ink-2 focus-visible:ring-2 focus-visible:ring-slate focus-visible:ring-offset-2 focus-visible:ring-offset-surface active:scale-[0.98] dark:bg-slate"
-          >
-            <UserPlus size={15} aria-hidden="true" />
-            New lead
-          </Link>
-          <button
-            type="button"
-            onClick={onRefresh}
-            disabled={isRefreshing}
-            aria-label="Refresh dashboard"
-            className="flex h-10 w-10 items-center justify-center rounded-xl border border-line bg-surface text-ink-soft outline-none transition hover:bg-paper hover:text-fg focus-visible:ring-2 focus-visible:ring-slate disabled:cursor-wait"
-          >
-            <RefreshCw size={16} className={isRefreshing ? "animate-spin" : ""} aria-hidden="true" />
-          </button>
-          {updatedIso && (
-            <span className="text-xs text-ink-soft" title={formatDateTime(updatedIso)}>
-              Updated {formatRelativeTime(updatedIso)}
-            </span>
-          )}
-        </div>
+        <Link
+          href="/dashboard/leads/new"
+          className="inline-flex h-10 items-center gap-2 rounded-xl bg-ink px-4 text-sm font-medium text-white outline-none transition hover:bg-ink-2 focus-visible:ring-2 focus-visible:ring-slate focus-visible:ring-offset-2 focus-visible:ring-offset-surface active:scale-[0.98] dark:bg-slate"
+        >
+          <UserPlus size={15} aria-hidden="true" />
+          New lead
+        </Link>
       </div>
     </div>
   );

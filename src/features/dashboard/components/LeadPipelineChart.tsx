@@ -21,12 +21,15 @@ export default function LeadPipelineChart({ state, onRetry, delay }: LeadPipelin
   const rows = useMemo(() => (stats ? buildPipelineRows(stats.leads.by_status, stats.leads.total) : []), [stats]);
   const maxCount = Math.max(1, ...rows.map((row) => row.count));
 
-  // Bars mount at 0 and grow on the next frame so the width transition runs once.
+  // Bars mount at 0 and grow on the next frame once the data is on screen, so
+  // the width transition runs together with the other charts.
+  const hasStats = stats !== null;
   const [grown, setGrown] = useState(false);
   useEffect(() => {
+    if (!hasStats) return;
     const frame = requestAnimationFrame(() => setGrown(true));
     return () => cancelAnimationFrame(frame);
-  }, []);
+  }, [hasStats]);
 
   return (
     <WidgetCard
@@ -63,8 +66,8 @@ export default function LeadPipelineChart({ state, onRetry, delay }: LeadPipelin
                     style={{
                       width: grown ? `${(row.count / maxCount) * 100}%` : "0%",
                       background: TONE_COLOR[leadStatusTone(row.status)],
-                      transition: "width 700ms cubic-bezier(0.16, 1, 0.3, 1)",
-                      transitionDelay: `${index * 40}ms`,
+                      transition: "width 1500ms cubic-bezier(0.22, 0.61, 0.36, 1)",
+                      transitionDelay: `${index * 60}ms`,
                     }}
                   />
                 </span>

@@ -15,7 +15,7 @@ interface LeadSourceDonutProps {
   delay?: number;
 }
 
-const BODY_HEIGHT = 300;
+const BODY_HEIGHT = 340;
 const SIZE = 160;
 const RADIUS = 62;
 const STROKE = 14;
@@ -28,7 +28,7 @@ export default function LeadSourceDonut({ state, range, isFetching, onRetry, del
   return (
     <WidgetCard
       title="Lead sources"
-      subtitle={`Created in the last ${range} days`}
+      subtitle={`Created in the last ${stats ? stats.range_days : range} days`}
       status={state.status}
       error={state.status === "error" ? state.message : undefined}
       onRetry={onRetry}
@@ -36,7 +36,7 @@ export default function LeadSourceDonut({ state, range, isFetching, onRetry, del
       delay={delay}
     >
       {stats && (
-        <div className={`transition-opacity ${isFetching ? "opacity-60" : ""}`}>
+        <div aria-busy={isFetching}>
           <DonutBody stats={stats} />
         </div>
       )}
@@ -47,7 +47,7 @@ export default function LeadSourceDonut({ state, range, isFetching, onRetry, del
 function DonutBody({ stats }: { stats: DashboardStats }) {
   const { slices, total } = useMemo(() => buildSourceSlices(stats.leads.by_source), [stats]);
   const [activeKey, setActiveKey] = useState<string | null>(null);
-  const animatedTotal = useCountUp(total);
+  const animatedTotal = useCountUp(total, 1400);
 
   const segments = useMemo(() => {
     let cursor = 0;

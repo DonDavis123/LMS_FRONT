@@ -38,6 +38,8 @@ interface CardModel {
 }
 
 const WEEK = 7;
+/** Slower than the hook default so the numbers settle together with the charts. */
+const COUNT_UP_MS = 1400;
 
 const EMPTY_TASK_CARD: CardModel = {
   key: "tasks",
@@ -154,11 +156,11 @@ export default function DashboardStats({ stats, tasks, completingIds, range, onR
 
   return (
     <div className="grid grid-cols-2 gap-2.5 sm:gap-4 lg:grid-cols-4" aria-label="Key figures">
-      {slots.map((slot, index) =>
+      {slots.map((slot) =>
         slot.card ? (
-          <StatCard key={slot.key} card={slot.card} delay={index * 60} />
+          <StatCard key={slot.key} card={slot.card} delay={0} />
         ) : (
-          <PlaceholderCard key={slot.key} state={slot.state} onRetry={slot.retry} delay={index * 60} />
+          <PlaceholderCard key={slot.key} state={slot.state} onRetry={slot.retry} delay={0} />
         ),
       )}
     </div>
@@ -186,7 +188,7 @@ function DeltaChip({ delta, title }: { delta: Delta; title: string }) {
 }
 
 function StatCard({ card, delay }: { card: CardModel; delay: number }) {
-  const shown = useCountUp(card.value ?? 0);
+  const shown = useCountUp(card.value ?? 0, COUNT_UP_MS);
   const Icon = card.icon;
 
   return (

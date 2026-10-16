@@ -29,7 +29,7 @@ interface LeadsTrendChartProps {
 
 const MARGIN = { top: 14, right: 14, bottom: 26, left: 34 };
 const MAX_X_LABELS = 6;
-const BODY_HEIGHT = 300;
+const BODY_HEIGHT = 340;
 
 function leadsText(count: number): string {
   return `${count} new ${count === 1 ? "lead" : "leads"}`;
@@ -62,7 +62,7 @@ export default function LeadsTrendChart({ state, range, onRangeChange, isFetchin
   return (
     <WidgetCard
       title="Leads over time"
-      subtitle={stats ? `${total.toLocaleString()} new ${total === 1 ? "lead" : "leads"} · last ${range} days` : undefined}
+      subtitle={stats ? `${total.toLocaleString()} new ${total === 1 ? "lead" : "leads"} · last ${stats.range_days} days` : undefined}
       headerAside={<RangeToggle range={range} onChange={onRangeChange} />}
       status={state.status}
       error={state.status === "error" ? state.message : undefined}
@@ -71,7 +71,7 @@ export default function LeadsTrendChart({ state, range, onRangeChange, isFetchin
       delay={delay}
     >
       {stats && (
-        <div className={`px-2 pb-3 pt-3 transition-opacity sm:px-4 ${isFetching ? "opacity-60" : ""}`}>
+        <div className="px-2 pb-3 pt-3 sm:px-4" aria-busy={isFetching}>
           <TrendCanvas stats={stats} />
           {stats.is_sampled && <p className="px-2 pt-1 text-[11px] text-ink-soft">Based on the latest 300 leads</p>}
         </div>
@@ -111,7 +111,7 @@ function TrendCanvas({ stats }: { stats: DashboardStats }) {
   const gradientId = `trend-${useId().replace(/:/g, "")}`;
   const tableId = useId();
 
-  const height = width < 480 ? 210 : 250;
+  const height = width < 480 ? 230 : 290;
   const innerWidth = Math.max(0, width - MARGIN.left - MARGIN.right);
   const innerHeight = height - MARGIN.top - MARGIN.bottom;
   const baseline = MARGIN.top + innerHeight;
