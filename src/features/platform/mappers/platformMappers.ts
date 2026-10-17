@@ -91,5 +91,18 @@ export function toPlatformOverview(raw: PlatformOverview): PlatformOverview {
     recent_companies: Array.isArray(raw.recent_companies)
       ? raw.recent_companies.map(toRecentCompany)
       : [],
+    companies_growth: Array.isArray(raw.companies_growth)
+      ? raw.companies_growth.map((row) => ({ month: row.month, count: row.count ?? 0 }))
+      : [],
+    users_by_role: Array.isArray(raw.users_by_role)
+      ? raw.users_by_role.map((row) => ({ role: row.role, count: row.count ?? 0 }))
+      : [],
+    top_companies: Array.isArray(raw.top_companies)
+      ? raw.top_companies.map((row) => ({
+          ...row,
+          status: toStatus(row.status),
+          users_count: row.users_count ?? 0,
+        }))
+      : [],
   };
 }

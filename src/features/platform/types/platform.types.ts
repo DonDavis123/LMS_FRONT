@@ -160,6 +160,24 @@ export interface RecentCompany {
   created_at: string;
 }
 
+export interface MonthlyCount {
+  /** "YYYY-MM" */
+  month: string;
+  count: number;
+}
+
+export interface RoleCount {
+  role: string;
+  count: number;
+}
+
+export interface TopCompany {
+  id: string;
+  name: string;
+  status: CompanyStatus;
+  users_count: number;
+}
+
 /** GET /platform/overview/ */
 export interface PlatformOverview {
   companies: {
@@ -174,4 +192,10 @@ export interface PlatformOverview {
     active: number;
   };
   recent_companies: RecentCompany[];
+  /** New companies per month, last 6 months, oldest first. */
+  companies_growth: MonthlyCount[];
+  /** Company users per role, largest first. */
+  users_by_role: RoleCount[];
+  /** Top 5 companies by user count. */
+  top_companies: TopCompany[];
 }
