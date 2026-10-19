@@ -20,6 +20,7 @@ export const LEAD_SOURCES = [
   "Chat",
   "X (Twitter)",
   "Facebook",
+  "Other",
 ] as const;
 
 export type LeadSource = (typeof LEAD_SOURCES)[number];

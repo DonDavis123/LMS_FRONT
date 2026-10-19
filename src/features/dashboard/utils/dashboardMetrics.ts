@@ -328,7 +328,7 @@ export function buildSourceSlices(bySource: { source: LeadSource; count: number 
 
   const head = sorted.slice(0, MAX_SOURCE_SLICES).map(([source, count]) => ({ key: source, label: sourceLabel(source), count }));
   const otherCount = sorted.slice(MAX_SOURCE_SLICES).reduce((sum, [, count]) => sum + count, 0);
-  const entries = otherCount > 0 ? [...head, { key: "__other", label: "Other", count: otherCount }] : head;
+  const entries = otherCount > 0 ? [...head, { key: "__other", label: "More sources", count: otherCount }] : head;
 
   return {
     total,
