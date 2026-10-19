@@ -1,5 +1,6 @@
 import { isAxiosError } from "axios";
 import { apiClient } from "@/infrastructure/api/client";
+import { CALLS_ENABLED } from "@/features/calls/config";
 import { CallService } from "@/features/calls/services/CallService";
 import type { Call } from "@/features/calls/types/call.types";
 import { LeadService } from "@/features/leads/services/LeadService";
@@ -218,6 +219,7 @@ function callToItem(call: Call): ScheduleItem | null {
 }
 
 async function readLocalCalls(): Promise<Call[]> {
+  if (!CALLS_ENABLED) return [];
   try {
     return await CallService.getCalls();
   } catch {

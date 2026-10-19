@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { CALLS_ENABLED } from "@/features/calls/config";
 import CallList from "@/features/calls/components/CallList";
 import CallForm from "@/features/calls/components/CallForm";
 import Modal from "@/shared/components/Modal";
@@ -19,6 +20,10 @@ export default function CallsPage() {
   const [toast, setToast] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!CALLS_ENABLED) {
+      router.replace("/dashboard");
+      return;
+    }
     load();
   }, []);
 
@@ -56,6 +61,8 @@ export default function CallsPage() {
     setCalls((prev) => prev.filter((c) => c.id !== id));
     setToast(message);
   }
+
+  if (!CALLS_ENABLED) return null;
 
   return (
     <>

@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import type { AuthUser } from "@/features/auth/types/auth.types";
 import { isSuperAdmin } from "@/features/auth/types/auth.types";
+import { CALLS_ENABLED } from "@/features/calls/config";
 import { teamspaceService } from "@/features/teamspace/services/teamspaceService";
 import type { Teamspace } from "@/features/teamspace/types/teamspace.types";
 
@@ -39,7 +40,7 @@ const NAV_ITEMS = [
 const ACTIVITY_ITEMS = [
   { href: "/dashboard/tasks", label: "Tasks", icon: SquareCheckBig },
   { href: "/dashboard/meetings", label: "Meetings", icon: CalendarClock },
-  { href: "/dashboard/calls", label: "Calls", icon: Phone },
+  ...(CALLS_ENABLED ? [{ href: "/dashboard/calls", label: "Calls", icon: Phone }] : []),
 ];
 
 /**

@@ -1,3 +1,5 @@
+import { CALLS_ENABLED } from "@/features/calls/config";
+
 /** Copy and structure shared by the auth brand panel and the compact header. */
 
 export const BRAND_HEADLINE_LINES = ["Know where", "every lead stands."] as const;
@@ -26,6 +28,6 @@ export interface ProofPoint {
 
 export const PROOF_POINTS: readonly ProofPoint[] = [
   { icon: "owner", text: "Every lead has an owner" },
-  { icon: "activity", text: "Calls, meetings and tasks on one record" },
+  { icon: "activity", text: CALLS_ENABLED ? "Calls, meetings and tasks on one record" : "Meetings and tasks on one record" },
   { icon: "reminder", text: "Reminders before a follow-up slips" },
 ];

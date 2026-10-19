@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { MoreVertical } from "lucide-react";
+import { CALLS_ENABLED } from "@/features/calls/config";
 import { CallService } from "@/features/calls/services/CallService";
 import type { Call } from "@/features/calls/types/call.types";
 import Modal from "@/shared/components/Modal";
@@ -20,10 +21,15 @@ export default function CallDetailPage() {
   const [menu, setMenu] = useState(false);
 
   useEffect(() => {
+    if (!CALLS_ENABLED) {
+      router.replace("/dashboard");
+      return;
+    }
     if (!params.id) return;
     CallService.getCall(params.id).then(setCall).catch(() => router.replace("/dashboard/calls"));
   }, [params.id, router]);
 
+  if (!CALLS_ENABLED) return null;
   if (!call) return <div className="p-6 text-sm text-ink-soft">Loading…</div>;
 
   const related = call.lead_name ? `Lead: ${call.lead_name}` : call.contact_name ? `Contact: ${call.contact_name}` : call.account_name ? `Account: ${call.account_name}` : "—";

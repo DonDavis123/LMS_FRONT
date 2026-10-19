@@ -1,5 +1,6 @@
 import type { CSSProperties } from "react";
 import { Bell, CalendarCheck, Users, type LucideIcon } from "lucide-react";
+import { CALLS_ENABLED } from "@/features/calls/config";
 import BrandMark from "@/features/auth/components/BrandMark";
 import LoginIllustration from "@/features/auth/components/LoginIllustration";
 
@@ -10,7 +11,7 @@ interface Highlight {
 
 const HIGHLIGHTS: Highlight[] = [
   { icon: Users, text: "Every lead has an owner" },
-  { icon: CalendarCheck, text: "Calls, meetings and tasks on one record" },
+  { icon: CalendarCheck, text: CALLS_ENABLED ? "Calls, meetings and tasks on one record" : "Meetings and tasks on one record" },
   { icon: Bell, text: "Reminders before a follow-up slips" },
 ];
 
