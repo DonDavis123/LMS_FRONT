@@ -102,7 +102,13 @@ export default function PicklistManager() {
         setData(next);
       })
       .catch((error: unknown) => {
-        if (!cancelled) setLoadError(extractApiError(error, "Couldn't load the dropdown options from the server."));
+        if (cancelled) return;
+        const status = (error as { response?: { status?: number } } | null)?.response?.status;
+        setLoadError(
+          status !== undefined && status >= 500
+            ? "The server couldn't load your dropdown options. If the backend was just updated, its database update (migrations) may not have been applied yet — please contact your administrator."
+            : extractApiError(error, "Couldn't load the dropdown options from the server."),
+        );
       })
       .finally(() => {
         if (!cancelled) setIsLoading(false);
