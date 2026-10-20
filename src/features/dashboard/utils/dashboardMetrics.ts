@@ -250,7 +250,8 @@ export function leadStatusTone(status: LeadStatus): Tone {
     case "Junk Lead":
     case "Not Qualified":
       return "danger";
-    case "None":
+    default:
+      // "None", and any stage the company added itself.
       return "slate";
   }
 }
@@ -276,12 +277,27 @@ function repairEnum<T extends string>(value: unknown, allowed: readonly T[]): T 
   return allowed.find((item) => squash(item) === bare) ?? null;
 }
 
+/**
+ * Options are now company-defined text, so any non-empty value is kept as the
+ * backend sent it. Only the old Python-enum shape ("LeadStatus.PRE_QUALIFIED")
+ * is repaired back to its built-in name.
+ */
+function toOptionText(value: unknown, builtIn: readonly string[]): string {
+  if (typeof value !== "string" || !value.trim()) return "None";
+  const text = value.trim();
+  if (text.includes(".")) {
+    const repaired = repairEnum(text, builtIn);
+    if (repaired) return repaired;
+  }
+  return text;
+}
+
 export function toLeadStatus(value: unknown): LeadStatus {
-  return repairEnum(value, LEAD_STATUSES) ?? "None";
+  return toOptionText(value, LEAD_STATUSES);
 }
 
 export function toLeadSource(value: unknown): LeadSource {
-  return repairEnum(value, LEAD_SOURCES) ?? "None";
+  return toOptionText(value, LEAD_SOURCES);
 }
 
 export interface PipelineRow {
@@ -296,7 +312,9 @@ export function buildPipelineRows(byStatus: { status: LeadStatus; count: number 
   const counts = new Map<LeadStatus, number>();
   for (const item of byStatus) counts.set(item.status, (counts.get(item.status) ?? 0) + item.count);
 
-  return LEAD_STATUSES.filter((status) => status !== "None" || (counts.get(status) ?? 0) > 0)
+  // `byStatus` already lists the company's own stages (see DashboardService).
+  return [...counts.keys()]
+    .filter((status) => status !== "None" || (counts.get(status) ?? 0) > 0)
     .map((status) => {
       const count = counts.get(status) ?? 0;
       return {

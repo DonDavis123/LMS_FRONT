@@ -11,7 +11,8 @@ import InlineEditRow from "@/shared/components/InlineEditRow";
 import { Tabs } from "@/shared/components/Tabs";
 import { RecordSection } from "@/shared/components/RecordSection";
 import { formatDateTime } from "@/shared/utils/formatDate";
-import { LEAD_INDUSTRIES, LEAD_RATINGS, LEAD_SOURCES, LEAD_STATUSES } from "@/features/leads/types/lead.types";
+import { useLeadPicklists } from "@/features/picklists/hooks/useLeadPicklists";
+import { toSelectOptions } from "@/features/picklists/utils/optionHelpers";
 import type { Lead, LeadStatus } from "@/features/leads/types/lead.types";
 
 import CreateTaskFromRecord from "@/shared/components/CreateTaskFromRecord";
@@ -35,6 +36,8 @@ export default function LeadDetail({ lead, onLeadChange }: LeadDetailProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const [pendingStatus, setPendingStatus] = useState<LeadStatus | null>(null);
+  // The company's own Lead Source / Status / Industry / Rating options.
+  const { options: picklists } = useLeadPicklists();
 
 async function handleStatusClick(status: LeadStatus) {
   if (status === lead.lead_status || isUpdatingStatus) return;
@@ -153,6 +156,7 @@ async function handleStatusClick(status: LeadStatus) {
         <>
           {/* Status pipeline */}
           <LeadStatusPipeline
+            statuses={picklists.lead_status}
             current={lead.lead_status}
             pending={pendingStatus}
             onSelect={handleStatusClick}
@@ -168,7 +172,7 @@ async function handleStatusClick(status: LeadStatus) {
               <Row label="Email" value={lead.email} onSave={(raw) => updateField("email", raw)} />
               <Row label="Phone" value={lead.phone} onSave={(raw) => updateField("phone", raw)} />
               <Row label="Mobile" value={lead.mobile_number} onSave={(raw) => updateField("mobile_number", raw)} />
-              <Row label="Lead Status" value={lead.lead_status} onSave={(raw) => updateField("lead_status", raw)} type="select" options={LEAD_STATUSES.map(value => ({value, label: value}))} />
+              <Row label="Lead Status" value={lead.lead_status} onSave={(raw) => updateField("lead_status", raw)} type="select" options={toSelectOptions(picklists.lead_status, lead.lead_status)} />
             </div>
           </div>
 
@@ -202,10 +206,10 @@ async function handleStatusClick(status: LeadStatus) {
                 <Row label="Phone" value={lead.phone} onSave={(raw) => updateField("phone", raw)} />
                 <Row label="Website" value={lead.website} onSave={(raw) => updateField("website", raw)} />
                 <Row label="Mobile" value={lead.mobile_number} onSave={(raw) => updateField("mobile_number", raw)} />
-                <Row label="Lead Status" value={lead.lead_status} onSave={(raw) => updateField("lead_status", raw)} type="select" options={LEAD_STATUSES.map(value => ({value, label: value}))} />
-                <Row label="Lead Source" value={lead.lead_source} onSave={(raw) => updateField("lead_source", raw)} type="select" options={LEAD_SOURCES.map(value => ({value, label: value}))} />
-                <Row label="Rating" value={lead.rating} onSave={(raw) => updateField("rating", raw)} type="select" options={LEAD_RATINGS.map(value => ({value, label: value}))} />
-                <Row label="Industry" value={lead.industry} onSave={(raw) => updateField("industry", raw)} type="select" options={LEAD_INDUSTRIES.map(value => ({value, label: value}))} />
+                <Row label="Lead Status" value={lead.lead_status} onSave={(raw) => updateField("lead_status", raw)} type="select" options={toSelectOptions(picklists.lead_status, lead.lead_status)} />
+                <Row label="Lead Source" value={lead.lead_source} onSave={(raw) => updateField("lead_source", raw)} type="select" options={toSelectOptions(picklists.lead_source, lead.lead_source)} />
+                <Row label="Rating" value={lead.rating} onSave={(raw) => updateField("rating", raw)} type="select" options={toSelectOptions(picklists.rating, lead.rating)} />
+                <Row label="Industry" value={lead.industry} onSave={(raw) => updateField("industry", raw)} type="select" options={toSelectOptions(picklists.industry, lead.industry)} />
                 <Row label="No. of Employees" value={lead.number_of_employees} onSave={(raw) => updateField("number_of_employees", raw)} type="number" />
                 <Row label="Annual Revenue" value={lead.annual_revenue} onSave={(raw) => updateField("annual_revenue", raw)} type="number" />
               </RecordSection>

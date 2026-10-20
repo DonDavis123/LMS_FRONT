@@ -2,9 +2,11 @@
 
 import type { CSSProperties } from "react";
 import { Check, ThumbsDown } from "lucide-react";
-import { LEAD_STATUS_PIPELINE, type LeadStatus } from "@/features/leads/types/lead.types";
+import type { LeadStatus } from "@/features/leads/types/lead.types";
 
 interface LeadStatusPipelineProps {
+  /** The company's active Lead Status options, in their configured order. */
+  statuses: readonly LeadStatus[];
   current: LeadStatus;
   /** Status currently being saved, if any (shows a pulse). */
   pending: LeadStatus | null;
@@ -13,6 +15,9 @@ interface LeadStatusPipelineProps {
 
 /** Stages that mean the lead is a dead end — marked with a thumbs-down. */
 const NEGATIVE_STATUSES: readonly LeadStatus[] = ["Junk Lead", "Not Qualified"];
+
+/** Beyond this many stages a single overlapping row gets too cramped, so they wrap into a grid. */
+const MAX_CHEVRON_ROW = 9;
 
 // Arrow-shaped step: a point on the right, a matching notch on the left.
 // The first step keeps a flat left edge.
@@ -28,13 +33,22 @@ const FIRST_STEP_SHAPE = `polygon(0 0, calc(100% - ${NOTCH}) 0, 100% 50%, calc(1
  * Purely presentational — LeadDetail owns
  * the API call and passes the result back in via `current` / `pending`.
  */
-export default function LeadStatusPipeline({ current, pending, onSelect }: LeadStatusPipelineProps) {
+export default function LeadStatusPipeline({ statuses, current, pending, onSelect }: LeadStatusPipelineProps) {
+  // "None" means "no status yet" and was never a stage. A lead whose status
+  // was since hidden or removed still sees its own stage, highlighted.
+  const stages = statuses.filter((status) => status !== "None");
+  if (current && current !== "None" && !stages.includes(current)) stages.push(current);
+  const wraps = stages.length > MAX_CHEVRON_ROW;
+
   return (
-    <ol className="mt-4 grid grid-cols-2 gap-1.5 sm:grid-cols-4 lg:flex lg:gap-0" aria-label="Lead status">
-      {LEAD_STATUS_PIPELINE.map((status, index) => {
+    <ol
+      className={`mt-4 grid grid-cols-2 gap-1.5 sm:grid-cols-4 ${wraps ? "lg:grid-cols-6" : "lg:flex lg:gap-0"}`}
+      aria-label="Lead status"
+    >
+      {stages.map((status, index) => {
         const isCurrent = status === current;
         const isNegative = NEGATIVE_STATUSES.includes(status);
-        const shape: CSSProperties = { clipPath: index === 0 ? FIRST_STEP_SHAPE : STEP_SHAPE };
+        const shape: CSSProperties = { clipPath: index === 0 || wraps ? FIRST_STEP_SHAPE : STEP_SHAPE };
 
         // Outer layer paints the 1px outline, inner layer the fill.
         const outline = isCurrent ? (isNegative ? "bg-danger" : "bg-slate") : "bg-line group-hover:bg-slate";
@@ -45,7 +59,7 @@ export default function LeadStatusPipeline({ current, pending, onSelect }: LeadS
           : "bg-surface text-ink-soft group-hover:bg-paper group-hover:text-fg";
 
         return (
-          <li key={status} className={`min-w-0 lg:flex-1 ${index === 0 ? "" : "lg:-ml-2"}`}>
+          <li key={status} className={`min-w-0 lg:flex-1 ${index === 0 || wraps ? "" : "lg:-ml-2"}`}>
             <button
               type="button"
               onClick={() => onSelect(status)}

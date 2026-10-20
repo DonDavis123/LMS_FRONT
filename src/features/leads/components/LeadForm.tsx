@@ -11,11 +11,9 @@ import OwnerPicker from "@/shared/components/OwnerPicker";
 import Spinner from "@/shared/components/Spinner";
 import { inputClass, Section, Field } from "@/shared/components/FormLayout";
 import ModernStatusSelect from "@/shared/components/ModernStatusSelect";
+import { useLeadPicklists } from "@/features/picklists/hooks/useLeadPicklists";
+import { toSelectOptions, toStatusOptions } from "@/features/picklists/utils/optionHelpers";
 import {
-  LEAD_INDUSTRIES,
-  LEAD_RATINGS,
-  LEAD_SOURCES,
-  LEAD_STATUSES,
   type CreateLeadPayload,
   type Lead,
   type LeadIndustry,
@@ -57,6 +55,13 @@ interface FormState {
   country: string;
   postal_code: string;
   description: string;
+}
+
+/** A rejected dropdown option comes back as a 400 `{ detail }` — show it as-is. */
+function saveErrorMessage(error: unknown): string {
+  const response = (error as { response?: { status?: number; data?: { detail?: unknown } } } | null)?.response;
+  if (response?.status === 400 && typeof response.data?.detail === "string") return response.data.detail;
+  return "Couldn't save this lead. Check the fields and try again.";
 }
 
 function emptyForm(): FormState {
@@ -125,6 +130,8 @@ export default function LeadForm({
   );
   const { warning, isUnchanged } = useNoChangeGuard(form, mode === "edit");
   const [owners, setOwners] = useState<LeadOwnerOption[]>([]);
+  // The company's own Lead Source / Status / Industry / Rating options.
+  const { options: picklists } = useLeadPicklists();
   const [error, setError, errorRef] = useFormError();
   const [notice, setNotice] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -198,8 +205,8 @@ export default function LeadForm({
     setIsSubmitting(true);
     try {
       await onSubmit(payload);
-    } catch {
-      setError("Couldn't save this lead. Check the fields and try again.");
+    } catch (err) {
+      setError(saveErrorMessage(err));
       setIsSubmitting(false);
     }
   }
@@ -221,8 +228,8 @@ export default function LeadForm({
         setNotice("Lead created successfully. Ready for the next one.");
         window.setTimeout(() => setNotice(null), 3000);
       }
-    } catch {
-      setError("Couldn't save this lead. Check the fields and try again.");
+    } catch (err) {
+      setError(saveErrorMessage(err));
     } finally {
       setIsSavingNext(false);
     }
@@ -322,7 +329,7 @@ export default function LeadForm({
             value={form.lead_source}
             onChange={(next) => update("lead_source", next as LeadSource)}
             ariaLabel="Lead source"
-            options={LEAD_SOURCES.map((source) => ({ value: source, label: source }))}
+            options={toSelectOptions(picklists.lead_source, form.lead_source)}
           />
         </Field>
 
@@ -398,11 +405,7 @@ export default function LeadForm({
                 value={form.lead_status}
                 onChange={(value) => update("lead_status", value as LeadStatus)}
                 fullWidth
-                options={LEAD_STATUSES.map((status) => ({
-                  value: status,
-                  label: status,
-                  tone: status === "Contacted" || status === "Pre-Qualified" ? "success" : status === "Junk Lead" || status === "Lost Lead" || status === "Not Qualified" ? "danger" : status === "Attempted to Contact" || status === "Contact in Future" ? "warning" : "neutral",
-                }))}
+                options={toStatusOptions(picklists.lead_status, form.lead_status)}
               />
             </Field>
 
@@ -411,7 +414,7 @@ export default function LeadForm({
                 value={form.rating}
                 onChange={(next) => update("rating", next as LeadRating)}
                 ariaLabel="Rating"
-                options={LEAD_RATINGS.map((rating) => ({ value: rating, label: rating }))}
+                options={toSelectOptions(picklists.rating, form.rating)}
               />
             </Field>
             <Field label="Industry">
@@ -419,7 +422,7 @@ export default function LeadForm({
                 value={form.industry}
                 onChange={(next) => update("industry", next as LeadIndustry)}
                 ariaLabel="Industry"
-                options={LEAD_INDUSTRIES.map((industry) => ({ value: industry, label: industry }))}
+                options={toSelectOptions(picklists.industry, form.industry)}
               />
             </Field>
 

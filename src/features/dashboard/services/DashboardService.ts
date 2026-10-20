@@ -5,6 +5,7 @@ import { CallService } from "@/features/calls/services/CallService";
 import type { Call } from "@/features/calls/types/call.types";
 import { LeadService } from "@/features/leads/services/LeadService";
 import { LEAD_STATUSES, type Lead } from "@/features/leads/types/lead.types";
+import { loadLeadPicklists } from "@/features/picklists/hooks/useLeadPicklists";
 import { MeetingService } from "@/features/meetings/services/MeetingService";
 import type { MeetingListItem } from "@/features/meetings/types/meeting.types";
 import { TaskService } from "@/features/tasks/services/TaskService";
@@ -133,7 +134,7 @@ async function fetchRangeLeads(filters: FilterCondition[]): Promise<{ leads: Lea
 }
 
 /**
- * Request budget: 1 (total) + 1 (previous window) + 9 (one per status) +
+ * Request budget: 1 (total) + 1 (previous window) + 1 per status +
  * 1–6 (range pages). A `/dashboard/stats/` endpoint replaces all of these
  * with a single call.
  *
@@ -141,19 +142,19 @@ async function fetchRangeLeads(filters: FilterCondition[]): Promise<{ leads: Lea
  * leads (the backend excludes them before filters apply), so an
  * `is_converted` filter could only ever report 0.
  */
-async function composeStats(range: DashboardRange, now: Date): Promise<DashboardStats> {
+async function composeStats(range: DashboardRange, now: Date, statuses: readonly string[]): Promise<DashboardStats> {
   const window = buildRangeWindow(range, now);
 
   const [total, previous, statusResults, inRange] = await Promise.all([
     countLeads([]),
     countLeads([createdBetween(window.previousFrom, window.previousTo)]),
     Promise.allSettled(
-      LEAD_STATUSES.map((status) => countLeads([{ field: "lead_status", operator: "equals", value: status }])),
+      statuses.map((status) => countLeads([{ field: "lead_status", operator: "equals", value: status }])),
     ),
     fetchRangeLeads([createdBetween(window.from, window.to)]),
   ]);
 
-  const byStatus = LEAD_STATUSES.map((status, index) => {
+  const byStatus = statuses.map((status, index) => {
     const result = statusResults[index];
     return { status, count: result.status === "fulfilled" ? result.value : 0 };
   });
@@ -227,6 +228,26 @@ async function readLocalCalls(): Promise<Call[]> {
   }
 }
 
+/**
+ * The pipeline shows the company's own Lead Status options. Falls back to the
+ * built-in stages if the options can't be loaded.
+ */
+async function companyStatuses(): Promise<readonly string[]> {
+  try {
+    return (await loadLeadPicklists()).lead_status;
+  } catch {
+    return LEAD_STATUSES;
+  }
+}
+
+/** The stats endpoint only lists statuses that have leads; add the other stages as 0 so they still show. */
+function withStages(stats: DashboardStats, statuses: readonly string[]): DashboardStats {
+  const seen = new Set<string>(stats.leads.by_status.map((item) => item.status));
+  const missing = statuses.filter((status) => !seen.has(status)).map((status) => ({ status, count: 0 }));
+  if (missing.length === 0) return stats;
+  return { ...stats, leads: { ...stats.leads, by_status: [...stats.leads.by_status, ...missing] } };
+}
+
 export const DashboardService = {
   /** False once the backend has answered 404 for /dashboard/stats/ (the slow composed fallback is in use). */
   hasStatsEndpoint(): boolean {
@@ -239,17 +260,18 @@ export const DashboardService = {
    * list endpoints. Any other failure is thrown so the widget can show Retry.
    */
   async getStats(range: DashboardRange, now: Date = new Date()): Promise<DashboardStats> {
+    const statuses = companyStatuses(); // started now so it runs alongside the stats request
     if (!statsEndpointMissing) {
       try {
         const { data } = await apiClient.get<unknown>("/dashboard/stats/", { params: { range, tz: browserTimeZone() } });
         const parsed = parseStatsResponse(data, range, now);
-        if (parsed) return parsed;
+        if (parsed) return withStages(parsed, await statuses);
       } catch (error) {
         if (!(isAxiosError(error) && error.response?.status === 404)) throw error;
         statsEndpointMissing = true;
       }
     }
-    return composeStats(range, now);
+    return composeStats(range, now, await statuses);
   },
 
   /** Open tasks owned by `userId` — the tasks API is company-wide, so the owner filter is mandatory. */

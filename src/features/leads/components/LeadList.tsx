@@ -4,14 +4,9 @@ import { useEffect, useMemo, useState } from "react";
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import {
-  LEAD_SOURCES,
-  LEAD_STATUSES,
-  LEAD_RATINGS,
-  LEAD_INDUSTRIES,
-  type Lead,
-  type LeadStatus,
-} from "@/features/leads/types/lead.types";
+import type { Lead, LeadStatus } from "@/features/leads/types/lead.types";
+import { useLeadPicklists } from "@/features/picklists/hooks/useLeadPicklists";
+import { toStatusOptions } from "@/features/picklists/utils/optionHelpers";
 import { LeadService } from "@/features/leads/services/LeadService";
 import { userService } from "@/features/users/services/userService";
 import RecordActionsMenu from "@/shared/components/RecordActionsMenu";
@@ -72,6 +67,8 @@ export default function LeadList({
 }: LeadListProps) {
   const router = useRouter();
   const [owners, setOwners] = useState<LeadOwnerOption[]>([]);
+  // The company's own Lead Source / Status / Industry / Rating options.
+  const { options: picklists } = useLeadPicklists();
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [selectionMode, setSelectionMode] = useState(false);
   const [bulkDeleting, setBulkDeleting] = useState(false);
@@ -90,15 +87,15 @@ export default function LeadList({
       { field: "email", label: "Email", type: "text" },
       { field: "phone", label: "Phone", type: "text" },
       { field: "city", label: "City", type: "text" },
-      { field: "lead_source", label: "Lead Source", type: "choice", choices: toChoices(LEAD_SOURCES) },
-      { field: "lead_status", label: "Lead Status", type: "choice", choices: toChoices(LEAD_STATUSES) },
-      { field: "rating", label: "Rating", type: "choice", choices: toChoices(LEAD_RATINGS) },
-      { field: "industry", label: "Industry", type: "choice", choices: toChoices(LEAD_INDUSTRIES) },
+      { field: "lead_source", label: "Lead Source", type: "choice", choices: toChoices(picklists.lead_source) },
+      { field: "lead_status", label: "Lead Status", type: "choice", choices: toChoices(picklists.lead_status) },
+      { field: "rating", label: "Rating", type: "choice", choices: toChoices(picklists.rating) },
+      { field: "industry", label: "Industry", type: "choice", choices: toChoices(picklists.industry) },
       { field: "owner", label: "Lead Owner", type: "uuid", choices: owners.map((o) => ({ value: o.id, label: o.name })) },
       { field: "annual_revenue", label: "Annual Revenue", type: "number" },
       { field: "created_at", label: "Created", type: "date" },
     ],
-    [owners]
+    [owners, picklists]
   );
 
   const pageItems = leads;
@@ -301,11 +298,7 @@ export default function LeadList({
                         disabled={updatingStatusId === lead.id}
                         ariaLabel={`Change status for ${lead.name || "lead"}`}
                         onChange={(next) => handleStatusChange(lead, next as LeadStatus)}
-                        options={LEAD_STATUSES.map((status) => ({
-                          value: status,
-                          label: status,
-                          tone: status === "Contacted" || status === "Pre-Qualified" ? "success" : status === "Junk Lead" || status === "Lost Lead" || status === "Not Qualified" ? "danger" : status === "Attempted to Contact" || status === "Contact in Future" ? "warning" : "neutral",
-                        }))}
+                        options={toStatusOptions(picklists.lead_status, lead.lead_status || "None")}
                       />
                     </td>
                     <td className="px-4 py-3 text-ink-soft">{lead.owner?.name ?? "Unassigned"}</td>

@@ -9,6 +9,7 @@ import {
   ChevronDown,
   Contact2,
   Home,
+  ListChecks,
   Phone,
   Plus,
   ShieldCheck,
@@ -235,6 +236,13 @@ export default function Sidebar({
               icon={ShieldCheck}
               label="Users"
               isActive={pathname.startsWith("/dashboard/users")}
+              isCollapsed={isCollapsed}
+            />
+            <SidebarLink
+              href="/dashboard/dropdown-options"
+              icon={ListChecks}
+              label="Dropdown Options"
+              isActive={pathname.startsWith("/dashboard/dropdown-options")}
               isCollapsed={isCollapsed}
             />
           </nav>

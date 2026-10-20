@@ -1,6 +1,10 @@
-// Enum values mirrored 1:1 from the backend's domain enums
-// (lead_source.py, lead_status.py, lead_rating.py, lead_industry.py)
-// so the dropdowns can never send a value the API will reject.
+// Built-in options, mirrored from the backend's domain enums
+// (lead_source.py, lead_status.py, lead_rating.py, lead_industry.py).
+//
+// These are only the STARTING options every company gets. Each company's
+// superadmin can add, rename, hide, delete and reorder them, so the live
+// lists come from GET /picklists/leads/ (see `useLeadPicklists`). These
+// constants are just the fallback shown until that list has loaded.
 
 export const LEAD_SOURCES = [
   "None",
@@ -23,7 +27,8 @@ export const LEAD_SOURCES = [
   "Other",
 ] as const;
 
-export type LeadSource = (typeof LEAD_SOURCES)[number];
+/** Any option text the company has configured (not only the built-in ones). */
+export type LeadSource = string;
 
 export const LEAD_STATUSES = [
   "None",
@@ -37,7 +42,8 @@ export const LEAD_STATUSES = [
   "Not Qualified",
 ] as const;
 
-export type LeadStatus = (typeof LEAD_STATUSES)[number];
+/** Any option text the company has configured (not only the built-in ones). */
+export type LeadStatus = string;
 
 export const LEAD_RATINGS = [
   "None",
@@ -48,7 +54,8 @@ export const LEAD_RATINGS = [
   "Shut Down",
 ] as const;
 
-export type LeadRating = (typeof LEAD_RATINGS)[number];
+/** Any option text the company has configured (not only the built-in ones). */
+export type LeadRating = string;
 
 export const LEAD_INDUSTRIES = [
   "None",
@@ -73,9 +80,10 @@ export const LEAD_INDUSTRIES = [
   "Management ISV",
 ] as const;
 
-export type LeadIndustry = (typeof LEAD_INDUSTRIES)[number];
+/** Any option text the company has configured (not only the built-in ones). */
+export type LeadIndustry = string;
 
-/** The pipeline strip shown across the top of a lead's detail page. */
+/** Built-in stages of the pipeline strip on a lead's detail page (default only — the strip now follows the company's own Lead Status options). */
 export const LEAD_STATUS_PIPELINE = [
   "Attempted to Contact",
   "Contact in Future",
