@@ -12,7 +12,8 @@ import OwnerPicker from "@/shared/components/OwnerPicker";
 import RecordPicker from "@/shared/components/RecordPicker";
 import Spinner from "@/shared/components/Spinner";
 import { inputClass, Section, Field } from "@/shared/components/FormLayout";
-import { LEAD_SOURCES, type LeadSource } from "@/features/leads/types/lead.types";
+import { useContactPicklists } from "@/features/picklists/hooks/useLeadPicklists";
+import { toSelectOptions } from "@/features/picklists/utils/optionHelpers";
 import type { Contact, CreateContactPayload } from "@/features/contacts/types/contact.types";
 import Select from "@/shared/components/Select";
 import { useFormError } from "@/shared/hooks/useFormError";
@@ -42,7 +43,7 @@ interface FormState {
   assistant_phone: string;
   title: string;
   department: string;
-  lead_source: LeadSource | "";
+  lead_source: string;
   vendor_name: string;
   date_of_birth: string;
   assistant: string;
@@ -74,7 +75,7 @@ function emptyForm(): FormState {
     assistant_phone: "",
     title: "",
     department: "",
-    lead_source: "",
+    lead_source: "None",
     vendor_name: "",
     date_of_birth: "",
     assistant: "",
@@ -107,7 +108,7 @@ function formFromContact(contact: Contact): FormState {
     assistant_phone: contact.assistant_phone ?? "",
     title: contact.title ?? "",
     department: contact.department ?? "",
-    lead_source: (contact.lead_source as LeadSource) ?? "",
+    lead_source: contact.lead_source ?? "None",
     vendor_name: contact.vendor_name ?? "",
     date_of_birth: contact.date_of_birth ?? "",
     assistant: contact.assistant ?? "",
@@ -128,6 +129,8 @@ export default function ContactForm({ mode, initialContact, onSubmit, onCancel }
   );
   const { warning, isUnchanged } = useNoChangeGuard(form, mode === "edit");
   const [owners, setOwners] = useState<LeadOwnerOption[]>([]);
+  // The company's own Lead Source options.
+  const { options: picklists } = useContactPicklists();
   const [error, setError, errorRef] = useFormError();
   const [isSubmitting, setIsSubmitting] = useState(false);
   // Create starts with the six essentials; edit opens with everything visible.
@@ -273,9 +276,9 @@ export default function ContactForm({ mode, initialContact, onSubmit, onCancel }
         <Field label="Lead Source">
           <Select
             value={form.lead_source}
-            onChange={(next) => update("lead_source", next as LeadSource)}
+            onChange={(next) => update("lead_source", next)}
             ariaLabel="Lead source"
-            options={[{ value: "", label: "-None-" }, ...LEAD_SOURCES.map((source) => ({ value: source, label: source }))]}
+            options={toSelectOptions(picklists.lead_source, form.lead_source)}
           />
         </Field>
         <Field label="Description" fullWidth>

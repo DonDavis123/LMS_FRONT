@@ -12,6 +12,9 @@ interface DeletePicklistOptionDialogProps {
   fieldLabel: string;
   /** How many leads use the option right now (the server's latest answer wins). */
   usageCount: number;
+  /** Singular / plural noun of the records using the option (lead, contact, account). */
+  recordSingular?: string;
+  recordPlural?: string;
   /** Active options of the same field the leads can be moved to. */
   replacements: PicklistOption[];
   isBusy: boolean;
@@ -31,6 +34,8 @@ export default function DeletePicklistOptionDialog({
   option,
   fieldLabel,
   usageCount,
+  recordSingular = "lead",
+  recordPlural = "leads",
   replacements,
   isBusy,
   error,
@@ -71,13 +76,13 @@ export default function DeletePicklistOptionDialog({
               {inUse ? (
                 <>
                   <span className="font-semibold text-fg">
-                    {usageCount} {usageCount === 1 ? "lead uses" : "leads use"}
+                    {usageCount} {usageCount === 1 ? `${recordSingular} uses` : `${recordPlural} use`}
                   </span>{" "}
                   this {fieldLabel} option. Choose what they should change to — or cancel and hide the option
-                  instead, which leaves those leads as they are.
+                  instead, which leaves those {recordPlural} as they are.
                 </>
               ) : (
-                <>No lead uses this {fieldLabel} option. It will be removed permanently.</>
+                <>No {recordSingular} uses this {fieldLabel} option. It will be removed permanently.</>
               )}
             </p>
           </div>
@@ -85,7 +90,7 @@ export default function DeletePicklistOptionDialog({
 
         {inUse && (
           <div className="mt-4">
-            <span className="mb-1.5 block text-sm font-medium text-fg">Move those leads to</span>
+            <span className="mb-1.5 block text-sm font-medium text-fg">Move those {recordPlural} to</span>
             <Select
               value={replacementId}
               onChange={setReplacementId}
@@ -119,7 +124,7 @@ export default function DeletePicklistOptionDialog({
             className="flex items-center gap-2 rounded-md bg-danger px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90 active:scale-[0.98] disabled:opacity-60"
           >
             {isBusy && <Spinner size="sm" className="border-white/30 border-t-white" />}
-            {inUse ? "Move leads & delete" : "Delete"}
+            {inUse ? `Move ${recordPlural} & delete` : "Delete"}
           </button>
         </div>
       </div>

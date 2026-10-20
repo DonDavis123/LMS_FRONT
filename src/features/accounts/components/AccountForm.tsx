@@ -9,11 +9,10 @@ import { authService } from "@/features/auth/services/authService";
 import OwnerPicker from "@/shared/components/OwnerPicker";
 import Spinner from "@/shared/components/Spinner";
 import { inputClass, Section, Field } from "@/shared/components/FormLayout";
-import { LEAD_INDUSTRIES, LEAD_RATINGS, type LeadIndustry, type LeadRating } from "@/features/leads/types/lead.types";
+import { useAccountPicklists } from "@/features/picklists/hooks/useLeadPicklists";
+import { toSelectOptions } from "@/features/picklists/utils/optionHelpers";
 import {
-  ACCOUNT_OWNERSHIP_OPTIONS,
   type Account,
-  type AccountOwnership,
   type CreateAccountPayload,
 } from "@/features/accounts/types/account.types";
 import Select from "@/shared/components/Select";
@@ -33,13 +32,13 @@ interface FormState {
   account_site: string;
   account_number: string;
   account_type: string;
-  industry: LeadIndustry | "";
+  industry: string;
   annual_revenue: string;
-  rating: LeadRating | "";
+  rating: string;
   phone: string;
   website: string;
   ticker_symbol: string;
-  ownership: AccountOwnership;
+  ownership: string;
   employees: string;
   sic_code: string;
   billing_address: string;
@@ -58,9 +57,9 @@ function emptyForm(): FormState {
     account_site: "",
     account_number: "",
     account_type: "",
-    industry: "",
+    industry: "None",
     annual_revenue: "",
-    rating: "",
+    rating: "None",
     phone: "",
     website: "",
     ticker_symbol: "",
@@ -84,9 +83,9 @@ function formFromAccount(account: Account): FormState {
     account_site: account.account_site ?? "",
     account_number: account.account_number ?? "",
     account_type: account.account_type ?? "",
-    industry: (account.industry as LeadIndustry) ?? "",
+    industry: account.industry ?? "None",
     annual_revenue: account.annual_revenue?.toString() ?? "",
-    rating: (account.rating as LeadRating) ?? "",
+    rating: account.rating ?? "None",
     phone: account.phone ?? "",
     website: account.website ?? "",
     ticker_symbol: account.ticker_symbol ?? "",
@@ -108,6 +107,8 @@ export default function AccountForm({ mode, initialAccount, onSubmit, onCancel }
   );
   const { warning, isUnchanged } = useNoChangeGuard(form, mode === "edit");
   const [owners, setOwners] = useState<LeadOwnerOption[]>([]);
+  // The company's own Industry / Rating / Ownership options.
+  const { options: picklists } = useAccountPicklists();
   const [error, setError, errorRef] = useFormError();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -248,9 +249,9 @@ export default function AccountForm({ mode, initialAccount, onSubmit, onCancel }
         <Field label="Ownership">
           <Select
             value={form.ownership}
-            onChange={(next) => update("ownership", next as AccountOwnership)}
+            onChange={(next) => update("ownership", next)}
             ariaLabel="Ownership"
-            options={ACCOUNT_OWNERSHIP_OPTIONS.map((option) => ({ value: option, label: option }))}
+            options={toSelectOptions(picklists.ownership, form.ownership)}
           />
         </Field>
 
@@ -273,17 +274,17 @@ export default function AccountForm({ mode, initialAccount, onSubmit, onCancel }
         <Field label="Industry">
           <Select
             value={form.industry}
-            onChange={(next) => update("industry", next as LeadIndustry)}
+            onChange={(next) => update("industry", next)}
             ariaLabel="Industry"
-            options={[{ value: "", label: "-None-" }, ...LEAD_INDUSTRIES.map((industry) => ({ value: industry, label: industry }))]}
+            options={toSelectOptions(picklists.industry, form.industry)}
           />
         </Field>
         <Field label="Rating">
           <Select
             value={form.rating}
-            onChange={(next) => update("rating", next as LeadRating)}
+            onChange={(next) => update("rating", next)}
             ariaLabel="Rating"
-            options={[{ value: "", label: "-None-" }, ...LEAD_RATINGS.map((rating) => ({ value: rating, label: rating }))]}
+            options={toSelectOptions(picklists.rating, form.rating)}
           />
         </Field>
 

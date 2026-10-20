@@ -12,7 +12,9 @@ import InlineEditRow from "@/shared/components/InlineEditRow";
 import { Tabs } from "@/shared/components/Tabs";
 import { RecordSection } from "@/shared/components/RecordSection";
 import { formatDateTime } from "@/shared/utils/formatDate";
-import { ACCOUNT_OWNERSHIP_OPTIONS, type AccountContactSummary } from "@/features/accounts/types/account.types";
+import type { AccountContactSummary } from "@/features/accounts/types/account.types";
+import { useAccountPicklists } from "@/features/picklists/hooks/useLeadPicklists";
+import { toSelectOptions } from "@/features/picklists/utils/optionHelpers";
 import { ContactService } from "@/features/contacts/services/ContactService";
 import CreateTaskFromRecord from "@/shared/components/CreateTaskFromRecord";
 
@@ -31,6 +33,8 @@ export default function AccountDetail({ account, onAccountChange }: AccountDetai
   const [activeTab, setActiveTab] = useState<DetailTab>("overview");
   const [showDetails, setShowDetails] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  // The company's own Industry / Rating / Ownership options.
+  const { options: picklists } = useAccountPicklists();
   const [associatedContacts, setAssociatedContacts] = useState<AccountContactSummary[]>(account.contacts ?? []);
 
   useEffect(() => {
@@ -173,7 +177,7 @@ export default function AccountDetail({ account, onAccountChange }: AccountDetai
               <Row label="Account Owner" value={account.account_owner_name} editable={false} />
               <Row label="Website" value={account.website} onSave={(raw) => updateField("website", raw)} />
               <Row label="Phone" value={account.phone} onSave={(raw) => updateField("phone", raw)} />
-              <Row label="Industry" value={account.industry} onSave={(raw) => updateField("industry", raw)} />
+              <Row label="Industry" value={account.industry} type="select" options={toSelectOptions(picklists.industry, account.industry)} onSave={(raw) => updateField("industry", raw)} />
             </div>
           </div>
 
@@ -195,11 +199,11 @@ export default function AccountDetail({ account, onAccountChange }: AccountDetai
                   <Row label="Account Site" value={account.account_site} onSave={(raw) => updateField("account_site", raw)} />
                   <Row label="Account Number" value={account.account_number} onSave={(raw) => updateField("account_number", raw)} />
                   <Row label="Account Type" value={account.account_type} onSave={(raw) => updateField("account_type", raw)} />
-                  <Row label="Ownership" value={account.ownership} type="select" options={ACCOUNT_OWNERSHIP_OPTIONS.map(value => ({value,label:value}))} onSave={(raw) => updateField("ownership", raw)} />
+                  <Row label="Ownership" value={account.ownership} type="select" options={toSelectOptions(picklists.ownership, account.ownership)} onSave={(raw) => updateField("ownership", raw)} />
                   <Row label="Website" value={account.website} onSave={(raw) => updateField("website", raw)} />
                   <Row label="Phone" value={account.phone} onSave={(raw) => updateField("phone", raw)} />
-                  <Row label="Industry" value={account.industry} onSave={(raw) => updateField("industry", raw)} />
-                  <Row label="Rating" value={account.rating} onSave={(raw) => updateField("rating", raw)} />
+                  <Row label="Industry" value={account.industry} type="select" options={toSelectOptions(picklists.industry, account.industry)} onSave={(raw) => updateField("industry", raw)} />
+                  <Row label="Rating" value={account.rating} type="select" options={toSelectOptions(picklists.rating, account.rating)} onSave={(raw) => updateField("rating", raw)} />
                   <Row label="No. of Employees" value={account.employees} type="number" onSave={(raw) => updateField("employees", raw)} />
                   <Row label="Annual Revenue" value={account.annual_revenue} type="number" onSave={(raw) => updateField("annual_revenue", raw)} />
                   <Row label="Ticker Symbol" value={account.ticker_symbol} onSave={(raw) => updateField("ticker_symbol", raw)} />

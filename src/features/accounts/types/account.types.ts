@@ -1,3 +1,5 @@
+// Built-in Ownership options are only the starting set / fallback: each company
+// edits its own list (see features/picklists).
 // Mirrors DjangoAccountModel field-for-field, and matches the flat shape
 // the API actually returns: account_owner_id/account_owner_name are plain
 // fields on the record, not a nested object.
@@ -16,7 +18,8 @@ export const ACCOUNT_OWNERSHIP_OPTIONS = [
   "Public Company",
 ] as const;
 
-export type AccountOwnership = (typeof ACCOUNT_OWNERSHIP_OPTIONS)[number];
+/** Any option text the company has configured (not only the built-in ones). */
+export type AccountOwnership = string;
 
 export interface AccountContactSummary { id: string; name: string; email?: string | null; phone?: string | null; mobile?: string | null; }
 

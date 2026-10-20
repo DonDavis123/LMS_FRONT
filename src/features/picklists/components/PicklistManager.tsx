@@ -3,25 +3,22 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { AlertCircle, CheckCircle2, Info, Plus, RefreshCw } from "lucide-react";
 import Spinner from "@/shared/components/Spinner";
+import { Tabs } from "@/shared/components/Tabs";
 import { extractApiError } from "@/shared/utils/apiError";
 import { PicklistService } from "@/features/picklists/services/PicklistService";
-import { invalidateLeadPicklists } from "@/features/picklists/hooks/useLeadPicklists";
+import { invalidatePicklists } from "@/features/picklists/hooks/useLeadPicklists";
 import {
-  PICKLIST_FIELDS,
-  type LeadPicklistField,
+  PICKLIST_MODULES,
+  getPicklistModuleMeta,
+  type PicklistFieldKey,
+  type PicklistModule,
   type PicklistOption,
 } from "@/features/picklists/types/picklist.types";
 import PicklistOptionRow from "@/features/picklists/components/PicklistOptionRow";
 import DeletePicklistOptionDialog from "@/features/picklists/components/DeletePicklistOptionDialog";
 
-type OptionsByField = Record<LeadPicklistField, PicklistOption[]>;
-
-const EMPTY: OptionsByField = {
-  lead_source: [],
-  lead_status: [],
-  industry: [],
-  rating: [],
-};
+type OptionsByField = Partial<Record<PicklistFieldKey, PicklistOption[]>>;
+const NO_OPTIONS: PicklistOption[] = [];
 
 interface ToastState {
   kind: "success" | "error";
@@ -52,13 +49,14 @@ function moveItem(list: PicklistOption[], from: number, to: number): PicklistOpt
 }
 
 /**
- * Superadmin screen for the company's own Lead Source / Lead Status /
- * Industry / Rating options: add, rename, hide, delete and reorder.
+ * Superadmin screen for the company's own dropdown options of Leads,
+ * Contacts and Accounts: add, rename, hide, delete and reorder.
  * Every change is saved straight away through /api/picklists/…
  */
 export default function PicklistManager() {
-  const [data, setData] = useState<OptionsByField>(EMPTY);
-  const [activeField, setActiveField] = useState<LeadPicklistField>("lead_source");
+  const [data, setData] = useState<OptionsByField>({});
+  const [activeModule, setActiveModule] = useState<PicklistModule>("leads");
+  const [activeField, setActiveField] = useState<PicklistFieldKey>("lead_source");
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
@@ -80,22 +78,24 @@ export default function PicklistManager() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
-  const meta = PICKLIST_FIELDS.find((item) => item.field === activeField) ?? PICKLIST_FIELDS[0];
-  const options = data[activeField];
+  const moduleMeta = getPicklistModuleMeta(activeModule);
+  const meta = moduleMeta.fields.find((item) => item.field === activeField) ?? moduleMeta.fields[0];
+  const options = data[meta.field] ?? NO_OPTIONS;
   const activeCount = options.filter((option) => option.is_active).length;
   const hiddenCount = options.length - activeCount;
 
-  // Loads every field at once, in the admin view (hidden options + usage counts).
+  // Loads every field of the selected module at once, in the admin view
+  // (hidden options + usage counts).
   useEffect(() => {
     let cancelled = false;
     setIsLoading(true);
     setLoadError(null);
 
-    PicklistService.getLeadPicklists(true)
+    PicklistService.getPicklists(activeModule, true)
       .then((fields) => {
         if (cancelled) return;
-        const next: OptionsByField = { lead_source: [], lead_status: [], industry: [], rating: [] };
-        for (const item of PICKLIST_FIELDS) {
+        const next: OptionsByField = {};
+        for (const item of getPicklistModuleMeta(activeModule).fields) {
           const match = fields.find((field) => field.field === item.field);
           next[item.field] = match ? [...match.options].sort((a, b) => a.sort_order - b.sort_order) : [];
         }
@@ -117,7 +117,7 @@ export default function PicklistManager() {
     return () => {
       cancelled = true;
     };
-  }, [reloadKey]);
+  }, [activeModule, reloadKey]);
 
   useEffect(() => {
     return () => {
@@ -131,8 +131,8 @@ export default function PicklistManager() {
     toastTimer.current = window.setTimeout(() => setToast(null), kind === "error" ? 5000 : 3000);
   }
 
-  function patchField(field: LeadPicklistField, update: (list: PicklistOption[]) => PicklistOption[]) {
-    setData((prev) => ({ ...prev, [field]: update(prev[field]) }));
+  function patchField(field: PicklistFieldKey, update: (list: PicklistOption[]) => PicklistOption[]) {
+    setData((prev) => ({ ...prev, [field]: update(prev[field] ?? NO_OPTIONS) }));
   }
 
   function setBusy(id: string, busy: boolean) {
@@ -144,13 +144,27 @@ export default function PicklistManager() {
     });
   }
 
-  function selectField(field: LeadPicklistField) {
-    if (field === activeField) return;
-    setActiveField(field);
+  function resetPanelState() {
     setNewValue("");
     setAddError(null);
     setDragId(null);
     setOverId(null);
+  }
+
+  function selectField(field: PicklistFieldKey) {
+    if (field === activeField) return;
+    setActiveField(field);
+    resetPanelState();
+  }
+
+  function selectModule(module: PicklistModule) {
+    if (module === activeModule || isReordering || isAdding) return;
+    setActiveModule(module);
+    setActiveField(getPicklistModuleMeta(module).fields[0].field);
+    setData({});
+    resetPanelState();
+    setDeleteTarget(null);
+    setDeleteError(null);
   }
 
   /* ── Add ─────────────────────────────────────────────────────────── */
@@ -173,9 +187,9 @@ export default function PicklistManager() {
     setIsAdding(true);
     setAddError(null);
     try {
-      const created = await PicklistService.createOption(field, value);
+      const created = await PicklistService.createOption(field, value, activeModule);
       patchField(field, (list) => [...list, created]);
-      invalidateLeadPicklists();
+      invalidatePicklists(activeModule);
       setNewValue("");
       showToast("success", `Added “${created.value}” to ${meta.label}`);
       addInputRef.current?.focus();
@@ -200,7 +214,7 @@ export default function PicklistManager() {
       patchField(field, (list) =>
         list.map((item) => (item.id === option.id ? { ...item, ...updated, usage_count: item.usage_count } : item)),
       );
-      invalidateLeadPicklists();
+      invalidatePicklists(activeModule);
       showToast("success", `Renamed to “${updated.value}”`);
       return null;
     } catch (error) {
@@ -218,7 +232,7 @@ export default function PicklistManager() {
       patchField(field, (list) =>
         list.map((item) => (item.id === option.id ? { ...item, ...updated, usage_count: item.usage_count } : item)),
       );
-      invalidateLeadPicklists();
+      invalidatePicklists(activeModule);
       showToast(
         "success",
         updated.is_active ? `“${updated.value}” is visible again` : `“${updated.value}” is now hidden from forms`,
@@ -256,13 +270,13 @@ export default function PicklistManager() {
               : item,
           ),
       );
-      invalidateLeadPicklists();
+      invalidatePicklists(activeModule);
       setDeleteTarget(null);
       showToast(
         "success",
         result.records_updated > 0 && replacement
           ? `Deleted “${option.value}” — ${result.records_updated} ${
-              result.records_updated === 1 ? "lead" : "leads"
+              result.records_updated === 1 ? moduleMeta.recordSingular : moduleMeta.recordPlural
             } moved to “${replacement.value}”`
           : `Deleted “${option.value}”`,
       );
@@ -286,7 +300,7 @@ export default function PicklistManager() {
 
   /* ── Reorder ─────────────────────────────────────────────────────── */
 
-  async function persistOrder(field: LeadPicklistField, next: PicklistOption[], previous: PicklistOption[]) {
+  async function persistOrder(field: PicklistFieldKey, next: PicklistOption[], previous: PicklistOption[]) {
     // Show the new order immediately; roll back if the server refuses it.
     patchField(field, () => next.map((option, index) => ({ ...option, sort_order: index })));
     setIsReordering(true);
@@ -294,8 +308,9 @@ export default function PicklistManager() {
       await PicklistService.reorderOptions(
         field,
         next.map((option) => option.id),
+        activeModule,
       );
-      invalidateLeadPicklists();
+      invalidatePicklists(activeModule);
     } catch (error) {
       patchField(field, () => previous);
       showToast("error", extractApiError(error, "Couldn't save the new order. Try again."));
@@ -334,8 +349,17 @@ export default function PicklistManager() {
         <div className="border-b border-line bg-surface px-4 py-3">
           <h1 className="font-serif text-lg leading-tight text-fg">Dropdown Options</h1>
           <p className="text-xs text-ink-soft">
-            Customise the choices your team sees on leads. These lists belong to your company only.
+            Customise the choices your team sees on {moduleMeta.recordPlural}. These lists belong to your company
+            only.
           </p>
+          {/* Module switcher: Leads / Contacts / Accounts */}
+          <div className="[&>div]:!mt-3 overflow-x-auto">
+            <Tabs
+              tabs={PICKLIST_MODULES.map((item) => ({ value: item.module, label: item.label }))}
+              active={activeModule}
+              onChange={selectModule}
+            />
+          </div>
         </div>
 
         <div className="grid lg:grid-cols-[14rem_minmax(0,1fr)]">
@@ -344,8 +368,8 @@ export default function PicklistManager() {
             aria-label="Dropdown fields"
             className="flex gap-1.5 overflow-x-auto border-b border-line bg-paper/50 p-2 lg:flex-col lg:gap-0.5 lg:overflow-visible lg:border-b-0 lg:border-r lg:p-3"
           >
-            {PICKLIST_FIELDS.map((item) => {
-              const list = data[item.field];
+            {moduleMeta.fields.map((item) => {
+              const list = data[item.field] ?? NO_OPTIONS;
               const isActive = item.field === activeField;
               return (
                 <button
@@ -453,6 +477,8 @@ export default function PicklistManager() {
                       canMoveUp={index > 0 && !options[index - 1].is_system}
                       canMoveDown={index < options.length - 1}
                       maxLength={meta.maxLength}
+                      recordSingular={moduleMeta.recordSingular}
+                      recordPlural={moduleMeta.recordPlural}
                       isDragging={dragId === option.id}
                       isDropTarget={dragId !== null && overId === option.id && dragId !== option.id}
                       onRename={handleRename}
@@ -479,7 +505,7 @@ export default function PicklistManager() {
                   <Info size={14} className="mt-px shrink-0" />
                   <p>
                     Drag the handle or use the arrows to reorder — the order is the one your team sees. Hidden options
-                    disappear from forms and filters, but leads that already use them keep their value. Every change is
+                    disappear from forms and filters, but {moduleMeta.recordPlural} that already use them keep their value. Every change is
                     saved automatically.
                   </p>
                 </div>
@@ -493,6 +519,8 @@ export default function PicklistManager() {
         option={deleteTarget?.option ?? null}
         fieldLabel={meta.label}
         usageCount={deleteTarget?.usageCount ?? 0}
+        recordSingular={moduleMeta.recordSingular}
+        recordPlural={moduleMeta.recordPlural}
         replacements={replacements}
         isBusy={isDeleting}
         error={deleteError}

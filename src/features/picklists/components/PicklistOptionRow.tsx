@@ -15,6 +15,9 @@ interface PicklistOptionRowProps {
   canMoveUp: boolean;
   canMoveDown: boolean;
   maxLength: number;
+  /** Singular / plural noun of the records using the option (lead, contact, account). */
+  recordSingular?: string;
+  recordPlural?: string;
   isDragging: boolean;
   isDropTarget: boolean;
   /** Resolves to an error message, or `null` once the rename was saved. */
@@ -33,9 +36,9 @@ const iconBase =
 const iconButton = `${iconBase} enabled:hover:bg-paper enabled:hover:text-fg`;
 const iconButtonDanger = `${iconBase} enabled:hover:bg-danger-soft enabled:hover:text-danger`;
 
-function usageLabel(count: number): string {
+function usageLabel(count: number, singular: string, plural: string): string {
   if (count === 0) return "Not used";
-  return `${count} ${count === 1 ? "lead" : "leads"}`;
+  return `${count} ${count === 1 ? singular : plural}`;
 }
 
 export default function PicklistOptionRow({
@@ -45,6 +48,8 @@ export default function PicklistOptionRow({
   canMoveUp,
   canMoveDown,
   maxLength,
+  recordSingular = "lead",
+  recordPlural = "leads",
   isDragging,
   isDropTarget,
   onRename,
@@ -225,7 +230,7 @@ export default function PicklistOptionRow({
                     usage > 0 ? "bg-slate-light text-slate" : "text-ink-soft"
                   }`}
                 >
-                  {usageLabel(usage)}
+                  {usageLabel(usage, recordSingular, recordPlural)}
                 </span>
               )}
             </div>
@@ -238,7 +243,7 @@ export default function PicklistOptionRow({
           )}
           {isEditing && !error && usage !== null && usage > 0 && (
             <p className="mt-1 text-xs text-ink-soft">
-              {usage} {usage === 1 ? "lead uses" : "leads use"} this option and will be updated to the new name.
+              {usage} {usage === 1 ? `${recordSingular} uses` : `${recordPlural} use`} this option and will be updated to the new name.
             </p>
           )}
         </div>

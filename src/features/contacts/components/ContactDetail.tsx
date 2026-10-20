@@ -13,6 +13,8 @@ import { Tabs } from "@/shared/components/Tabs";
 import { RecordSection } from "@/shared/components/RecordSection";
 import { formatDateTime } from "@/shared/utils/formatDate";
 
+import { useContactPicklists } from "@/features/picklists/hooks/useLeadPicklists";
+import { toSelectOptions } from "@/features/picklists/utils/optionHelpers";
 import CreateTaskFromRecord from "@/shared/components/CreateTaskFromRecord";
 import { confirmDelete } from "@/shared/utils/confirmDelete";
 
@@ -25,6 +27,8 @@ export default function ContactDetail({ contact, onContactChange }: ContactDetai
   const [activeTab, setActiveTab] = useState<DetailTab>("overview");
   const [showDetails, setShowDetails] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  // The company's own Lead Source options.
+  const { options: picklists } = useContactPicklists();
 
   async function updateField(field: string, raw: string) {
     if (!onContactChange) return;
@@ -122,7 +126,7 @@ export default function ContactDetail({ contact, onContactChange }: ContactDetai
                   <Row label="Home Phone" value={contact.home_phone} onSave={(raw) => updateField("home_phone", raw)} />
                   <Row label="Other Phone" value={contact.other_phone} onSave={(raw) => updateField("other_phone", raw)} />
                   <Row label="Department" value={contact.department} onSave={(raw) => updateField("department", raw)} />
-                  <Row label="Lead Source" value={contact.lead_source} onSave={(raw) => updateField("lead_source", raw)} />
+                  <Row label="Lead Source" value={contact.lead_source} type="select" options={toSelectOptions(picklists.lead_source, contact.lead_source)} onSave={(raw) => updateField("lead_source", raw)} />
                   <Row label="Vendor Name" value={contact.vendor_name} onSave={(raw) => updateField("vendor_name", raw)} />
                   <Row label="Date of Birth" value={contact.date_of_birth} type="date" onSave={(raw) => updateField("date_of_birth", raw)} />
                   <Row label="Assistant" value={contact.assistant} onSave={(raw) => updateField("assistant", raw)} />

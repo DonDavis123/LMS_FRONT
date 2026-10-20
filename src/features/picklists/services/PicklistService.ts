@@ -1,15 +1,15 @@
 import { apiClient } from "@/infrastructure/api/client";
 import {
-  PICKLIST_MODULE,
   type DeletePicklistOptionResult,
-  type LeadPicklistField,
+  type PicklistFieldKey,
+  type PicklistModule,
   type PicklistField,
   type PicklistModuleResponse,
   type PicklistOption,
   type UpdatePicklistOptionPayload,
 } from "@/features/picklists/types/picklist.types";
 
-const BASE = `/picklists/${PICKLIST_MODULE}`;
+const base = (module: PicklistModule) => `/picklists/${module}`;
 
 export const PicklistService = {
   /**
@@ -18,7 +18,15 @@ export const PicklistService = {
    * With it, hidden options and usage counts are included (superadmin only).
    */
   async getLeadPicklists(includeInactive = false): Promise<PicklistField[]> {
-    const { data } = await apiClient.get<PicklistModuleResponse>(`${BASE}/`, {
+    return this.getPicklists("leads", includeInactive);
+  },
+
+  /**
+   * GET /picklists/{module}/ — every dropdown of Leads, Contacts or Accounts.
+   * Same rules as above: hidden options + usage counts are superadmin-only.
+   */
+  async getPicklists(module: PicklistModule, includeInactive = false): Promise<PicklistField[]> {
+    const { data } = await apiClient.get<PicklistModuleResponse>(`${base(module)}/`, {
       params: includeInactive ? { include_inactive: true } : undefined,
     });
 
@@ -28,15 +36,19 @@ export const PicklistService = {
     return data.fields;
   },
 
-  /** POST /picklists/leads/{field}/create/ — appended after the existing options. */
-  async createOption(field: LeadPicklistField, value: string): Promise<PicklistOption> {
-    const { data } = await apiClient.post<PicklistOption>(`${BASE}/${field}/create/`, { value });
+  /** POST /picklists/{module}/{field}/create/ — appended after the existing options. */
+  async createOption(
+    field: PicklistFieldKey,
+    value: string,
+    module: PicklistModule = "leads",
+  ): Promise<PicklistOption> {
+    const { data } = await apiClient.post<PicklistOption>(`${base(module)}/${field}/create/`, { value });
     return data;
   },
 
   /**
    * PATCH /picklists/options/{id}/update/ — rename and/or show/hide.
-   * Renaming also moves every lead that uses the option to the new text.
+   * Renaming also moves every record that uses the option to the new text.
    * The response has `usage_count: null`, so callers keep the count they had.
    */
   async updateOption(id: string, payload: UpdatePicklistOptionPayload): Promise<PicklistOption> {
@@ -49,8 +61,8 @@ export const PicklistService = {
 
   /**
    * DELETE /picklists/options/{id}/delete/[?replace_with=<option id>].
-   * An option that leads still use is refused with 409 `OPTION_IN_USE`
-   * unless a replacement is given; those leads are then moved to it.
+   * An option that records still use is refused with 409 `OPTION_IN_USE`
+   * unless a replacement is given; those records are then moved to it.
    */
   async deleteOption(id: string, replaceWith?: string): Promise<DeletePicklistOptionResult> {
     const { data } = await apiClient.delete<Partial<DeletePicklistOptionResult> | undefined>(
@@ -64,10 +76,14 @@ export const PicklistService = {
   },
 
   /**
-   * PUT /picklists/leads/{field}/reorder/ — the body must list EVERY option of
+   * PUT /picklists/{module}/{field}/reorder/ — the body must list EVERY option of
    * the field (hidden ones and the built-in "None" included) exactly once.
    */
-  async reorderOptions(field: LeadPicklistField, orderedIds: string[]): Promise<void> {
-    await apiClient.put(`${BASE}/${field}/reorder/`, { ordered_ids: orderedIds });
+  async reorderOptions(
+    field: PicklistFieldKey,
+    orderedIds: string[],
+    module: PicklistModule = "leads",
+  ): Promise<void> {
+    await apiClient.put(`${base(module)}/${field}/reorder/`, { ordered_ids: orderedIds });
   },
 };
