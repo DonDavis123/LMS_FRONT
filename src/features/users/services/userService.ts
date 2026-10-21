@@ -146,9 +146,13 @@ export const userService = {
   /**
    * Every active user of the caller's company (any role) — the "Assigned To"
    * dropdown on the Task form. The backend scopes it to the company.
+   * `excludeSelf` leaves the logged-in user out (a task can't be assigned to
+   * yourself); the tasks-list filter omits it so it can still pick anyone.
    */
-  async getAssignableUsers(): Promise<LeadOwnerOption[]> {
-    const { data } = await apiClient.get<LeadOwnerOption[]>("/users/assignable/");
+  async getAssignableUsers(options: { excludeSelf?: boolean } = {}): Promise<LeadOwnerOption[]> {
+    const { data } = await apiClient.get<LeadOwnerOption[]>("/users/assignable/", {
+      params: options.excludeSelf ? { exclude_self: true } : undefined,
+    });
     return data;
   },
 };

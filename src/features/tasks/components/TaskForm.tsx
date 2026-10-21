@@ -114,9 +114,12 @@ export default function TaskForm({ mode, initialTask, onSubmit, onCancel, initia
       .then(setOwners)
       .catch(() => setOwners([]));
 
+    const currentUserId = authService.getSessionUser()?.id;
     userService
-      .getAssignableUsers()
-      .then(setAssignableUsers)
+      .getAssignableUsers({ excludeSelf: true })
+      // Also filtered here so the logged-in user is never offered, whatever
+      // the API returns.
+      .then((users) => setAssignableUsers(users.filter((user) => user.id !== currentUserId)))
       .catch(() => setAssignableUsers([]));
 
     if (mode === "create") {
