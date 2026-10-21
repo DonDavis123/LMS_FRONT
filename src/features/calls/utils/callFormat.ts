@@ -1,4 +1,4 @@
-import type { Call, CallRecordType } from "@/features/calls/types/call.types";
+import type { Call, CallLatestUpdate, CallRecordType } from "@/features/calls/types/call.types";
 
 const pad = (n: number) => String(n).padStart(2, "0");
 
@@ -63,4 +63,43 @@ export function recordHref(type: CallRecordType, id: string): string {
 
 export function recordLabel(type: CallRecordType): string {
   return type === "LEAD" ? "Lead" : "Contact";
+}
+
+/** Labels for the fields a call edit can change (keys match the backend's change history). */
+export const CALL_FIELD_LABELS: Record<string, string> = {
+  call_start_time: "Start Time",
+  duration_seconds: "Duration",
+  call_type: "Call Type",
+  outcome: "Outcome",
+  description: "Notes",
+};
+
+/** One old/new value of a call change, formatted for display. */
+export function formatChangeValue(field: string, value: unknown): string {
+  if (value === null || value === undefined || value === "") return "Empty";
+  if (field === "call_start_time" && typeof value === "string") return formatCallDateTime(value);
+  if (field === "duration_seconds" && typeof value === "number") return formatDuration(value);
+  return String(value);
+}
+
+/**
+ * One-line summary of a record's latest call event for the table row:
+ * "Call logged", "Outcome: Busy → Connected (+1 more)", "Call deleted".
+ * Notes edits are summarised as "Notes updated" so long text never fills a cell.
+ */
+export function summarizeLatestUpdate(update: CallLatestUpdate): string {
+  if (update.event_type === "CALL_LOGGED") return "Call logged";
+  if (update.event_type === "CALL_DELETED") return "Call deleted";
+  if (update.event_type !== "CALL_UPDATED") return update.message;
+
+  const entries = Object.entries(update.changes ?? {});
+  if (entries.length === 0) return "Call updated";
+
+  const describe = ([field, change]: [string, CallLatestUpdate["changes"][string]]) =>
+    field === "description"
+      ? "Notes updated"
+      : `${CALL_FIELD_LABELS[field] ?? field.replace(/_/g, " ")}: ${formatChangeValue(field, change.old_value)} → ${formatChangeValue(field, change.new_value)}`;
+
+  const [first, ...rest] = entries;
+  return rest.length > 0 ? `${describe(first)} (+${rest.length} more)` : describe(first);
 }

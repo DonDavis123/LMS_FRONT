@@ -7,7 +7,7 @@ import CallList from "@/features/calls/components/CallList";
 import CallForm from "@/features/calls/components/CallForm";
 import Modal from "@/shared/components/Modal";
 import { CallService } from "@/features/calls/services/CallService";
-import type { Call, CreateCallPayload, UpdateCallPayload } from "@/features/calls/types/call.types";
+import type { Call, CallRecordRow, CreateCallPayload, UpdateCallPayload } from "@/features/calls/types/call.types";
 import type { PaginationMeta } from "@/shared/types/pagination";
 import type { SortState } from "@/shared/types/sort";
 
@@ -24,7 +24,8 @@ const EMPTY_PAGINATION: PaginationMeta = {
 
 export default function CallsPage() {
   const router = useRouter();
-  const [calls, setCalls] = useState<Call[]>([]);
+  // One row per lead / contact (not one per call).
+  const [rows, setRows] = useState<CallRecordRow[]>([]);
   const [pagination, setPagination] = useState<PaginationMeta>(EMPTY_PAGINATION);
   const [page, setPage] = useState(1);
   const [sort, setSort] = useState<SortState | null>(null);
@@ -39,7 +40,7 @@ export default function CallsPage() {
       setError(null);
 
       try {
-        const response = await CallService.getCallsPage(requestedPage, PAGE_SIZE, sort);
+        const response = await CallService.getCallRecordsPage(requestedPage, PAGE_SIZE, sort);
 
         // A record deleted from the last page can leave it empty: move to the
         // last valid page and load that instead.
@@ -48,11 +49,11 @@ export default function CallsPage() {
           return;
         }
 
-        setCalls(response.results);
+        setRows(response.results);
         setPagination(response.pagination);
         setPage(response.pagination.page);
       } catch {
-        setCalls([]);
+        setRows([]);
         setError("Couldn't load calls.");
       } finally {
         setIsLoading(false);
@@ -95,7 +96,7 @@ export default function CallsPage() {
   return (
     <>
       <CallList
-        calls={calls}
+        rows={rows}
         pagination={pagination}
         isLoading={isLoading}
         error={error}

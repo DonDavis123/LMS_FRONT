@@ -121,3 +121,61 @@ export interface UpdateCallPayload {
   outcome?: CallOutcome;
   description?: string | null;
 }
+
+/** The newest call event on a lead / contact (call logged, edited or deleted). */
+export interface CallLatestUpdate {
+  id: string;
+  event_type: string; // CALL_LOGGED | CALL_UPDATED | CALL_DELETED
+  actor: { id: string; name: string };
+  message: string;
+  call_id: string | null;
+  /** field -> { old_value, new_value }. Empty unless the event is CALL_UPDATED. */
+  changes: Record<string, CallChange>;
+  created_at: string;
+}
+
+/**
+ * One row of `GET /calls/records/`: a lead or contact listed ONCE, however
+ * many calls were logged on it.
+ */
+export interface CallRecordRow {
+  record_type: CallRecordType;
+  record_id: string;
+  record_name: string | null;
+  /** Active calls on this lead / contact. */
+  call_count: number;
+  /** Last time any call on the record was logged or edited. */
+  last_updated_at: string;
+  /** The record's most recent call (by start time). */
+  latest_call: Call;
+  latest_update: CallLatestUpdate | null;
+}
+
+/** A call as it was when a history event happened. Any field can be null. */
+export interface CallHistorySnapshot {
+  call_start_time: string | null;
+  call_type: CallType | null;
+  outcome: CallOutcome | null;
+  duration_seconds: number | null;
+  duration_label: string | null;
+  description: string | null;
+  owner_name: string | null;
+}
+
+export interface CallRecordHistoryEvent {
+  id: string;
+  event_type: string; // CALL_LOGGED | CALL_UPDATED | CALL_DELETED
+  call_id: string | null;
+  actor: { id: string; name: string };
+  message: string;
+  changes: Record<string, CallChange>;
+  created_at: string;
+  call: CallHistorySnapshot;
+}
+
+/** `GET /calls/{id}/history/` — every call event on the call's lead / contact. */
+export interface CallRecordHistory {
+  related_record: CallRelatedRecord;
+  total_calls_for_record: number;
+  events: CallRecordHistoryEvent[];
+}

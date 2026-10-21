@@ -6,6 +6,8 @@ import { toListQueryParams } from "@/shared/utils/listQuery";
 import type {
   Call,
   CallDetail,
+  CallRecordHistory,
+  CallRecordRow,
   CreateCallPayload,
   UpdateCallPayload,
 } from "@/features/calls/types/call.types";
@@ -16,6 +18,11 @@ const MAX_PAGE_SIZE = 50;
 interface CallListResponse {
   results: Call[];
   pagination: PaginatedResponse<Call>["pagination"];
+}
+
+interface CallRecordListResponse {
+  results: CallRecordRow[];
+  pagination: PaginatedResponse<CallRecordRow>["pagination"];
 }
 
 /** Which record a call list is scoped to (a lead's or a contact's calls). */
@@ -29,6 +36,28 @@ export const CallService = {
     filters: FilterCondition[] = [],
   ): Promise<PaginatedResponse<Call>> {
     const { data } = await apiClient.get<CallListResponse>("/calls/", {
+      params: toListQueryParams({
+        page,
+        page_size: Math.min(pageSize, MAX_PAGE_SIZE),
+        sort,
+        filters,
+      }),
+    });
+
+    return { results: data.results, pagination: data.pagination };
+  },
+
+  /**
+   * The Calls table: one row per lead / contact (its latest call, call count
+   * and latest update). Most recently logged-or-edited record first by default.
+   */
+  async getCallRecordsPage(
+    page = 1,
+    pageSize = DEFAULT_PAGE_SIZE,
+    sort: SortState | null = null,
+    filters: FilterCondition[] = [],
+  ): Promise<PaginatedResponse<CallRecordRow>> {
+    const { data } = await apiClient.get<CallRecordListResponse>("/calls/records/", {
       params: toListQueryParams({
         page,
         page_size: Math.min(pageSize, MAX_PAGE_SIZE),
@@ -55,6 +84,12 @@ export const CallService = {
   /** Full detail: the call, its change history and the other calls on the same record. */
   async getCall(id: string): Promise<CallDetail> {
     const { data } = await apiClient.get<CallDetail>(`/calls/${id}/`);
+    return data;
+  },
+
+  /** Detailed history of every call on the same lead / contact as `id`. */
+  async getCallRecordHistory(id: string): Promise<CallRecordHistory> {
+    const { data } = await apiClient.get<CallRecordHistory>(`/calls/${id}/history/`);
     return data;
   },
 

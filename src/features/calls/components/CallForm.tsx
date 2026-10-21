@@ -291,15 +291,9 @@ export default function CallForm(props: CallFormProps) {
               <Field label="Related To" required fullWidth>
                 <RelatedToPicker
                   value={form.related}
-                  onChange={(related) =>
-                    update("related", related.personType === "lead" ? { ...related, accountId: "", accountLabel: "" } : related)
-                  }
+                  onChange={(related) => update("related", related)}
+                  disableAccountForLead
                 />
-                {form.related.personType === "lead" && (
-                  <span className="mt-1.5 block text-xs text-ink-soft">
-                    Accounts can only be linked to a call with a contact.
-                  </span>
-                )}
               </Field>
 
               <Field label="Call Owner" required>
