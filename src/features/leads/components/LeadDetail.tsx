@@ -17,21 +17,28 @@ import type { Lead, LeadStatus } from "@/features/leads/types/lead.types";
 
 import CreateTaskFromRecord from "@/shared/components/CreateTaskFromRecord";
 import { confirmDelete } from "@/shared/utils/confirmDelete";
+import { CALLS_ENABLED } from "@/features/calls/config";
+import LogCallFromRecord from "@/features/calls/components/LogCallFromRecord";
+import RecordCalls from "@/features/calls/components/RecordCalls";
 
 interface LeadDetailProps {
   lead: Lead;
   onLeadChange: (lead: Lead) => void;
 }
 
-type DetailTab = "overview" | "timeline";
+type DetailTab = "overview" | "calls" | "timeline";
 
 export default function LeadDetail({ lead, onLeadChange }: LeadDetailProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  // "View Lead History" links from converted contacts/accounts open ?tab=timeline.
+  // "View Lead History" links from converted contacts/accounts open ?tab=timeline;
+  // a call's "Back to Lead" link opens ?tab=calls.
+  const requestedTab = searchParams.get("tab");
   const [activeTab, setActiveTab] = useState<DetailTab>(
-    searchParams.get("tab") === "timeline" ? "timeline" : "overview",
+    requestedTab === "timeline" ? "timeline" : requestedTab === "calls" && CALLS_ENABLED ? "calls" : "overview",
   );
+  // Bumped when a call is logged from the header so the Calls tab reloads.
+  const [callsVersion, setCallsVersion] = useState(0);
   const [showDetails, setShowDetails] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
@@ -85,6 +92,8 @@ async function handleStatusClick(status: LeadStatus) {
     }
   }
 
+  const callRelated = { personType: "lead" as const, personId: lead.id, personLabel: lead.name || lead.email || "Lead", accountId: "", accountLabel: "" };
+
   return (
     <div className="mx-auto max-w-5xl">
       <Link href="/dashboard/leads" className="text-sm text-slate hover:text-fg">
@@ -113,6 +122,7 @@ async function handleStatusClick(status: LeadStatus) {
           >
             Convert
           </Link>
+          {CALLS_ENABLED && <LogCallFromRecord related={callRelated} onLogged={() => setCallsVersion((v) => v + 1)} />}
           <CreateTaskFromRecord related={{ personType: "lead", personId: lead.id, personLabel: lead.name || lead.email || "Lead", accountId: "", accountLabel: "" }} />
           <Link
             href={`/dashboard/leads/${lead.id}/edit`}
@@ -141,10 +151,11 @@ async function handleStatusClick(status: LeadStatus) {
         </div>
       </div>
 
-      {/* Overview / Timeline tabs */}
+      {/* Overview / Calls / Timeline tabs */}
       <Tabs
         tabs={[
           { value: "overview", label: "Overview" },
+          ...(CALLS_ENABLED ? [{ value: "calls" as const, label: "Calls" }] : []),
           { value: "timeline", label: "Timeline" },
         ]}
         active={activeTab}
@@ -234,6 +245,15 @@ async function handleStatusClick(status: LeadStatus) {
             </div>
           </div>
         </>
+      ) : activeTab === "calls" ? (
+        <RecordCalls
+          kind="lead"
+          recordId={lead.id}
+          recordName={lead.name || lead.email || "this lead"}
+          related={callRelated}
+          returnTo={`/dashboard/leads/${lead.id}?tab=calls`}
+          refreshKey={callsVersion}
+        />
       ) : (
         <Timeline lead={lead} />
       )}

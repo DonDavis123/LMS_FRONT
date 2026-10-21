@@ -9,6 +9,7 @@ import {
   FileEdit,
   Filter,
   Loader2,
+  PhoneCall,
   PlusCircle,
   RefreshCcw,
   Trash2,
@@ -93,6 +94,9 @@ function highlightMessage(
 
 function iconFor(eventType: string | null | undefined) {
   const type = (eventType ?? "").toUpperCase();
+  if (type.startsWith("CALL_")) {
+    return { Icon: PhoneCall, tone: type.includes("DELETED") ? "text-danger" : type.includes("LOGGED") ? "text-success" : "text-slate" };
+  }
   if (type.includes("STATUS_CHANGED")) return { Icon: RefreshCcw, tone: "text-slate" };
   if (type.includes("CONTACT_CREATED")) return { Icon: UserSquare2, tone: "text-slate" };
   if (type.includes("CREATED")) return { Icon: PlusCircle, tone: "text-success" };
@@ -124,6 +128,15 @@ function getSourceLeadId(event: TimelineEvent): string | null {
   const metadata = event.raw?.metadata as Record<string, unknown> | undefined;
   if (!metadata) return null;
   const id = metadata.source_lead_id ?? metadata.lead_id;
+  return typeof id === "string" && id.trim() ? id : null;
+}
+
+/** The call a CALL_LOGGED / CALL_UPDATED entry is about (it is not offered for deleted calls). */
+function getCallId(event: TimelineEvent): string | null {
+  const type = (event.event_type ?? event.type ?? "").toUpperCase();
+  if (!type.startsWith("CALL_") || type.includes("DELETED")) return null;
+  const metadata = event.raw?.metadata as Record<string, unknown> | undefined;
+  const id = metadata?.call_id;
   return typeof id === "string" && id.trim() ? id : null;
 }
 
@@ -293,6 +306,7 @@ export default function RecordTimeline({ module, recordId, showLeadOrigin = fals
                     const changes = getChanges(event);
                     const isLast = index === dayEvents.length - 1;
                     const sourceLeadId = getSourceLeadId(event);
+                    const callId = module === "tasks" || module === "meetings" ? null : getCallId(event);
                     const leadOrigin = showLeadOrigin && module !== "leads" && isLeadOriginEvent(event);
                     const metadata = event.raw?.metadata as Record<string, unknown> | undefined;
                     const leadName = typeof metadata?.source_lead_name === "string" ? metadata.source_lead_name : "";
@@ -320,6 +334,14 @@ export default function RecordTimeline({ module, recordId, showLeadOrigin = fals
                                 {segment.bold ? <span className="font-medium text-indigo-600">{segment.text}</span> : segment.text}
                               </Fragment>
                             ))}
+                            {callId && (
+                              <Link
+                                href={`/dashboard/calls/${callId}?returnTo=${encodeURIComponent(`/dashboard/${module}/${recordId}?tab=timeline`)}`}
+                                className="ml-4 whitespace-nowrap text-sm text-fg underline underline-offset-4 transition hover:text-indigo-600"
+                              >
+                                View Call
+                              </Link>
+                            )}
                             {leadOrigin && sourceLeadId && (
                               <Link
                                 // `from`/`fromId` let the (read-only) lead history page link back to

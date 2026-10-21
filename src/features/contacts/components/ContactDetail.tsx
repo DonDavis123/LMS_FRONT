@@ -17,14 +17,24 @@ import { useContactPicklists } from "@/features/picklists/hooks/useLeadPicklists
 import { toSelectOptions } from "@/features/picklists/utils/optionHelpers";
 import CreateTaskFromRecord from "@/shared/components/CreateTaskFromRecord";
 import { confirmDelete } from "@/shared/utils/confirmDelete";
+import { CALLS_ENABLED } from "@/features/calls/config";
+import LogCallFromRecord from "@/features/calls/components/LogCallFromRecord";
+import RecordCalls from "@/features/calls/components/RecordCalls";
 
 interface ContactDetailProps { contact: Contact; onContactChange?: (contact: Contact) => void; }
-type DetailTab = "overview" | "timeline";
+type DetailTab = "overview" | "calls" | "timeline";
 
 export default function ContactDetail({ contact, onContactChange }: ContactDetailProps) {
   const router = useRouter();
-  const returnTo = getSafeReturnTo(useSearchParams().get("returnTo"));
-  const [activeTab, setActiveTab] = useState<DetailTab>("overview");
+  const searchParams = useSearchParams();
+  const returnTo = getSafeReturnTo(searchParams.get("returnTo"));
+  // A call's "Back to Contact" link opens ?tab=calls (or ?tab=timeline).
+  const requestedTab = searchParams.get("tab");
+  const [activeTab, setActiveTab] = useState<DetailTab>(
+    requestedTab === "calls" && CALLS_ENABLED ? "calls" : requestedTab === "timeline" ? "timeline" : "overview",
+  );
+  // Bumped when a call is logged from the header so the Calls tab reloads.
+  const [callsVersion, setCallsVersion] = useState(0);
   const [showDetails, setShowDetails] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   // The company's own Lead Source options.
@@ -49,6 +59,8 @@ export default function ContactDetail({ contact, onContactChange }: ContactDetai
     }
   }
 
+  const callRelated = { personType: "contact" as const, personId: contact.id, personLabel: contact.name || contact.email || "Contact", accountId: contact.account_id || "", accountLabel: contact.account_name || "" };
+
   return (
     <div className="mx-auto max-w-5xl">
       <Link href={returnTo ?? "/dashboard/contacts"} className="text-sm text-slate hover:text-fg">{returnTo ? "← Back to Lead Conversion" : "← Back to Contacts"}</Link>
@@ -65,6 +77,7 @@ export default function ContactDetail({ contact, onContactChange }: ContactDetai
         </div>
 
         <div className="flex items-center gap-2">
+          {CALLS_ENABLED && <LogCallFromRecord related={callRelated} onLogged={() => setCallsVersion((v) => v + 1)} />}
           <CreateTaskFromRecord related={{ personType: "contact", personId: contact.id, personLabel: contact.name || contact.email || "Contact", accountId: contact.account_id || "", accountLabel: contact.account_name || "" }} />
           <Link href={`/dashboard/contacts/${contact.id}?edit=1`} className="rounded-md border border-line px-4 py-2 text-sm font-medium text-fg hover:bg-paper">Edit</Link>
           <div className="relative">
@@ -84,6 +97,7 @@ export default function ContactDetail({ contact, onContactChange }: ContactDetai
       <Tabs
         tabs={[
           { value: "overview", label: "Overview" },
+          ...(CALLS_ENABLED ? [{ value: "calls" as const, label: "Calls" }] : []),
           { value: "timeline", label: "Timeline" },
         ]}
         active={activeTab}
@@ -92,6 +106,15 @@ export default function ContactDetail({ contact, onContactChange }: ContactDetai
 
       {activeTab === "timeline" ? (
         <RecordTimeline module="contacts" recordId={contact.id} showLeadOrigin />
+      ) : activeTab === "calls" ? (
+        <RecordCalls
+          kind="contact"
+          recordId={contact.id}
+          recordName={contact.name || contact.email || "this contact"}
+          related={callRelated}
+          returnTo={`/dashboard/contacts/${contact.id}?tab=calls`}
+          refreshKey={callsVersion}
+        />
       ) : (
         <div className="animate-fade-in">
           <div className="mt-4 rounded-lg border border-line bg-surface p-6">

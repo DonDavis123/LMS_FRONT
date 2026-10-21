@@ -1,8 +1,5 @@
 import { isAxiosError } from "axios";
 import { apiClient } from "@/infrastructure/api/client";
-import { CALLS_ENABLED } from "@/features/calls/config";
-import { CallService } from "@/features/calls/services/CallService";
-import type { Call } from "@/features/calls/types/call.types";
 import { LeadService } from "@/features/leads/services/LeadService";
 import { LEAD_STATUSES, type Lead } from "@/features/leads/types/lead.types";
 import { loadLeadPicklists } from "@/features/picklists/hooks/useLeadPicklists";
@@ -31,7 +28,6 @@ const MAX_TREND_PAGES = 6; // 300 leads
 const MY_TASKS_PAGE_SIZE = 50;
 const SCHEDULE_LOOKAHEAD_DAYS = 7;
 const MS_PER_HOUR = 3_600_000;
-const DEFAULT_CALL_MINUTES = 30;
 
 const COMPLETED_STATUS: TaskStatus = "Completed";
 
@@ -203,31 +199,6 @@ function meetingToItem(meeting: MeetingListItem): ScheduleItem | null {
   };
 }
 
-function callToItem(call: Call): ScheduleItem | null {
-  if (call.call_status !== "Scheduled" || !call.call_start_time) return null;
-  const start = new Date(call.call_start_time);
-  if (Number.isNaN(start.getTime())) return null;
-  const minutes = call.call_duration_minutes ?? DEFAULT_CALL_MINUTES;
-  return {
-    id: `call-${call.id}`,
-    kind: "Call",
-    title: call.subject,
-    start,
-    end: new Date(start.getTime() + minutes * 60_000),
-    detail: call.lead_name || call.contact_name || call.account_name || "",
-    href: `/dashboard/calls/${call.id}`,
-  };
-}
-
-async function readLocalCalls(): Promise<Call[]> {
-  if (!CALLS_ENABLED) return [];
-  try {
-    return await CallService.getCalls();
-  } catch {
-    return [];
-  }
-}
-
 /**
  * The pipeline shows the company's own Lead Status options. Falls back to the
  * built-in stages if the options can't be loaded.
@@ -299,15 +270,15 @@ export const DashboardService = {
    * filter or an upcoming-meetings endpoint.
    */
   async getUpcomingSchedule(now: Date = new Date()): Promise<ScheduleItem[]> {
-    const [meetings, calls] = await Promise.all([
-      MeetingService.getMeetingsPage(1, 50, { field: "start_at", direction: "desc" }),
-      readLocalCalls(),
-    ]);
+    // Calls are logged after they happen (the /calls/ API has no future-dated
+    // "scheduled" calls), so only meetings appear in the upcoming schedule.
+    const meetings = await MeetingService.getMeetingsPage(1, 50, { field: "start_at", direction: "desc" });
 
     const windowStart = now.getTime() - MS_PER_HOUR;
     const windowEnd = now.getTime() + SCHEDULE_LOOKAHEAD_DAYS * 24 * MS_PER_HOUR;
 
-    return [...meetings.results.map(meetingToItem), ...calls.map(callToItem)]
+    return meetings.results
+      .map(meetingToItem)
       .filter((item): item is ScheduleItem => item !== null)
       .filter((item) => item.start.getTime() <= windowEnd && (item.start.getTime() >= windowStart || item.end.getTime() > now.getTime()))
       .sort((a, b) => a.start.getTime() - b.start.getTime());

@@ -1,80 +1,75 @@
-import type { Call, CreateCallPayload, UpdateCallPayload } from "@/features/calls/types/call.types";
-import { DEFAULT_CALL_STATUS, DEFAULT_CALL_TYPE } from "@/features/calls/types/call.types";
+import { apiClient } from "@/infrastructure/api/client";
+import type { FilterCondition } from "@/shared/components/FilterBar";
+import type { PaginatedResponse } from "@/shared/types/pagination";
+import type { SortState } from "@/shared/types/sort";
+import { toListQueryParams } from "@/shared/utils/listQuery";
+import type {
+  Call,
+  CallDetail,
+  CreateCallPayload,
+  UpdateCallPayload,
+} from "@/features/calls/types/call.types";
 
-/**
- * There's no `/calls/` endpoint on the backend yet, so this is kept
- * client-side (localStorage) for now — same async method shape
- * (`getX/createX/updateX/deleteX`) a real `apiClient`-backed service would
- * have, so swapping this for real HTTP calls later is a small, contained
- * change (only the inside of this file).
- */
-const STORAGE_KEY = "crm.calls";
-const isBrowser = () => typeof window !== "undefined";
+const DEFAULT_PAGE_SIZE = 10;
+const MAX_PAGE_SIZE = 50;
 
-function readAll(): Call[] {
-  if (!isBrowser()) return [];
-  const raw = window.localStorage.getItem(STORAGE_KEY);
-  if (!raw) return [];
-  try {
-    return JSON.parse(raw) as Call[];
-  } catch {
-    return [];
-  }
+interface CallListResponse {
+  results: Call[];
+  pagination: PaginatedResponse<Call>["pagination"];
 }
 
-function writeAll(calls: Call[]): void {
-  if (!isBrowser()) return;
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(calls));
-}
+/** Which record a call list is scoped to (a lead's or a contact's calls). */
+export type CallRecordKind = "lead" | "contact";
 
 export const CallService = {
-  async getCalls(): Promise<Call[]> {
-    return [...readAll()].sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
+  async getCallsPage(
+    page = 1,
+    pageSize = DEFAULT_PAGE_SIZE,
+    sort: SortState | null = null,
+    filters: FilterCondition[] = [],
+  ): Promise<PaginatedResponse<Call>> {
+    const { data } = await apiClient.get<CallListResponse>("/calls/", {
+      params: toListQueryParams({
+        page,
+        page_size: Math.min(pageSize, MAX_PAGE_SIZE),
+        sort,
+        filters,
+      }),
+    });
+
+    return { results: data.results, pagination: data.pagination };
   },
 
-  async getCall(id: string): Promise<Call> {
-    const call = readAll().find((c) => c.id === id);
-    if (!call) throw new Error("Call not found");
-    return call;
+  /** Calls logged on one lead or contact, newest first by default. */
+  async getCallsForRecord(
+    kind: CallRecordKind,
+    recordId: string,
+    page = 1,
+    pageSize = DEFAULT_PAGE_SIZE,
+  ): Promise<PaginatedResponse<Call>> {
+    return this.getCallsPage(page, pageSize, null, [
+      { field: kind === "lead" ? "lead_id" : "contact_id", operator: "equals", value: recordId },
+    ]);
+  },
+
+  /** Full detail: the call, its change history and the other calls on the same record. */
+  async getCall(id: string): Promise<CallDetail> {
+    const { data } = await apiClient.get<CallDetail>(`/calls/${id}/`);
+    return data;
   },
 
   async createCall(payload: CreateCallPayload): Promise<Call> {
-    const now = new Date().toISOString();
-    const call: Call = {
-      id: crypto.randomUUID(),
-      subject: payload.subject,
-      owner_id: payload.owner_id,
-      owner_name: payload.owner_name ?? null,
-      call_type: payload.call_type ?? DEFAULT_CALL_TYPE,
-      call_status: payload.call_status ?? DEFAULT_CALL_STATUS,
-      call_start_time: payload.call_start_time ?? null,
-      call_duration_minutes: payload.call_duration_minutes ?? null,
-      description: payload.description ?? null,
-      lead_id: payload.lead_id ?? null,
-      lead_name: payload.lead_name ?? null,
-      contact_id: payload.contact_id ?? null,
-      contact_name: payload.contact_name ?? null,
-      account_id: payload.account_id ?? null,
-      account_name: payload.account_name ?? null,
-      created_at: now,
-      updated_at: now,
-    };
-    writeAll([call, ...readAll()]);
-    return call;
+    const { data } = await apiClient.post<Call>("/calls/", payload);
+    return data;
   },
 
   async updateCall(id: string, payload: UpdateCallPayload): Promise<Call> {
-    const all = readAll();
-    const index = all.findIndex((c) => c.id === id);
-    if (index === -1) throw new Error("Call not found");
-    const updated: Call = { ...all[index], ...payload, updated_at: new Date().toISOString() };
-    all[index] = updated;
-    writeAll(all);
-    return updated;
+    const { data } = await apiClient.patch<Call>(`/calls/${id}/`, payload);
+    return data;
   },
 
   async deleteCall(id: string): Promise<string> {
-    writeAll(readAll().filter((c) => c.id !== id));
-    return "Call deleted successfully";
+    const { data } = await apiClient.delete<{ message?: string; detail?: string }>(`/calls/${id}/`);
+    return data.message ?? data.detail ?? "Call deleted successfully";
   },
 };

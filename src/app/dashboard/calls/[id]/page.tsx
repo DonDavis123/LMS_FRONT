@@ -1,24 +1,22 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
-import { MoreVertical } from "lucide-react";
+import { Suspense, useEffect, useState } from "react";
+import { CheckCircle2 } from "lucide-react";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { CALLS_ENABLED } from "@/features/calls/config";
+import CallDetail from "@/features/calls/components/CallDetail";
 import { CallService } from "@/features/calls/services/CallService";
-import type { Call } from "@/features/calls/types/call.types";
-import Modal from "@/shared/components/Modal";
-import CallForm from "@/features/calls/components/CallForm";
+import type { CallDetail as CallDetailData } from "@/features/calls/types/call.types";
+import { getSafeReturnTo, RETURN_TO_PARAM } from "@/shared/utils/returnTo";
 
-import { confirmDelete } from "@/shared/utils/confirmDelete";
-import { formatDateTime } from "@/shared/utils/formatDate";
-
-export default function CallDetailPage() {
+function CallDetailPageInner() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
-  const [call, setCall] = useState<Call | null>(null);
-  const [editing, setEditing] = useState(false);
-  const [menu, setMenu] = useState(false);
+  const searchParams = useSearchParams();
+  const returnTo = getSafeReturnTo(searchParams.get(RETURN_TO_PARAM));
+  const [call, setCall] = useState<CallDetailData | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
 
   useEffect(() => {
     if (!CALLS_ENABLED) {
@@ -26,72 +24,68 @@ export default function CallDetailPage() {
       return;
     }
     if (!params.id) return;
-    CallService.getCall(params.id).then(setCall).catch(() => router.replace("/dashboard/calls"));
+
+    let cancelled = false;
+    setCall(null);
+    setError(null);
+    CallService.getCall(params.id)
+      .then((data) => {
+        if (!cancelled) setCall(data);
+      })
+      .catch(() => {
+        if (!cancelled) setError("Couldn't load this call. It may have been deleted.");
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [params.id, router]);
 
+  useEffect(() => {
+    if (!toast) return;
+    const timer = window.setTimeout(() => setToast(null), 3000);
+    return () => window.clearTimeout(timer);
+  }, [toast]);
+
   if (!CALLS_ENABLED) return null;
-  if (!call) return <div className="p-6 text-sm text-ink-soft">Loading…</div>;
 
-  const related = call.lead_name ? `Lead: ${call.lead_name}` : call.contact_name ? `Contact: ${call.contact_name}` : call.account_name ? `Account: ${call.account_name}` : "—";
-  const relatedTo = call.lead_id ? "lead_id" : call.contact_id ? "contact_id" : call.account_id ? "account_id" : null;
-
-  async function saveEdit(payload: Parameters<typeof CallService.updateCall>[1]) {
-    const updated = await CallService.updateCall(call!.id, payload);
-    setCall(updated);
-    setEditing(false);
+  if (error) {
+    return <p className="text-sm text-danger">{error}</p>;
   }
 
-  async function del() {
-    const currentCall = call;
-    if (!currentCall) return;
-    if (!(await confirmDelete(`Delete "${currentCall.subject}"? This can't be undone.`))) return;
-    await CallService.deleteCall(currentCall.id);
-    router.push("/dashboard/calls");
+  if (!call) {
+    return (
+      <div className="mx-auto max-w-5xl space-y-3">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} className="h-10 animate-shimmer rounded-md" />
+        ))}
+      </div>
+    );
   }
 
   return (
-    <div className="mx-auto max-w-5xl">
-      <Link href="/dashboard/calls" className="text-sm text-slate hover:text-fg">← Back to Calls</Link>
-      <div className="mt-3 flex items-center justify-between gap-4">
-        <div>
-          <h1 className="font-serif text-2xl text-fg">{call.subject}</h1>
-          <p className="mt-1 text-sm text-ink-soft">{related}</p>
+    <>
+      <CallDetail
+        call={call}
+        returnTo={returnTo}
+        onCallChange={(next) => {
+          setCall(next);
+          setToast("Call updated successfully");
+        }}
+      />
+      {toast && (
+        <div className="fixed bottom-6 right-6 z-[60] flex items-center gap-2 rounded-md border border-success/30 bg-success-soft px-4 py-3 text-sm font-medium text-success shadow-lg animate-toast-in">
+          <CheckCircle2 size={16} className="shrink-0 animate-pop-in" />
+          {toast}
         </div>
-        <div className="flex items-center gap-2">
-          <button type="button" onClick={() => setEditing(true)} className="rounded-md border border-line px-4 py-2 text-sm font-medium hover:bg-paper">Edit</button>
-          <div className="relative">
-            <button type="button" onClick={() => setMenu((v) => !v)} className="rounded-md border border-line p-2 text-ink-soft hover:bg-paper"><MoreVertical size={16}/></button>
-            {menu && <div className="absolute right-0 top-full z-20 mt-1 w-36 rounded-md border border-line bg-surface py-1 shadow-lg"><button type="button" onClick={del} className="block w-full px-3 py-2 text-left text-sm text-danger hover:bg-danger-soft">Delete</button></div>}
-          </div>
-        </div>
-      </div>
-
-      <div className="mt-6 rounded-lg border border-line bg-surface p-6">
-        <h2 className="mb-4 text-xs font-semibold uppercase tracking-wide text-ink-soft">Overview</h2>
-        <div className="grid grid-cols-1 gap-y-5 sm:grid-cols-2">
-          <Detail label="Subject" value={call.subject} />
-          <Detail label="Owner" value={call.owner_name ?? "—"} />
-          <Detail label="Call Type" value={call.call_type} />
-          <Detail label="Status" value={call.call_status} />
-          <Detail label="Start Time" value={formatDateTime(call.call_start_time) || "—"} />
-          <Detail label="Duration" value={call.call_duration_minutes != null ? `${call.call_duration_minutes} min` : "—"} />
-          <Detail label="Related To" value={related} />
-          <Detail label="Record Type" value={relatedTo ? relatedTo.replace("_id", "") : "—"} />
-        </div>
-      </div>
-
-      <div className="mt-4 rounded-lg border border-line bg-surface p-6">
-        <h2 className="mb-4 text-xs font-semibold uppercase tracking-wide text-ink-soft">Description</h2>
-        <p className="whitespace-pre-wrap text-sm text-ink-soft">{call.description || "—"}</p>
-      </div>
-
-      <Modal isOpen={editing} onClose={() => setEditing(false)}>
-        <CallForm mode="edit" initialCall={call} onSubmit={saveEdit} onCancel={() => setEditing(false)} />
-      </Modal>
-    </div>
+      )}
+    </>
   );
 }
 
-function Detail({ label, value }: { label: string; value: string }) {
-  return <div><p className="text-sm text-ink-soft">{label}</p><p className="mt-1 text-sm text-fg">{value || "—"}</p></div>;
+export default function CallDetailPage() {
+  return (
+    <Suspense fallback={null}>
+      <CallDetailPageInner />
+    </Suspense>
+  );
 }
