@@ -20,6 +20,7 @@ import FilterBar, { type FilterCondition, type FilterFieldConfig } from "@/share
 import type { LeadOwnerOption } from "@/features/auth/types/auth.types";
 
 import { confirmDelete } from "@/shared/utils/confirmDelete";
+import { formatDateTime } from "@/shared/utils/formatDate";
 import { useSelectionKeyboard } from "@/shared/hooks/useSelectionKeyboard";
 import ServerPagination from "@/shared/components/ServerPagination";
 import type { PaginationMeta } from "@/shared/types/pagination";
@@ -208,7 +209,7 @@ export default function LeadList({
       ) : (
         <>
           <div className="lp-table-scroll">
-            <table className="w-full min-w-[760px] text-left text-sm">
+            <table className="w-full min-w-[900px] text-left text-sm">
               <thead>
                 <tr className="border-b border-line text-xs font-semibold uppercase tracking-wide text-ink-soft">
                   <th className="w-10 px-4 py-3" aria-label="Selection and actions">
@@ -228,6 +229,7 @@ export default function LeadList({
                   <SortableHeader label="Lead Source" field="lead_source" sort={sort} onSortChange={onSortChange} />
                   <SortableHeader label="Lead Status" field="lead_status" sort={sort} onSortChange={onSortChange} />
                   <SortableHeader label="Lead Owner" field="owner" sort={sort} onSortChange={onSortChange} />
+                  <SortableHeader label="Created" field="created_at" sort={sort} onSortChange={onSortChange} />
                 </tr>
               </thead>
               <tbody>
@@ -302,6 +304,7 @@ export default function LeadList({
                       />
                     </td>
                     <td className="px-4 py-3 text-ink-soft">{lead.owner?.name ?? "Unassigned"}</td>
+                    <td className="whitespace-nowrap px-4 py-3 text-ink-soft">{formatDateTime(lead.created_at) || "—"}</td>
                   </tr>
                 ))}
               </tbody>
