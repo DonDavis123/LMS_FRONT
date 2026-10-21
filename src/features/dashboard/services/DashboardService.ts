@@ -274,13 +274,17 @@ export const DashboardService = {
     return composeStats(range, now, await statuses);
   },
 
-  /** Open tasks owned by `userId` — the tasks API is company-wide, so the owner filter is mandatory. */
+  /**
+   * Open tasks that are `userId`'s responsibility — the tasks API is company-wide, so the filter is
+   * mandatory. "Responsible" is the assigned user when a task has one, otherwise its owner, so an
+   * assigned task shows on the assignee's dashboard and not on the owner's.
+   */
   async getMyTasks(userId: string): Promise<MyTasksData> {
     const page = await TaskService.getTasksPage({
       page: 1,
       page_size: MY_TASKS_PAGE_SIZE,
       filters: [
-        { field: "owner", operator: "equals", value: userId },
+        { field: "responsible", operator: "equals", value: userId },
         { field: "status", operator: "not_equals", value: COMPLETED_STATUS },
       ],
       sort: { field: "due_date", direction: "asc" },

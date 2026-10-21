@@ -41,6 +41,8 @@ interface FormState {
   subject: string;
   owner_id: string;
   ownerLabel: string;
+  assigned_to_id: string;
+  assignedToLabel: string;
   due_date: string;
   priority: TaskPriority;
   status: TaskStatus;
@@ -55,6 +57,8 @@ function emptyForm(): FormState {
     subject: "",
     owner_id: "",
     ownerLabel: "",
+    assigned_to_id: "",
+    assignedToLabel: "",
     due_date: "",
     priority: DEFAULT_TASK_PRIORITY,
     status: DEFAULT_TASK_STATUS,
@@ -82,6 +86,8 @@ function formFromTask(task: Task): FormState {
     subject: task.subject ?? "",
     owner_id: task.owner_id ?? "",
     ownerLabel: task.owner_name ?? "",
+    assigned_to_id: task.assigned_to_id ?? "",
+    assignedToLabel: task.assigned_to_name ?? "",
     due_date: task.due_date ?? "",
     priority: task.priority ?? DEFAULT_TASK_PRIORITY,
     status: task.status ?? DEFAULT_TASK_STATUS,
@@ -98,6 +104,7 @@ export default function TaskForm({ mode, initialTask, onSubmit, onCancel, initia
   );
   const { warning, isUnchanged } = useNoChangeGuard(form, mode === "edit");
   const [owners, setOwners] = useState<LeadOwnerOption[]>([]);
+  const [assignableUsers, setAssignableUsers] = useState<LeadOwnerOption[]>([]);
   const [error, setError, errorRef] = useFormError();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -106,6 +113,11 @@ export default function TaskForm({ mode, initialTask, onSubmit, onCancel, initia
       .getLeadOwners()
       .then(setOwners)
       .catch(() => setOwners([]));
+
+    userService
+      .getAssignableUsers()
+      .then(setAssignableUsers)
+      .catch(() => setAssignableUsers([]));
 
     if (mode === "create") {
       const current = authService.getSessionUser();
@@ -163,6 +175,7 @@ export default function TaskForm({ mode, initialTask, onSubmit, onCancel, initia
       await onSubmit({
         subject: form.subject.trim(),
         owner_id: form.owner_id,
+        assigned_to_id: form.assigned_to_id || null,
         due_date: form.due_date || null,
         priority: form.priority,
         status: form.status,
@@ -213,6 +226,31 @@ export default function TaskForm({ mode, initialTask, onSubmit, onCancel, initia
                 update("ownerLabel", label);
               }}
             />
+          </Field>
+
+          <Field label="Assigned To">
+            <OwnerPicker
+              owners={assignableUsers}
+              value={form.assigned_to_id}
+              label={form.assignedToLabel}
+              placeholder="Select user…"
+              onChange={(id, label) => {
+                update("assigned_to_id", id);
+                update("assignedToLabel", label);
+              }}
+            />
+            {form.assigned_to_id && (
+              <button
+                type="button"
+                onClick={() => {
+                  update("assigned_to_id", "");
+                  update("assignedToLabel", "");
+                }}
+                className="mt-1 text-xs text-ink-soft hover:text-fg"
+              >
+                Clear assignment
+              </button>
+            )}
           </Field>
 
           <Field label="Due Date">

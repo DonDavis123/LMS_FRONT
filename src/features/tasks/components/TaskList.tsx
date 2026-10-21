@@ -86,6 +86,7 @@ export default function TaskList({
 }: TaskListProps) {
 
   const [owners, setOwners] = useState<LeadOwnerOption[]>([]);
+  const [assignableUsers, setAssignableUsers] = useState<LeadOwnerOption[]>([]);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [selectionMode, setSelectionMode] = useState(false);
   const [bulkDeleting, setBulkDeleting] = useState(false);
@@ -94,6 +95,7 @@ export default function TaskList({
 
   useEffect(() => {
     userService.getLeadOwners().then(setOwners).catch(() => setOwners([]));
+    userService.getAssignableUsers().then(setAssignableUsers).catch(() => setAssignableUsers([]));
   }, []);
 
   const fields = useMemo<FilterFieldConfig[]>(
@@ -107,9 +109,15 @@ export default function TaskList({
         type: "uuid",
         choices: owners.map((o) => ({ value: o.id, label: o.name })),
       },
+      {
+        field: "assigned_to",
+        label: "Assigned To",
+        type: "uuid",
+        choices: assignableUsers.map((o) => ({ value: o.id, label: o.name })),
+      },
       { field: "created_at", label: "Created", type: "datetime" },
     ],
-    [owners]
+    [owners, assignableUsers]
   );
 
   const pageItems = tasks;
@@ -261,6 +269,7 @@ export default function TaskList({
                   <SortableHeader label="Status" field="status" sort={sort} onSortChange={onSortChange} />
                   <SortableHeader label="Related To" field="related_to" sort={sort} onSortChange={onSortChange} />
                   <SortableHeader label="Owner" field="owner" sort={sort} onSortChange={onSortChange} />
+                  <SortableHeader label="Assigned To" field="assigned_to" sort={sort} onSortChange={onSortChange} />
                 </tr>
               </thead>
               <tbody className="divide-y divide-line">
@@ -335,6 +344,7 @@ export default function TaskList({
                     </td>
                     <td className="px-4 py-3 text-ink-soft">{relatedLabel(task)}</td>
                     <td className="px-4 py-3 text-ink-soft">{task.owner_name ?? "Unassigned"}</td>
+                    <td className="px-4 py-3 text-ink-soft">{task.assigned_to_name ?? "—"}</td>
                   </tr>
                 ))}
               </tbody>

@@ -96,6 +96,7 @@ export default function TaskDetail({ task, onTaskChange }: Props) {
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <Row label="Subject" value={task.subject} onSave={v => updateField("subject", v)} />
                 <Row label="Owner" value={task.owner_name} editable={false} />
+                <Row label="Assigned To" value={task.assigned_to_name} editable={false} />
                 <Row label="Due Date" value={task.due_date} displayValue={dueDateWithDaysLeft(task.due_date)} type="date" onSave={v => updateField("due_date", v)} />
                 <Row label="Priority" value={task.priority} type="select" options={TASK_PRIORITIES.map(v=>({value:v,label:v}))} onSave={v=>updateField("priority",v)} />
                 <Row label="Status" value={task.status} type="select" options={TASK_STATUSES.map(v=>({value:v,label:v}))} onSave={v=>updateField("status",v)} />

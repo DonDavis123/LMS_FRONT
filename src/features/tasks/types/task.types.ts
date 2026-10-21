@@ -26,6 +26,8 @@ export interface Task {
   subject: string;
   owner_id: string;
   owner_name?: string | null;
+  assigned_to_id?: string | null;
+  assigned_to_name?: string | null;
   due_date: string | null; // YYYY-MM-DD
   priority: TaskPriority;
   status: TaskStatus;
@@ -51,6 +53,7 @@ export interface Task {
 export interface CreateTaskPayload {
   subject: string;
   owner_id: string;
+  assigned_to_id?: string | null;
   due_date?: string | null;
   priority?: TaskPriority;
   status?: TaskStatus;

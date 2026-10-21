@@ -142,4 +142,13 @@ export const userService = {
     const { data } = await apiClient.get<LeadOwnerOption[]>("/lead-owners/");
     return data;
   },
+
+  /**
+   * Every active user of the caller's company (any role) — the "Assigned To"
+   * dropdown on the Task form. The backend scopes it to the company.
+   */
+  async getAssignableUsers(): Promise<LeadOwnerOption[]> {
+    const { data } = await apiClient.get<LeadOwnerOption[]>("/users/assignable/");
+    return data;
+  },
 };
