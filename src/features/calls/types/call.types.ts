@@ -93,6 +93,11 @@ export interface CallDetail extends Call {
   change_history: CallHistoryEvent[];
   related_calls: RelatedCall[];
   total_calls_for_record: number;
+  /**
+   * True only for the newest call on the lead / contact. Earlier calls are
+   * read-only history and the backend rejects edits to them.
+   */
+  is_latest: boolean;
 }
 
 /** `POST /calls/` */

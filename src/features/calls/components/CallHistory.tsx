@@ -63,9 +63,6 @@ export default function CallHistory({ callId, updatedAt, recordName, returnTo = 
   return (
     <div className="mt-4 rounded-lg border border-line bg-surface">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-5">
-        <span className="-mb-px inline-block border-b-2 border-indigo-600 px-1 py-3 text-sm font-medium text-indigo-600">
-          History
-        </span>
         <div className="flex items-center gap-1 py-2 text-xs" role="group" aria-label="History scope">
           {(
             [

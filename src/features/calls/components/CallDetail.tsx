@@ -51,12 +51,16 @@ export default function CallDetail({ call, onCallChange, returnTo = null }: Call
   const backHref = returnTo ?? "/dashboard/calls";
   // Where "back" should land again after opening another call from this page.
   const selfReturn = returnTo;
+  // Only the newest call on a lead / contact can be edited; older calls are
+  // read-only history (the backend enforces the same rule).
+  const canEdit = call.is_latest !== false;
 
   async function refresh() {
     onCallChange(await CallService.getCall(call.id));
   }
 
   async function updateField(field: keyof UpdateCallPayload, raw: string) {
+    if (!canEdit) return;
     const value = field === "description" ? (raw.trim() ? raw.trim() : null) : raw;
     await CallService.updateCall(call.id, { [field]: value } as UpdateCallPayload);
     await refresh();
@@ -107,7 +111,9 @@ export default function CallDetail({ call, onCallChange, returnTo = null }: Call
             <button
               type="button"
               onClick={() => setEditing(true)}
-              className="rounded-md border border-line px-4 py-2 text-sm font-medium text-fg hover:bg-paper"
+              disabled={!canEdit}
+              title={canEdit ? undefined : "Only the latest call can be edited"}
+              className="rounded-md border border-line px-4 py-2 text-sm font-medium text-fg hover:bg-paper disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent"
             >
               Edit
             </button>
@@ -134,6 +140,12 @@ export default function CallDetail({ call, onCallChange, returnTo = null }: Call
             </div>
           </div>
         </div>
+
+        {!canEdit && (
+          <p className="mt-4 rounded-md border border-line bg-paper px-4 py-2.5 text-sm text-ink-soft">
+            A newer call has been logged with {recordName}, so this call is now history and can no longer be edited.
+          </p>
+        )}
 
         {/* At-a-glance summary */}
         <div className="mt-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
@@ -176,6 +188,7 @@ export default function CallDetail({ call, onCallChange, returnTo = null }: Call
                     value={call.call_type}
                     type="select"
                     options={CALL_TYPES.map((type) => ({ value: type, label: type }))}
+                    editable={canEdit}
                     onSave={(raw) => updateField("call_type", raw)}
                   />
                   <InlineEditRow
@@ -183,6 +196,7 @@ export default function CallDetail({ call, onCallChange, returnTo = null }: Call
                     value={call.outcome}
                     type="select"
                     options={CALL_OUTCOMES.map((outcome) => ({ value: outcome, label: outcome }))}
+                    editable={canEdit}
                     onSave={(raw) => updateField("outcome", raw)}
                   />
                   <InlineEditRow label="Start Time" value={formatDateTime(call.call_start_time)} editable={false} />
@@ -203,6 +217,7 @@ export default function CallDetail({ call, onCallChange, returnTo = null }: Call
                   value={call.description}
                   type="textarea"
                   fullWidth
+                  editable={canEdit}
                   onSave={(raw) => updateField("description", raw)}
                 />
               </div>
@@ -265,7 +280,7 @@ export default function CallDetail({ call, onCallChange, returnTo = null }: Call
         </div>
       </div>
 
-      <Modal isOpen={editing} onClose={() => setEditing(false)}>
+      <Modal isOpen={editing && canEdit} onClose={() => setEditing(false)}>
         <CallForm mode="edit" initialCall={call} onSubmit={saveEdit} onCancel={() => setEditing(false)} />
       </Modal>
     </>
