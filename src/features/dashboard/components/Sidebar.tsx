@@ -12,6 +12,7 @@ import {
   ListChecks,
   Phone,
   Plus,
+  QrCode,
   ShieldCheck,
   SquareCheckBig,
   Users as UsersIcon,
@@ -243,6 +244,13 @@ export default function Sidebar({
               icon={ListChecks}
               label="Dropdown Options"
               isActive={pathname.startsWith("/dashboard/dropdown-options")}
+              isCollapsed={isCollapsed}
+            />
+            <SidebarLink
+              href="/dashboard/lead-form"
+              icon={QrCode}
+              label="Lead Form"
+              isActive={pathname.startsWith("/dashboard/lead-form")}
               isCollapsed={isCollapsed}
             />
           </nav>
