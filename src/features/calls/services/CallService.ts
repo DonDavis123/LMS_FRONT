@@ -34,6 +34,7 @@ export const CallService = {
     pageSize = DEFAULT_PAGE_SIZE,
     sort: SortState | null = null,
     filters: FilterCondition[] = [],
+    search = "",
   ): Promise<PaginatedResponse<Call>> {
     const { data } = await apiClient.get<CallListResponse>("/calls/", {
       params: toListQueryParams({
@@ -41,6 +42,7 @@ export const CallService = {
         page_size: Math.min(pageSize, MAX_PAGE_SIZE),
         sort,
         filters,
+        search,
       }),
     });
 
@@ -50,12 +52,17 @@ export const CallService = {
   /**
    * The Calls table: one row per lead / contact (its latest call, call count
    * and latest update). Most recently logged-or-edited record first by default.
+   *
+   * `search` and `filters` are applied by the server to the calls first, so a
+   * record is listed when at least one of its calls matches; the row then
+   * shows the latest *matching* call. Sorting and paging are server-side too.
    */
   async getCallRecordsPage(
     page = 1,
     pageSize = DEFAULT_PAGE_SIZE,
     sort: SortState | null = null,
     filters: FilterCondition[] = [],
+    search = "",
   ): Promise<PaginatedResponse<CallRecordRow>> {
     const { data } = await apiClient.get<CallRecordListResponse>("/calls/records/", {
       params: toListQueryParams({
@@ -63,6 +70,7 @@ export const CallService = {
         page_size: Math.min(pageSize, MAX_PAGE_SIZE),
         sort,
         filters,
+        search,
       }),
     });
 

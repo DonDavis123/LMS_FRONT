@@ -1,10 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import RecordActionsMenu from "@/shared/components/RecordActionsMenu";
 import SortableHeader from "@/shared/components/SortableHeader";
+import SearchBox from "@/shared/components/SearchBox";
+import FilterBar, { type FilterCondition, type FilterFieldConfig } from "@/shared/components/FilterBar";
+import ServerPagination from "@/shared/components/ServerPagination";
 import type { PaginationMeta } from "@/shared/types/pagination";
 import type { SortState } from "@/shared/types/sort";
+import type { LeadOwnerOption } from "@/features/auth/types/auth.types";
+import { userService } from "@/features/users/services/userService";
+import { CALL_OUTCOMES, CALL_TYPES } from "@/features/calls/types/call.types";
 import type { Call, CallRecordRow } from "@/features/calls/types/call.types";
 import { CallService } from "@/features/calls/services/CallService";
 import CallOutcomeBadge from "@/features/calls/components/CallOutcomeBadge";
@@ -25,8 +31,19 @@ interface CallListProps {
   onOpenClick?: (call: Call) => void;
   onPageChange: (page: number) => void;
   onRefresh: () => Promise<void>;
+  /** Applied (already debounced) search text. */
+  search: string;
+  onSearchChange: (search: string) => void;
+  filters: FilterCondition[];
+  onFiltersChange: (filters: FilterCondition[]) => void;
   sort: SortState | null;
   onSortChange: (sort: SortState | null) => void;
+  pageSize: number;
+  onPageSizeChange: (pageSize: number) => void;
+}
+
+function toChoices(values: readonly string[]) {
+  return values.map((value) => ({ value, label: value }));
 }
 
 export default function CallList({
@@ -39,10 +56,47 @@ export default function CallList({
   onOpenClick,
   onPageChange,
   onRefresh,
+  search,
+  onSearchChange,
+  filters,
+  onFiltersChange,
   sort,
   onSortChange,
+  pageSize,
+  onPageSizeChange,
 }: CallListProps) {
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [owners, setOwners] = useState<LeadOwnerOption[]>([]);
+
+  useEffect(() => {
+    userService.getLeadOwners().then(setOwners).catch(() => setOwners([]));
+  }, []);
+
+  // Filter fields. `field` is the backend filter key, not the column label.
+  const fields = useMemo<FilterFieldConfig[]>(
+    () => [
+      { field: "record_name", label: "Related To", type: "text" },
+      {
+        field: "record_type",
+        label: "Related To Type",
+        type: "choice",
+        choices: [
+          { value: "LEAD", label: "Lead" },
+          { value: "CONTACT", label: "Contact" },
+        ],
+      },
+      { field: "account_name", label: "Account", type: "text" },
+      { field: "outcome", label: "Outcome", type: "choice", choices: toChoices(CALL_OUTCOMES) },
+      { field: "call_type", label: "Call Type", type: "choice", choices: toChoices(CALL_TYPES) },
+      { field: "call_start_time", label: "Call Date", type: "date" },
+      { field: "duration_seconds", label: "Duration (seconds)", type: "number" },
+      { field: "owner", label: "Owner", type: "uuid", choices: owners.map((o) => ({ value: o.id, label: o.name })) },
+      { field: "description", label: "Notes", type: "text" },
+    ],
+    [owners],
+  );
+
+  const hasQuery = filters.length > 0 || search.length > 0;
 
   function open(row: CallRecordRow) {
     if (onOpenClick) onOpenClick(row.latest_call);
@@ -70,24 +124,27 @@ export default function CallList({
     }
   }
 
-  const totalPages = Math.max(1, pagination.total_pages);
-  const currentPage = Math.min(Math.max(1, pagination.page), totalPages);
-  const firstRecord = pagination.total === 0 ? 0 : (currentPage - 1) * pagination.page_size + 1;
-  const lastRecord =
-    pagination.total === 0
-      ? 0
-      : Math.min((currentPage - 1) * pagination.page_size + rows.length, pagination.total);
-
   return (
     <div className="lp-card lp-list-page">
-      <div className="lp-list-head flex items-center justify-between gap-3 border-b border-line bg-surface px-3 py-2.5 sm:px-4">
-        <div className="min-w-0">
+      <div className="lp-list-head flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-line bg-surface px-3 py-2.5 sm:px-4">
+        <div className="order-1 min-w-0">
           <h1 className="font-serif text-lg leading-tight text-fg">Calls</h1>
           <p className="text-xs text-ink-soft">
-            {pagination.total} {pagination.total === 1 ? "lead / contact" : "leads / contacts"} with calls
+            {pagination.total} {hasQuery ? "matching " : ""}
+            {pagination.total === 1 ? "lead / contact" : "leads / contacts"}
+            {hasQuery ? "" : " with calls"}
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="order-3 flex w-full min-w-0 flex-wrap items-center gap-2 sm:order-2 sm:w-auto sm:flex-1 sm:px-2">
+          <SearchBox
+            value={search}
+            onSearchChange={onSearchChange}
+            placeholder="Search calls"
+            ariaLabel="Search calls"
+          />
+          <FilterBar fields={fields} filters={filters} onChange={onFiltersChange} />
+        </div>
+        <div className="order-2 ml-auto flex gap-2 sm:order-3">
           <button
             type="button"
             onClick={onCreateClick}
@@ -108,15 +165,23 @@ export default function CallList({
         </div>
       ) : rows.length === 0 ? (
         <div className="flex flex-col items-center gap-3 px-4 py-16 text-center animate-scale-in">
-          <p className="font-serif text-lg text-fg">No calls yet</p>
-          <p className="max-w-sm text-sm text-ink-soft">Log a call with a lead or contact to keep a record of every conversation.</p>
-          <button
-            type="button"
-            onClick={onCreateClick}
-            className="mt-1 rounded-md bg-ink px-4 py-2 text-sm font-semibold text-white transition hover:bg-ink-2 active:scale-[0.98]"
-          >
-            + Log a Call
-          </button>
+          <p className="font-serif text-lg text-fg">
+            {hasQuery ? "No calls match your search or filters" : "No calls yet"}
+          </p>
+          <p className="max-w-sm text-sm text-ink-soft">
+            {hasQuery
+              ? "Try a different search term, or remove a filter."
+              : "Log a call with a lead or contact to keep a record of every conversation."}
+          </p>
+          {!hasQuery && (
+            <button
+              type="button"
+              onClick={onCreateClick}
+              className="mt-1 rounded-md bg-ink px-4 py-2 text-sm font-semibold text-white transition hover:bg-ink-2 active:scale-[0.98]"
+            >
+              + Log a Call
+            </button>
+          )}
         </div>
       ) : (
         <>
@@ -125,14 +190,14 @@ export default function CallList({
               <thead>
                 <tr className="border-b border-line text-xs font-semibold uppercase tracking-wide text-ink-soft">
                   <th className="w-10 px-4 py-3" aria-label="Actions" />
-                  <th className="px-4 py-3">Related To</th>
+                  <SortableHeader label="Related To" field="record_name" sort={sort} onSortChange={onSortChange} />
                   <SortableHeader label="Calls" field="call_count" sort={sort} onSortChange={onSortChange} />
                   <SortableHeader label="Latest Outcome" field="outcome" sort={sort} onSortChange={onSortChange} />
                   <SortableHeader label="Latest Call" field="call_start_time" sort={sort} onSortChange={onSortChange} />
                   <SortableHeader label="Duration" field="duration_seconds" sort={sort} onSortChange={onSortChange} />
                   <SortableHeader label="Latest Update" field="last_updated_at" sort={sort} onSortChange={onSortChange} />
-                  <th className="px-4 py-3">Owner</th>
-                  <th className="px-4 py-3">Latest Notes</th>
+                  <SortableHeader label="Owner" field="owner" sort={sort} onSortChange={onSortChange} />
+                  <SortableHeader label="Latest Notes" field="description" sort={sort} onSortChange={onSortChange} />
                 </tr>
               </thead>
               <tbody className="divide-y divide-line">
@@ -213,32 +278,12 @@ export default function CallList({
             </table>
           </div>
 
-          <div className="lp-list-foot flex items-center justify-between border-t border-line px-4 py-2 text-sm text-ink-soft">
-            <span>
-              {firstRecord} to {lastRecord} of {pagination.total}
-            </span>
-            <div className="flex items-center gap-3">
-              <span>
-                Page {currentPage} of {totalPages}
-              </span>
-              <button
-                type="button"
-                onClick={() => onPageChange(currentPage - 1)}
-                disabled={currentPage <= 1 || isLoading}
-                className="rounded border border-line px-2 py-1 disabled:opacity-40"
-              >
-                ‹
-              </button>
-              <button
-                type="button"
-                onClick={() => onPageChange(currentPage + 1)}
-                disabled={currentPage >= totalPages || isLoading}
-                className="rounded border border-line px-2 py-1 disabled:opacity-40"
-              >
-                ›
-              </button>
-            </div>
-          </div>
+          <ServerPagination
+            pagination={pagination}
+            pageSize={pageSize}
+            onPageChange={onPageChange}
+            onPageSizeChange={onPageSizeChange}
+          />
         </>
       )}
     </div>
