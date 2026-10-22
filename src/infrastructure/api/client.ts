@@ -32,6 +32,18 @@ export const apiClient = axios.create(commonConfig);
  */
 export const authClient = axios.create(commonConfig);
 
+/**
+ * Anonymous client for the public lead-capture page (`/lead/<token>`).
+ *
+ * No interceptors and no credentials: it never attaches a token, never
+ * refreshes, and never redirects to /login, so a visitor without an account
+ * can't be bounced anywhere by a failed request.
+ */
+export const publicClient = axios.create({
+  ...commonConfig,
+  withCredentials: false,
+});
+
 apiClient.interceptors.request.use((config) => {
   const token = authStorage.getAccessToken();
 
