@@ -79,7 +79,7 @@ export default function InlineEditRow({
   function cancel() { setDraft(normalized); setError(false); setEditing(false); }
 
   return (
-    <div className={`group relative min-w-0 overflow-hidden rounded-xl border border-transparent px-3 py-2.5 -mx-1.5 transition-all duration-200 hover:border-line hover:bg-paper/70 ${editing ? "border-line bg-paper/80 shadow-sm" : ""} ${fullWidth ? "sm:col-span-2" : ""}`}>
+    <div className={`group relative min-w-0 overflow-hidden rounded-xl border border-transparent px-3 py-2.5 transition-all duration-200 hover:border-line hover:bg-paper/70 ${editing ? "border-line bg-paper/80 shadow-sm" : ""} ${fullWidth ? "sm:col-span-2" : ""}`}>
       <p className="text-xs text-ink-soft">{label}</p>
       {!editing ? (
         <div className="flex min-h-7 items-center justify-between gap-2">

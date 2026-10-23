@@ -1,17 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   Building2,
   CalendarClock,
-  ChevronDown,
   Contact2,
   Home,
   ListChecks,
   Phone,
-  Plus,
   QrCode,
   ShieldCheck,
   SquareCheckBig,
@@ -20,8 +17,6 @@ import {
 import type { AuthUser } from "@/features/auth/types/auth.types";
 import { isSuperAdmin } from "@/features/auth/types/auth.types";
 import { CALLS_ENABLED } from "@/features/calls/config";
-import { teamspaceService } from "@/features/teamspace/services/teamspaceService";
-import type { Teamspace } from "@/features/teamspace/types/teamspace.types";
 
 interface SidebarProps {
   user: AuthUser;
@@ -59,39 +54,6 @@ export default function Sidebar({
   onCloseMobile,
 }: SidebarProps) {
   const pathname = usePathname();
-  const [teamspaces, setTeamspaces] = useState<Teamspace[]>([]);
-  const [active, setActive] = useState<Teamspace | null>(null);
-  const [isSwitcherOpen, setIsSwitcherOpen] = useState(false);
-  const [isCreating, setIsCreating] = useState(false);
-  const [newName, setNewName] = useState("");
-
-  useEffect(() => {
-    setTeamspaces(teamspaceService.list());
-    setActive(teamspaceService.getActive());
-  }, []);
-
-  // Collapsing hides the switcher's dropdown/create-form entirely.
-  useEffect(() => {
-    if (isCollapsed) setIsSwitcherOpen(false);
-  }, [isCollapsed]);
-
-  function handleSelect(teamspace: Teamspace) {
-    teamspaceService.setActive(teamspace.id);
-    setActive(teamspace);
-    setIsSwitcherOpen(false);
-  }
-
-  function handleCreate() {
-    const name = newName.trim();
-    if (!name) return;
-    const teamspace = teamspaceService.create(name);
-    setTeamspaces(teamspaceService.list());
-    setActive(teamspace);
-    setNewName("");
-    setIsCreating(false);
-    setIsSwitcherOpen(false);
-  }
-
   return (
     <>
       {/* Mobile only: dims the page behind the open drawer; tap to dismiss. */}
@@ -131,66 +93,11 @@ export default function Sidebar({
 
       <div className="mt-4 px-3 md:mt-6">
         {!isCollapsed && (
-          <div className="relative">
-            <button
-              onClick={() => setIsSwitcherOpen((v) => !v)}
-              className="flex w-full items-center justify-between rounded-md px-2 py-2 text-left text-xs font-semibold uppercase tracking-wide text-ink-soft hover:bg-paper"
-            >
-              <span className="truncate">{active?.name ?? "Teamspace"}</span>
-              <ChevronDown size={14} />
-            </button>
-
-            {isSwitcherOpen && (
-              <div className="absolute left-0 right-0 top-full z-20 mt-1 rounded-md border border-line bg-surface p-1 shadow-lg animate-menu-in">
-                {teamspaces.map((teamspace) => (
-                  <button
-                    key={teamspace.id}
-                    onClick={() => handleSelect(teamspace)}
-                    className={`block w-full rounded px-2 py-1.5 text-left text-sm ${
-                      teamspace.id === active?.id
-                        ? "bg-slate-light text-fg"
-                        : "text-fg hover:bg-paper"
-                    }`}
-                  >
-                    {teamspace.name}
-                  </button>
-                ))}
-
-                {isSuperAdmin(user) && (
-                  <div className="mt-1 border-t border-line pt-1">
-                    {isCreating ? (
-                      <div className="flex gap-1 p-1">
-                        <input
-                          autoFocus
-                          value={newName}
-                          onChange={(e) => setNewName(e.target.value)}
-                          onKeyDown={(e) => e.key === "Enter" && handleCreate()}
-                          placeholder="Teamspace name"
-                          className="w-full rounded border border-line px-2 py-1 text-sm outline-none focus:border-slate"
-                        />
-                        <button
-                          onClick={handleCreate}
-                          className="rounded bg-ink px-2 text-xs font-semibold text-white"
-                        >
-                          Add
-                        </button>
-                      </div>
-                    ) : (
-                      <button
-                        onClick={() => setIsCreating(true)}
-                        className="flex w-full items-center gap-1.5 rounded px-2 py-1.5 text-left text-sm font-medium text-slate hover:bg-paper"
-                      >
-                        <Plus size={14} /> Create Teamspace
-                      </button>
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
+          <p className="px-2 pb-1 text-xs font-semibold uppercase tracking-wide text-ink-soft">
+            CRM
+          </p>
         )}
-
-        <nav className="mt-1 space-y-0.5">
+        <nav className="space-y-0.5">
           {NAV_ITEMS.map((item) => (
             <SidebarLink
               key={item.href}

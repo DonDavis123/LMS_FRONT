@@ -173,8 +173,8 @@ export default function CallDetail({ call, onCallChange, returnTo = null }: Call
             <>
               <div className="mt-4 rounded-lg border border-line bg-surface p-6">
                 <h2 className="mb-4 text-xs font-semibold uppercase tracking-wide text-ink-soft">Call Information</h2>
-                <div className="grid grid-cols-1 gap-x-4 gap-y-3 sm:grid-cols-2">
-                  <div className="-mx-1.5 min-w-0 px-3 py-2.5">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <div className="min-w-0 rounded-xl border border-transparent px-3 py-2.5">
                     <p className="text-xs text-ink-soft">{recordLabel(record.type)}</p>
                     <p className="flex min-h-7 items-center text-sm">
                       <Link href={recordLink} className="font-medium text-slate hover:underline">
@@ -268,7 +268,7 @@ export default function CallDetail({ call, onCallChange, returnTo = null }: Call
 
               <div className="mt-4 rounded-lg border border-line bg-surface p-6">
                 <h2 className="mb-4 text-xs font-semibold uppercase tracking-wide text-ink-soft">System Information</h2>
-                <div className="grid grid-cols-1 gap-x-4 gap-y-3 sm:grid-cols-2">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <InlineEditRow label="Logged At" value={formatDateTime(call.created_at)} editable={false} />
                   <InlineEditRow label="Last Updated" value={formatDateTime(call.updated_at)} editable={false} />
                 </div>
