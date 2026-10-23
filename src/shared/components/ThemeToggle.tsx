@@ -51,7 +51,10 @@ export default function ThemeToggle() {
       return;
     }
 
-    // The new theme grows outward from the centre of the button.
+    // Dark: the new (dark) theme grows outward from the centre of the button.
+    // Light: the reverse — the old (dark) theme shrinks back into the button,
+    // revealing the light theme underneath.
+    const reverse = next === "light";
     const rect = buttonRef.current.getBoundingClientRect();
     const x = rect.left + rect.width / 2;
     const y = rect.top + rect.height / 2;
@@ -63,6 +66,7 @@ export default function ThemeToggle() {
     const root = document.documentElement;
     isSwitchingRef.current = true;
     root.classList.add("theme-switching");
+    if (reverse) root.classList.add("theme-reverse");
 
     const transition = doc.startViewTransition(() => {
       // flushSync makes React render the new icon/state inside the
@@ -72,14 +76,15 @@ export default function ThemeToggle() {
 
     transition.ready
       .then(() => {
+        const full = `circle(${radius}px at ${x}px ${y}px)`;
+        const none = `circle(0px at ${x}px ${y}px)`;
         root.animate(
-          {
-            clipPath: [`circle(0px at ${x}px ${y}px)`, `circle(${radius}px at ${x}px ${y}px)`],
-          },
+          { clipPath: reverse ? [full, none] : [none, full] },
           {
             duration: REVEAL_MS,
-            easing: "cubic-bezier(0.22, 1, 0.36, 1)",
-            pseudoElement: "::view-transition-new(root)",
+            easing: reverse ? "cubic-bezier(0.65, 0, 0.35, 1)" : "cubic-bezier(0.22, 1, 0.36, 1)",
+            fill: "forwards",
+            pseudoElement: reverse ? "::view-transition-old(root)" : "::view-transition-new(root)",
           }
         );
       })
@@ -88,7 +93,7 @@ export default function ThemeToggle() {
       });
 
     transition.finished.finally(() => {
-      root.classList.remove("theme-switching");
+      root.classList.remove("theme-switching", "theme-reverse");
       isSwitchingRef.current = false;
     });
   }

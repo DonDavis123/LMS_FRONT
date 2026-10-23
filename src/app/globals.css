@@ -447,6 +447,14 @@ button, a, input, select, textarea {
 ::view-transition-new(root) {
   z-index: 2;
 }
+/* Switching to light: the OLD (dark) snapshot sits on top and shrinks into
+   the toggle button, so the light theme appears to flow back out of it. */
+.theme-reverse::view-transition-old(root) {
+  z-index: 2;
+}
+.theme-reverse::view-transition-new(root) {
+  z-index: 1;
+}
 .theme-switching *,
 .theme-switching *::before,
 .theme-switching *::after {
