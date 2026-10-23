@@ -182,8 +182,8 @@ async function handleStatusClick(status: LeadStatus) {
               <Row label="Lead Owner" value={lead.owner?.name} editable={false} />
               <Row label="Email" value={lead.email} onSave={(raw) => updateField("email", raw)} />
               <Row label="Phone" value={lead.phone} onSave={(raw) => updateField("phone", raw)} />
-              <Row label="Mobile" value={lead.mobile_number} onSave={(raw) => updateField("mobile_number", raw)} />
               <Row label="Lead Status" value={lead.lead_status} onSave={(raw) => updateField("lead_status", raw)} type="select" options={toSelectOptions(picklists.lead_status, lead.lead_status)} />
+              <Row label="Description" value={lead.description} onSave={(raw) => updateField("description", raw)} type="textarea" fullWidth />
             </div>
           </div>
 
@@ -231,10 +231,6 @@ async function handleStatusClick(status: LeadStatus) {
                 <Row label="State" value={lead.state} onSave={(raw) => updateField("state", raw)} />
                 <Row label="Country" value={lead.country} onSave={(raw) => updateField("country", raw)} />
                 <Row label="Zip Code" value={lead.postal_code} onSave={(raw) => updateField("postal_code", raw)} />
-              </RecordSection>
-
-              <RecordSection title="Description Information">
-                <Row label="Description" value={lead.description} onSave={(raw) => updateField("description", raw)} type="textarea" fullWidth />
               </RecordSection>
 
               <RecordSection title="System Information">
