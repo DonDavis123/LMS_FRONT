@@ -43,6 +43,8 @@ export interface WizardState {
   /** True after any mapping, option or exclusion change since `check` was made. */
   checkIsStale: boolean;
   progress: ProgressResult | null;
+  /** True from the click on "Start import". The draft is a real import then: steps 1 to 4 are locked and nothing is discarded. */
+  started: boolean;
 }
 
 type Action =
@@ -55,6 +57,7 @@ type Action =
   | { type: "setCheck"; check: ValidateResponse | null }
   | { type: "markStale" }
   | { type: "setProgress"; progress: ProgressResult | null }
+  | { type: "setStarted"; started: boolean }
   | { type: "unlock"; step: WizardStep }
   | { type: "goTo"; step: WizardStep }
   | { type: "reset" };
@@ -82,6 +85,7 @@ function createInitialState(): WizardState {
     check: null,
     checkIsStale: false,
     progress: null,
+    started: false,
   };
 }
 
@@ -117,9 +121,12 @@ function reducer(state: WizardState, action: Action): WizardState {
       return { ...state, checkIsStale: true };
     case "setProgress":
       return { ...state, progress: action.progress };
+    case "setStarted":
+      return state.started === action.started ? state : { ...state, started: action.started };
     case "unlock":
       return stepIndex(action.step) > stepIndex(state.furthest) ? { ...state, furthest: action.step } : state;
     case "goTo":
+      if (state.started) return state;
       return stepIndex(action.step) <= stepIndex(state.furthest) ? { ...state, step: action.step } : state;
     case "reset":
       return createInitialState();
@@ -150,13 +157,16 @@ export function useLeadImportWizard() {
   const setCheck = useCallback((check: ValidateResponse | null) => dispatch({ type: "setCheck", check }), []);
   const markStale = useCallback(() => dispatch({ type: "markStale" }), []);
   const setProgress = useCallback((progress: ProgressResult | null) => dispatch({ type: "setProgress", progress }), []);
+  /** Step 5 calls this: true on the click on "Start import", false when the server refuses the start. */
+  const setStarted = useCallback((started: boolean) => dispatch({ type: "setStarted", started }), []);
   /** Lets the user reach `step` (and any step before it). Later parts call this when a step is complete. */
   const unlock = useCallback((step: WizardStep) => dispatch({ type: "unlock", step }), []);
   const reset = useCallback(() => dispatch({ type: "reset" }), []);
 
   const canGoTo = useCallback(
-    (step: WizardStep) => stepIndex(step) <= stepIndex(state.furthest),
-    [state.furthest],
+    // Once the import has started only the import step is reachable.
+    (step: WizardStep) => (state.started ? step === "import" : stepIndex(step) <= stepIndex(state.furthest)),
+    [state.furthest, state.started],
   );
 
   /** Unlocks `step` and moves to it. Only call this once the current screen is valid. */
@@ -177,12 +187,12 @@ export function useLeadImportWizard() {
     if (!state.upload) return false;
     if (stepIndex(state.furthest) > stepIndex("mapping")) return true;
     // A preview alone is not user work (it loads by itself), so it does not count.
-    if (state.check !== null || state.progress !== null) return true;
+    if (state.check !== null || state.progress !== null || state.started) return true;
     const start = buildStartingMapping(state.upload);
     const mappingChanged = Object.keys(start).some((header) => state.mapping[header] !== start[header]);
     const optionsChanged = JSON.stringify(state.options) !== JSON.stringify(createDefaultImportOptions());
     return mappingChanged || optionsChanged;
-  }, [state.upload, state.furthest, state.check, state.progress, state.mapping, state.options]);
+  }, [state.upload, state.furthest, state.check, state.progress, state.started, state.mapping, state.options]);
 
   return {
     state,
@@ -196,6 +206,7 @@ export function useLeadImportWizard() {
     setCheck,
     markStale,
     setProgress,
+    setStarted,
     unlock,
     goTo,
     advanceTo,
