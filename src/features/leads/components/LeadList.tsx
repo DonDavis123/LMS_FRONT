@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { Upload } from "lucide-react";
 import type { Lead, LeadStatus } from "@/features/leads/types/lead.types";
 import { useLeadPicklists } from "@/features/picklists/hooks/useLeadPicklists";
 import { toStatusOptions } from "@/features/picklists/utils/optionHelpers";
@@ -17,7 +18,8 @@ import SortableHeader from "@/shared/components/SortableHeader";
 import type { SortState } from "@/shared/types/sort";
 import SearchBox from "@/shared/components/SearchBox";
 import FilterBar, { type FilterCondition, type FilterFieldConfig } from "@/shared/components/FilterBar";
-import type { LeadOwnerOption } from "@/features/auth/types/auth.types";
+import { isAdmin, type LeadOwnerOption } from "@/features/auth/types/auth.types";
+import { authStorage } from "@/infrastructure/auth/tokenStorage";
 
 import { confirmDelete } from "@/shared/utils/confirmDelete";
 import { formatDateTime } from "@/shared/utils/formatDate";
@@ -76,6 +78,12 @@ export default function LeadList({
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [removingId, setRemovingId] = useState<string | null>(null);
   const [updatingStatusId, setUpdatingStatusId] = useState<string | null>(null);
+  // Only admins see "Import". Read once on mount so server and client markup match.
+  const [canImport, setCanImport] = useState(false);
+
+  useEffect(() => {
+    setCanImport(isAdmin(authStorage.getUser()));
+  }, []);
 
   useEffect(() => {
     userService.getLeadOwners().then(setOwners).catch(() => setOwners([]));
@@ -187,6 +195,15 @@ export default function LeadList({
           />
         </div>
         <div className="order-2 ml-auto flex gap-2 sm:order-3">
+          {canImport && (
+            <Link
+              href="/dashboard/leads/import"
+              className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-md border border-line bg-surface px-3 py-1.5 text-sm font-medium text-fg transition hover:bg-paper active:scale-[0.98]"
+            >
+              <Upload size={14} aria-hidden="true" />
+              Import
+            </Link>
+          )}
           <Link
             href="/dashboard/leads/new"
             className="whitespace-nowrap rounded-md bg-amber px-3 py-1.5 text-sm font-semibold text-fg transition hover:bg-amber-dark active:scale-[0.98]"
