@@ -122,16 +122,22 @@ export const LeadImportService = {
   },
 
   /** POST /leads/import/<job_id>/validate/ */
-  async validate(jobId: string, mapping: ImportMapping, options: ImportOptions): Promise<ValidateResponse> {
-    const { data } = await apiClient.post<ValidateResponse>(`${BASE}/${jobId}/validate/`, {
-      mapping,
-      options,
-    });
+  async validate(
+    jobId: string,
+    mapping: ImportMapping,
+    options: ImportOptions,
+    signal?: AbortSignal,
+  ): Promise<ValidateResponse> {
+    const { data } = await apiClient.post<ValidateResponse>(
+      `${BASE}/${jobId}/validate/`,
+      { mapping, options },
+      { signal },
+    );
     return data;
   },
 
   /** GET /leads/import/<job_id>/rows/?status=&page=&page_size=&q= */
-  async getRows(jobId: string, query: RowsQuery = {}): Promise<ImportRowsResponse> {
+  async getRows(jobId: string, query: RowsQuery = {}, signal?: AbortSignal): Promise<ImportRowsResponse> {
     const { data } = await apiClient.get<ImportRowsResponse>(`${BASE}/${jobId}/rows/`, {
       params: {
         status: query.status ?? "all",
@@ -139,6 +145,7 @@ export const LeadImportService = {
         page_size: query.page_size,
         q: query.q || undefined,
       },
+      signal,
     });
     return data;
   },

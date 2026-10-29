@@ -10,6 +10,7 @@ import ImportConfirmDialog from "@/features/leadImport/components/ImportConfirmD
 import ImportStepper from "@/features/leadImport/components/ImportStepper";
 import MappingStep from "@/features/leadImport/components/MappingStep";
 import OptionsStep from "@/features/leadImport/components/OptionsStep";
+import ReviewStep from "@/features/leadImport/components/ReviewStep";
 import UploadStep from "@/features/leadImport/components/UploadStep";
 import {
   WIZARD_STEPS,
@@ -59,7 +60,7 @@ export default function ImportWizard() {
   const [access, setAccess] = useState<Access>("checking");
   const [uploadBusy, setUploadBusy] = useState(false);
   const [leaveOpen, setLeaveOpen] = useState(false);
-  // Steps 2 and 3 tell the footer whether Continue works and why not.
+  // Steps 2 to 4 tell the footer whether Continue works and why not.
   const [stepFooter, setStepFooter] = useState<StepFooter | null>(null);
 
   // Admin guard. Read once on mount so server and client markup match.
@@ -121,7 +122,7 @@ export default function ImportWizard() {
 
   // A footer that belongs to a screen the user has just left is ignored.
   const footer = stepFooter && stepFooter.step === state.step ? stepFooter : null;
-  const stepControlsFooter = state.step === "mapping" || state.step === "options";
+  const stepControlsFooter = state.step === "mapping" || state.step === "options" || state.step === "review";
 
   let continueDisabled = true;
   if (state.step === "upload") continueDisabled = !state.upload || uploadBusy;
@@ -166,6 +167,8 @@ export default function ImportWizard() {
             <MappingStep wizard={wizard} onFooterChange={setStepFooter} />
           ) : state.step === "options" ? (
             <OptionsStep wizard={wizard} onFooterChange={setStepFooter} />
+          ) : state.step === "review" ? (
+            <ReviewStep wizard={wizard} onFooterChange={setStepFooter} />
           ) : (
             <StepPlaceholder step={state.step} />
           )}

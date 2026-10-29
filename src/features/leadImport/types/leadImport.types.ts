@@ -202,9 +202,16 @@ export interface RowWarning {
  * out every key, so unknown keys are allowed and read defensively.
  */
 export interface DuplicateInfo {
+  /** DUPLICATE_EXISTING: matches a lead already saved. DUPLICATE_IN_FILE: repeats an earlier row. */
+  kind?: "DUPLICATE_EXISTING" | "DUPLICATE_IN_FILE";
   matched_on?: string | null;
   lead_id?: string | null;
   lead_name?: string | null;
+  /** The matched lead's name (what the rows endpoint sends). */
+  name?: string | null;
+  is_converted?: boolean;
+  /** For a repeat inside the file: the earlier row it repeats. */
+  first_row?: number | null;
   [key: string]: unknown;
 }
 
