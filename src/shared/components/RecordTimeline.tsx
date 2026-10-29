@@ -7,12 +7,14 @@ import {
   CheckCircle2,
   Clock3,
   FileEdit,
+  FileUp,
   Filter,
   Loader2,
   PhoneCall,
   PlusCircle,
   RefreshCcw,
   Trash2,
+  Undo2,
   UserSquare2,
 } from "lucide-react";
 import { TimelineService, type TimelineEvent, type TimelineModule } from "@/features/timeline/services/TimelineService";
@@ -97,6 +99,7 @@ function iconFor(eventType: string | null | undefined) {
   if (type.startsWith("CALL_")) {
     return { Icon: PhoneCall, tone: type.includes("DELETED") ? "text-danger" : type.includes("LOGGED") ? "text-success" : "text-slate" };
   }
+  if (type.includes("LEAD_IMPORT")) return { Icon: type.includes("UNDONE") ? Undo2 : FileUp, tone: "text-slate" };
   if (type.includes("STATUS_CHANGED")) return { Icon: RefreshCcw, tone: "text-slate" };
   if (type.includes("CONTACT_CREATED")) return { Icon: UserSquare2, tone: "text-slate" };
   if (type.includes("CREATED")) return { Icon: PlusCircle, tone: "text-success" };

@@ -7,6 +7,8 @@ export const NOTIFICATION_TYPES = [
   "TASK_DUE_TODAY",
   "MEETING_ONE_DAY",
   "MEETING_TODAY",
+  "LEAD_IMPORT_FINISHED",
+  "LEAD_IMPORT_UNDONE",
 ] as const;
 export type NotificationType = (typeof NOTIFICATION_TYPES)[number];
 
@@ -24,6 +26,8 @@ export interface Notification {
   task_id: string | null;
   meeting_id: string | null;
   reminder_id: string | null;
+  // Set on LEAD_IMPORT_FINISHED / LEAD_IMPORT_UNDONE: the import the notification is about.
+  lead_import_job_id: string | null;
   // For REMINDER this is the reminder time. For task/meeting "today"/"tomorrow"
   // notifications it is only a de-duplication key (local midnight of the day),
   // NOT the time the notification appeared — use `notificationTime()` to show it.

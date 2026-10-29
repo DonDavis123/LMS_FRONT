@@ -467,6 +467,18 @@ export interface ReportWarning {
   example_rows: number[];
 }
 
+export interface ReportMappedValue {
+  field: string;
+  file_value: string;
+  mapped_to: string;
+}
+
+export interface ReportMappedValues {
+  count: number;
+  values: ReportMappedValue[];
+  unknown_values_left_blank: boolean;
+}
+
 export interface ReportFiles {
   rejected_available: boolean;
   results_available: boolean;
@@ -483,7 +495,7 @@ export interface ImportReport {
   owners: ReportOwner[];
   converted: ReportConverted;
   warnings: ReportWarning[];
-  mapped_values: unknown;
+  mapped_values: ReportMappedValues;
   files: ReportFiles;
   can_undo: boolean;
   can_reupload: boolean;
@@ -529,7 +541,22 @@ export interface UndoPreview {
 }
 
 /** The backend does not fix the shape of the undo report, so it stays open. */
-export type UndoReport = Record<string, unknown>;
+export interface UndoReportCounts {
+  leads_removed: number;
+  accounts_removed: number;
+  contacts_removed: number;
+  leads_restored: number;
+  left_alone: number;
+}
+
+export interface UndoReport {
+  attempt: number;
+  status: string;
+  undone_at: string | null;
+  undone_by_name: string;
+  message: string;
+  counts: UndoReportCounts;
+}
 
 export interface UndoResult {
   job_id: string;

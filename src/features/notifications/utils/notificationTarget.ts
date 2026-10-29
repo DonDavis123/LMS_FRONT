@@ -11,6 +11,7 @@ import type { Notification } from "@/features/notifications/types/notification.t
 export type NotificationTarget =
   | { kind: "task"; href: string }
   | { kind: "meeting"; href: string }
+  | { kind: "lead_import"; href: string }
   | { kind: "custom" };
 
 export function getNotificationTarget(notification: Notification): NotificationTarget {
@@ -19,6 +20,9 @@ export function getNotificationTarget(notification: Notification): NotificationT
   }
   if (notification.meeting_id) {
     return { kind: "meeting", href: `/dashboard/meetings/${encodeURIComponent(notification.meeting_id)}` };
+  }
+  if (notification.lead_import_job_id) {
+    return { kind: "lead_import", href: `/dashboard/leads/import/${encodeURIComponent(notification.lead_import_job_id)}/report` };
   }
   return { kind: "custom" };
 }

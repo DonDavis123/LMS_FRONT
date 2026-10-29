@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell, CalendarClock, Users, X } from "lucide-react";
+import { Bell, CalendarClock, FileUp, Undo2, Users, X } from "lucide-react";
 import {
   notificationTime,
   type Notification,
@@ -14,6 +14,8 @@ const TYPE_ICON: Record<NotificationType, typeof Bell> = {
   TASK_DUE_TODAY: CalendarClock,
   MEETING_ONE_DAY: Users,
   MEETING_TODAY: Users,
+  LEAD_IMPORT_FINISHED: FileUp,
+  LEAD_IMPORT_UNDONE: Undo2,
 };
 
 interface NotificationDropdownProps {
