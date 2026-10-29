@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Upload } from "lucide-react";
+import { History, Upload } from "lucide-react";
 import type { Lead, LeadStatus } from "@/features/leads/types/lead.types";
 import { useLeadPicklists } from "@/features/picklists/hooks/useLeadPicklists";
 import { toStatusOptions } from "@/features/picklists/utils/optionHelpers";
@@ -195,6 +195,15 @@ export default function LeadList({
           />
         </div>
         <div className="order-2 ml-auto flex gap-2 sm:order-3">
+          {canImport && (
+            <Link
+              href="/dashboard/leads/import/history"
+              className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-md border border-line bg-surface px-2.5 py-1.5 text-xs font-medium text-fg transition hover:bg-paper active:scale-[0.98]"
+            >
+              <History size={14} aria-hidden="true" />
+              Import history
+            </Link>
+          )}
           {canImport && (
             <Link
               href="/dashboard/leads/import"

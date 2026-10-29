@@ -5,7 +5,7 @@ import { getImportError, type ImportErrorInfo } from "@/features/leadImport/util
 
 export type ReportStatus = "loading" | "ready" | "not-found" | "error";
 
-/** Loads one import report. Retry with reload(). */
+/** Loads one import report. Retry with reload(); refresh() reloads quietly. */
 export function useImportReport(jobId: string) {
   const [status, setStatus] = useState<ReportStatus>("loading");
   const [report, setReport] = useState<ImportReport | null>(null);
@@ -37,5 +37,10 @@ export function useImportReport(jobId: string) {
     setAttempt((value) => value + 1);
   }, []);
 
-  return { status, report, error, reload };
+  /** Loads the report again without the loading screen, so an open dialog stays on screen. */
+  const refresh = useCallback(() => {
+    setAttempt((value) => value + 1);
+  }, []);
+
+  return { status, report, error, reload, refresh };
 }

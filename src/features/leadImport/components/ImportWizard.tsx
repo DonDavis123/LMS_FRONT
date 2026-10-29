@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle, ArrowLeft, CheckCircle2 } from "lucide-react";
+import { AlertTriangle, ArrowLeft, CheckCircle2, History } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, type MouseEvent } from "react";
@@ -15,7 +15,7 @@ import { useImportAdminAccess } from "@/features/leadImport/hooks/useImportAdmin
 import type { RunnerPhase } from "@/features/leadImport/hooks/useImportRunner";
 import { WIZARD_STEPS, stepIndex, useLeadImportWizard } from "@/features/leadImport/hooks/useLeadImportWizard";
 import { LeadImportService } from "@/features/leadImport/services/LeadImportService";
-import { LEADS_PATH } from "@/features/leadImport/utils/importRoutes";
+import { IMPORT_HISTORY_PATH, LEADS_PATH } from "@/features/leadImport/utils/importRoutes";
 import type { StepFooter } from "@/features/leadImport/utils/stepFooter";
 
 /** Phases in which leaving this page is worth a word of reassurance. */
@@ -43,7 +43,8 @@ export default function ImportWizard() {
 
   const access = useImportAdminAccess();
   const [uploadBusy, setUploadBusy] = useState(false);
-  const [leaveOpen, setLeaveOpen] = useState(false);
+  // Where the user wants to go while a draft or a running import is on screen (null = dialog closed).
+  const [leaveTo, setLeaveTo] = useState<string | null>(null);
   // Steps 2 to 4 tell the footer whether Continue works and why not.
   const [stepFooter, setStepFooter] = useState<StepFooter | null>(null);
 
@@ -79,11 +80,11 @@ export default function ImportWizard() {
     [],
   );
 
-  const handleBackToLeads = useCallback(
-    (event: MouseEvent<HTMLAnchorElement>) => {
+  const handleLeaveTo = useCallback(
+    (path: string) => (event: MouseEvent<HTMLAnchorElement>) => {
       if ((!hasDraft && !importRunning) || event.metaKey || event.ctrlKey || event.shiftKey || event.button !== 0) return;
       event.preventDefault();
-      setLeaveOpen(true);
+      setLeaveTo(path);
     },
     [hasDraft, importRunning],
   );
@@ -126,14 +127,24 @@ export default function ImportWizard() {
             <h1 className="font-serif text-lg leading-tight text-fg">Import leads</h1>
             <p className="text-xs text-ink-soft">Add many leads at once from a CSV or Excel file.</p>
           </div>
-          <Link
-            href={LEADS_PATH}
-            onClick={handleBackToLeads}
-            className={`${secondaryButton} inline-flex items-center gap-1.5 whitespace-nowrap`}
-          >
-            <ArrowLeft size={14} aria-hidden="true" />
-            Back to leads
-          </Link>
+          <div className="flex flex-wrap items-center gap-2">
+            <Link
+              href={IMPORT_HISTORY_PATH}
+              onClick={handleLeaveTo(IMPORT_HISTORY_PATH)}
+              className={`${secondaryButton} inline-flex items-center gap-1.5 whitespace-nowrap`}
+            >
+              <History size={14} aria-hidden="true" />
+              Import history
+            </Link>
+            <Link
+              href={LEADS_PATH}
+              onClick={handleLeaveTo(LEADS_PATH)}
+              className={`${secondaryButton} inline-flex items-center gap-1.5 whitespace-nowrap`}
+            >
+              <ArrowLeft size={14} aria-hidden="true" />
+              Back to leads
+            </Link>
+          </div>
         </div>
 
         <div className="border-b border-line px-3 py-3 sm:px-4">
@@ -199,7 +210,7 @@ export default function ImportWizard() {
       </div>
 
       <ImportConfirmDialog
-        isOpen={leaveOpen}
+        isOpen={leaveTo !== null}
         title={importRunning ? "Leave this page?" : "Leave without importing?"}
         message={
           importRunning
@@ -208,10 +219,11 @@ export default function ImportWizard() {
         }
         confirmLabel="Leave"
         cancelLabel="Stay"
-        onCancel={() => setLeaveOpen(false)}
+        onCancel={() => setLeaveTo(null)}
         onConfirm={() => {
-          setLeaveOpen(false);
-          router.push(LEADS_PATH);
+          const target = leaveTo ?? LEADS_PATH;
+          setLeaveTo(null);
+          router.push(target);
         }}
       />
     </div>

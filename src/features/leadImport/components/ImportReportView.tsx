@@ -22,14 +22,14 @@ import { card } from "@/features/leadImport/utils/reviewStyles";
 
 interface ImportReportViewProps {
   jobId: string;
-  /** The undo part fills this: buttons shown next to "Import another file". `reload` refreshes the report. */
+  /** The undo part fills this: buttons shown next to "Import another file". the second argument refreshes the report quietly (no loading screen). */
   renderActions?: (report: ImportReport, reload: () => void) => ReactNode;
 }
 
 /** The report of one import: summary, why rows were not added, downloads and details. */
 export default function ImportReportView({ jobId, renderActions }: ImportReportViewProps) {
   const access = useImportAdminAccess();
-  const { status, report, error, reload } = useImportReport(jobId);
+  const { status, report, error, reload, refresh } = useImportReport(jobId);
 
   if (access !== "allowed") {
     return access === "checking" ? <ReportSkeleton /> : null;
@@ -40,7 +40,7 @@ export default function ImportReportView({ jobId, renderActions }: ImportReportV
       {status === "loading" && <ReportSkeleton />}
       {status === "not-found" && <ReportNotFound />}
       {status === "error" && <ReportError error={error} onRetry={reload} />}
-      {status === "ready" && report && <ReportBody report={report} renderActions={renderActions} reload={reload} />}
+      {status === "ready" && report && <ReportBody report={report} renderActions={renderActions} reload={refresh} />}
     </div>
   );
 }

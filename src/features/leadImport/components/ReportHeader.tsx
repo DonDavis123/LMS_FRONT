@@ -8,7 +8,7 @@ import { IMPORT_HISTORY_PATH, IMPORT_PATH } from "@/features/leadImport/utils/im
 import { primaryButton } from "@/features/leadImport/utils/reviewStyles";
 import { importedByLine, statusChip, type StatusTone } from "@/features/leadImport/utils/reportView";
 
-const TONE_CLASS: Record<StatusTone, string> = {
+export const TONE_CLASS: Record<StatusTone, string> = {
   success: "border-success/30 bg-success-soft text-success",
   danger: "border-danger/30 bg-danger-soft text-danger",
   warning: "border-amber/40 bg-paper text-fg",
