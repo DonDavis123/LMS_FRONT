@@ -3,7 +3,7 @@ import type { ImportErrorInfo } from "@/features/leadImport/utils/importErrors";
 import type { ImportLimits } from "@/features/leadImport/types/leadImport.types";
 
 function clientError(code: string, message: string, howToFix: string): ImportErrorInfo {
-  return { message, howToFix, code, isNetwork: false, isCancelled: false };
+  return { message, howToFix, code, isNetwork: false, isCancelled: false, status: null, extra: {} };
 }
 
 function extensionOf(name: string): string {
