@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useReducer } from "react";
+import type { LeadOwnerOption } from "@/features/auth/types/auth.types";
 import {
   IGNORE_COLUMN,
   createDefaultImportOptions,
@@ -34,6 +35,10 @@ export interface WizardState {
   mapping: ImportMapping;
   options: ImportOptions;
   preview: MappingPreviewResponse | null;
+  /** The mapping + options the `preview` was made for (a JSON string). Lets step 2 skip a request it already has the answer to. */
+  previewKey: string | null;
+  /** Eligible lead owners, loaded once by step 3 and kept for the whole wizard. */
+  owners: LeadOwnerOption[] | null;
   check: ValidateResponse | null;
   /** True after any mapping, option or exclusion change since `check` was made. */
   checkIsStale: boolean;
@@ -44,7 +49,9 @@ type Action =
   | { type: "setUpload"; upload: UploadResponse; file: File | null }
   | { type: "setMapping"; mapping: ImportMapping }
   | { type: "patchOptions"; patch: Partial<ImportOptions> }
-  | { type: "setPreview"; preview: MappingPreviewResponse | null }
+  | { type: "setPreview"; preview: MappingPreviewResponse | null; key: string | null }
+  | { type: "setOwners"; owners: LeadOwnerOption[] | null }
+  | { type: "advance"; step: WizardStep }
   | { type: "setCheck"; check: ValidateResponse | null }
   | { type: "markStale" }
   | { type: "setProgress"; progress: ProgressResult | null }
@@ -70,6 +77,8 @@ function createInitialState(): WizardState {
     mapping: {},
     options: createDefaultImportOptions(),
     preview: null,
+    previewKey: null,
+    owners: null,
     check: null,
     checkIsStale: false,
     progress: null,
@@ -94,7 +103,14 @@ function reducer(state: WizardState, action: Action): WizardState {
     case "patchOptions":
       return { ...state, options: { ...state.options, ...action.patch }, checkIsStale: true };
     case "setPreview":
-      return { ...state, preview: action.preview };
+      return { ...state, preview: action.preview, previewKey: action.preview ? action.key : null };
+    case "setOwners":
+      return { ...state, owners: action.owners };
+    case "advance": {
+      // Unlock and move in one step, so a screen can continue right after it decides it is complete.
+      const furthest = stepIndex(action.step) > stepIndex(state.furthest) ? action.step : state.furthest;
+      return { ...state, furthest, step: action.step };
+    }
     case "setCheck":
       return { ...state, check: action.check, checkIsStale: false };
     case "markStale":
@@ -126,7 +142,11 @@ export function useLeadImportWizard() {
   );
   const setMapping = useCallback((mapping: ImportMapping) => dispatch({ type: "setMapping", mapping }), []);
   const patchOptions = useCallback((patch: Partial<ImportOptions>) => dispatch({ type: "patchOptions", patch }), []);
-  const setPreview = useCallback((preview: MappingPreviewResponse | null) => dispatch({ type: "setPreview", preview }), []);
+  const setPreview = useCallback(
+    (preview: MappingPreviewResponse | null, key: string | null = null) => dispatch({ type: "setPreview", preview, key }),
+    [],
+  );
+  const setOwners = useCallback((owners: LeadOwnerOption[] | null) => dispatch({ type: "setOwners", owners }), []);
   const setCheck = useCallback((check: ValidateResponse | null) => dispatch({ type: "setCheck", check }), []);
   const markStale = useCallback(() => dispatch({ type: "markStale" }), []);
   const setProgress = useCallback((progress: ProgressResult | null) => dispatch({ type: "setProgress", progress }), []);
@@ -138,6 +158,9 @@ export function useLeadImportWizard() {
     (step: WizardStep) => stepIndex(step) <= stepIndex(state.furthest),
     [state.furthest],
   );
+
+  /** Unlocks `step` and moves to it. Only call this once the current screen is valid. */
+  const advanceTo = useCallback((step: WizardStep) => dispatch({ type: "advance", step }), []);
 
   /** Moves to `step` if the user has unlocked it. Returns whether it moved. */
   const goTo = useCallback(
@@ -169,11 +192,13 @@ export function useLeadImportWizard() {
     setMapping,
     patchOptions,
     setPreview,
+    setOwners,
     setCheck,
     markStale,
     setProgress,
     unlock,
     goTo,
+    advanceTo,
     reset,
   };
 }

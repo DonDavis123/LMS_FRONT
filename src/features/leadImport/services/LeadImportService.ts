@@ -106,16 +106,18 @@ export const LeadImportService = {
     return data;
   },
 
-  /** POST /leads/import/<job_id>/mapping-preview/ */
+  /** POST /leads/import/<job_id>/mapping-preview/. Pass `signal` to cancel a request that is no longer wanted. */
   async previewMapping(
     jobId: string,
     mapping: ImportMapping,
     options: ImportOptions,
+    signal?: AbortSignal,
   ): Promise<MappingPreviewResponse> {
-    const { data } = await apiClient.post<MappingPreviewResponse>(`${BASE}/${jobId}/mapping-preview/`, {
-      mapping,
-      options,
-    });
+    const { data } = await apiClient.post<MappingPreviewResponse>(
+      `${BASE}/${jobId}/mapping-preview/`,
+      { mapping, options },
+      { signal },
+    );
     return data;
   },
 

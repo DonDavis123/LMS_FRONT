@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft } from "lucide-react";
+import { AlertTriangle, ArrowLeft, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, type MouseEvent } from "react";
@@ -8,6 +8,8 @@ import { isAdmin } from "@/features/auth/types/auth.types";
 import { authStorage } from "@/infrastructure/auth/tokenStorage";
 import ImportConfirmDialog from "@/features/leadImport/components/ImportConfirmDialog";
 import ImportStepper from "@/features/leadImport/components/ImportStepper";
+import MappingStep from "@/features/leadImport/components/MappingStep";
+import OptionsStep from "@/features/leadImport/components/OptionsStep";
 import UploadStep from "@/features/leadImport/components/UploadStep";
 import {
   WIZARD_STEPS,
@@ -16,6 +18,7 @@ import {
   type WizardStep,
 } from "@/features/leadImport/hooks/useLeadImportWizard";
 import { LeadImportService } from "@/features/leadImport/services/LeadImportService";
+import type { StepFooter } from "@/features/leadImport/utils/stepFooter";
 
 const LEADS_PATH = "/dashboard/leads";
 
@@ -56,6 +59,8 @@ export default function ImportWizard() {
   const [access, setAccess] = useState<Access>("checking");
   const [uploadBusy, setUploadBusy] = useState(false);
   const [leaveOpen, setLeaveOpen] = useState(false);
+  // Steps 2 and 3 tell the footer whether Continue works and why not.
+  const [stepFooter, setStepFooter] = useState<StepFooter | null>(null);
 
   // Admin guard. Read once on mount so server and client markup match.
   useEffect(() => {
@@ -114,13 +119,22 @@ export default function ImportWizard() {
   const nextStep = WIZARD_STEPS[currentIndex + 1]?.id;
   const previousStep = WIZARD_STEPS[currentIndex - 1]?.id;
 
+  // A footer that belongs to a screen the user has just left is ignored.
+  const footer = stepFooter && stepFooter.step === state.step ? stepFooter : null;
+  const stepControlsFooter = state.step === "mapping" || state.step === "options";
+
   let continueDisabled = true;
   if (state.step === "upload") continueDisabled = !state.upload || uploadBusy;
+  else if (stepControlsFooter) continueDisabled = !footer || !footer.canContinue;
   else if (nextStep) continueDisabled = !wizard.canGoTo(nextStep);
+
+  const continueLabel = footer?.continueLabel ?? "Continue";
+  const continueReason = continueDisabled ? (footer?.reason ?? null) : null;
 
   function handleContinue() {
     if (continueDisabled || !nextStep) return;
-    wizard.goTo(nextStep);
+    // advanceTo unlocks the next step as it moves, so a valid screen can always continue.
+    wizard.advanceTo(nextStep);
   }
 
   return (
@@ -148,12 +162,16 @@ export default function ImportWizard() {
         <div className="px-3 py-4 sm:px-4">
           {state.step === "upload" ? (
             <UploadStep wizard={wizard} onBusyChange={setUploadBusy} />
+          ) : state.step === "mapping" ? (
+            <MappingStep wizard={wizard} onFooterChange={setStepFooter} />
+          ) : state.step === "options" ? (
+            <OptionsStep wizard={wizard} onFooterChange={setStepFooter} />
           ) : (
             <StepPlaceholder step={state.step} />
           )}
         </div>
 
-        <div className="flex items-center justify-between gap-2 border-t border-line px-3 py-3 sm:px-4">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-2 border-t border-line px-3 py-3 sm:px-4">
           {isFirst || !previousStep ? (
             <span />
           ) : (
@@ -161,10 +179,36 @@ export default function ImportWizard() {
               Back
             </button>
           )}
+          {footer ? (
+            <p
+              id="import-footer-status"
+              role="status"
+              aria-live="polite"
+              className={`order-last flex w-full items-start gap-1.5 text-xs sm:order-none sm:w-auto sm:flex-1 sm:justify-end sm:text-right ${
+                footer.tone === "success" ? "text-success" : footer.tone === "warning" ? "text-fg" : "text-ink-soft"
+              }`}
+            >
+              {footer.tone === "success" && <CheckCircle2 size={14} className="mt-px shrink-0" aria-hidden="true" />}
+              {footer.tone === "warning" && (
+                <AlertTriangle size={14} className="mt-px shrink-0 text-amber-dark" aria-hidden="true" />
+              )}
+              <span className="min-w-0">{footer.status}</span>
+            </p>
+          ) : (
+            <span className="flex-1" />
+          )}
           {nextStep && (
-            <button type="button" className={primaryButton} disabled={continueDisabled} onClick={handleContinue}>
-              Continue
-            </button>
+            <span title={continueReason ?? undefined} className="ml-auto sm:ml-0">
+              <button
+                type="button"
+                className={primaryButton}
+                disabled={continueDisabled}
+                onClick={handleContinue}
+                aria-describedby={continueReason ? "import-footer-status" : undefined}
+              >
+                {continueLabel}
+              </button>
+            </span>
           )}
         </div>
       </div>

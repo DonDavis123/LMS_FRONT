@@ -1,7 +1,7 @@
 "use client";
 
 import { Check, ChevronDown } from "lucide-react";
-import { useCallback, useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from "react";
+import { Fragment, useCallback, useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { createPortal } from "react-dom";
 
 export interface SelectOption {
@@ -10,6 +10,12 @@ export interface SelectOption {
   /** Optional second line shown under the label in the menu. */
   description?: string;
   disabled?: boolean;
+  /** Optional heading shown in the menu above the first option of each run of options that share it. */
+  group?: string;
+  /** Optional small tag shown at the end of the option, e.g. "Required". */
+  tag?: string;
+  /** Renders the label in the soft text colour (for a "none / don't use" choice). */
+  muted?: boolean;
 }
 
 interface SelectProps {
@@ -212,7 +218,7 @@ export default function Select({
           ariaInvalid ? "border-danger" : open ? "border-slate ring-2 ring-slate-light" : "border-line"
         } ${TRIGGER_SIZE[size]} ${className}`}
       >
-        <span className={`min-w-0 flex-1 truncate ${selected ? "" : "text-ink-soft"}`}>
+        <span className={`min-w-0 flex-1 truncate ${selected && !selected.muted ? "" : "text-ink-soft"}`}>
           {selected ? selected.label : placeholder}
         </span>
         <ChevronDown size={15} className={`shrink-0 text-ink-soft transition-transform ${open ? "rotate-180" : ""}`} />
@@ -242,9 +248,18 @@ export default function Select({
             {options.map((option, index) => {
               const isSelected = index === selectedIndex;
               const isActive = index === activeIndex;
+              const showGroup = Boolean(option.group) && option.group !== options[index - 1]?.group;
               return (
+                <Fragment key={option.value || `__empty-${index}`}>
+                {showGroup && (
+                  <div
+                    role="presentation"
+                    className="mt-1 border-t border-line px-2.5 pb-1 pt-2 text-[11px] font-semibold uppercase tracking-wide text-ink-soft"
+                  >
+                    {option.group}
+                  </div>
+                )}
                 <div
-                  key={option.value || `__empty-${index}`}
                   id={`${listId}-${index}`}
                   data-index={index}
                   role="option"
@@ -254,7 +269,7 @@ export default function Select({
                   onClick={() => choose(index)}
                   className={`flex cursor-pointer items-center gap-2 rounded-md px-2.5 py-2 text-sm transition-colors ${
                     option.disabled ? "cursor-not-allowed opacity-50" : isActive ? "bg-paper" : ""
-                  } ${isSelected ? "font-semibold text-fg" : "text-fg"}`}
+                  } ${isSelected ? "font-semibold" : ""} ${option.muted ? "text-ink-soft" : "text-fg"}`}
                 >
                   <span className="min-w-0 flex-1">
                     <span className="block truncate">{option.label}</span>
@@ -262,8 +277,14 @@ export default function Select({
                       <span className="mt-0.5 block truncate text-[11px] font-normal text-ink-soft">{option.description}</span>
                     )}
                   </span>
+                  {option.tag && (
+                    <span className="shrink-0 rounded bg-amber/15 px-1.5 py-0.5 text-[10px] font-semibold text-fg">
+                      {option.tag}
+                    </span>
+                  )}
                   {isSelected && <Check size={14} className="shrink-0 text-slate" />}
                 </div>
+                </Fragment>
               );
             })}
           </div>,
