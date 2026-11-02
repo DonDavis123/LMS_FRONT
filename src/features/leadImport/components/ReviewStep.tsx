@@ -13,7 +13,6 @@ import { RowsEmptyState, RowsErrorState, RowsSkeleton } from "@/features/leadImp
 import { ReviewBulkBar, ReviewFilterTabs } from "@/features/leadImport/components/ReviewRowsToolbar";
 import ReviewSkeleton from "@/features/leadImport/components/ReviewSkeleton";
 import ReviewSummary from "@/features/leadImport/components/ReviewSummary";
-import UnrecognizedValuesPanel from "@/features/leadImport/components/UnrecognizedValuesPanel";
 import { useImportCheck } from "@/features/leadImport/hooks/useImportCheck";
 import type { LeadImportWizard } from "@/features/leadImport/hooks/useLeadImportWizard";
 import { useLeadOwners } from "@/features/leadImport/hooks/useLeadOwners";
@@ -332,9 +331,13 @@ function ReviewStepBody({
           <div className={`space-y-4 transition-opacity ${outOfDate ? "opacity-60" : ""}`} aria-busy={outOfDate || undefined}>
             <IssuesPanel
               check={checked}
+              fields={upload.fields}
+              savedMapping={options.value_mapping}
               leftOutRows={leftOutRows}
               saving={exclusions.saving}
-              onLeaveOut={(row) => void leaveOut([row])}
+              onLeaveOut={(rowNumbers) => void leaveOut(rowNumbers)}
+              onApplyMapping={applyValueMapping}
+              onLeaveAllBlank={leaveAllBlank}
             />
 
             <OwnerMatchPanel
@@ -346,16 +349,6 @@ function ReviewStepBody({
               onRetryOwners={retryOwners}
               onApply={applyOwnerMapping}
             />
-
-            {Object.values(checked.unrecognized ?? {}).some((values) => values.length > 0) && (
-              <UnrecognizedValuesPanel
-                unrecognized={checked.unrecognized}
-                fields={upload.fields}
-                savedMapping={options.value_mapping}
-                onApply={applyValueMapping}
-                onLeaveAllBlank={leaveAllBlank}
-              />
-            )}
 
             <DuplicatesCard
               action={options.duplicate_action}
