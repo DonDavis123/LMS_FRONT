@@ -5,7 +5,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import DuplicatesCard from "@/features/leadImport/components/DuplicatesCard";
 import ExclusionRulesModal from "@/features/leadImport/components/ExclusionRulesModal";
 import ImportToast, { useImportToast } from "@/features/leadImport/components/ImportToast";
-import IssuesPanel from "@/features/leadImport/components/IssuesPanel";
 import OwnerMatchPanel from "@/features/leadImport/components/OwnerMatchPanel";
 import { CheckFailedBanner, SettingsProblemBanner, StaleBanner } from "@/features/leadImport/components/ReviewBanners";
 import ReviewRowsTable, { type RowOverride } from "@/features/leadImport/components/ReviewRowsTable";
@@ -13,6 +12,7 @@ import { RowsEmptyState, RowsErrorState, RowsSkeleton } from "@/features/leadImp
 import { ReviewBulkBar, ReviewFilterTabs } from "@/features/leadImport/components/ReviewRowsToolbar";
 import ReviewSkeleton from "@/features/leadImport/components/ReviewSkeleton";
 import ReviewSummary from "@/features/leadImport/components/ReviewSummary";
+import UnrecognizedValuesPanel from "@/features/leadImport/components/UnrecognizedValuesPanel";
 import { useImportCheck } from "@/features/leadImport/hooks/useImportCheck";
 import type { LeadImportWizard } from "@/features/leadImport/hooks/useLeadImportWizard";
 import { useLeadOwners } from "@/features/leadImport/hooks/useLeadOwners";
@@ -155,7 +155,6 @@ function ReviewStepBody({
   const [rulesOpen, setRulesOpen] = useState(false);
   const [ruleResult, setRuleResult] = useState<Pick<ExclusionsResponse, "excluded_by_number" | "excluded_by_rules"> | null>(null);
   const exclusions = useRowExclusions({ jobId, patchOptions: wizard.patchOptions, onSaved: notifyChanged });
-  const leftOutRows = useMemo(() => new Set(options.exclusions.row_numbers), [options.exclusions.row_numbers]);
 
   async function leaveOut(rowNumbers: number[]) {
     if (rowNumbers.length === 0) return;
@@ -329,17 +328,6 @@ function ReviewStepBody({
           />
 
           <div className={`space-y-4 transition-opacity ${outOfDate ? "opacity-60" : ""}`} aria-busy={outOfDate || undefined}>
-            <IssuesPanel
-              check={checked}
-              fields={upload.fields}
-              savedMapping={options.value_mapping}
-              leftOutRows={leftOutRows}
-              saving={exclusions.saving}
-              onLeaveOut={(rowNumbers) => void leaveOut(rowNumbers)}
-              onApplyMapping={applyValueMapping}
-              onLeaveAllBlank={leaveAllBlank}
-            />
-
             <OwnerMatchPanel
               plan={options.owner_plan}
               summary={checked.owners}
@@ -349,6 +337,16 @@ function ReviewStepBody({
               onRetryOwners={retryOwners}
               onApply={applyOwnerMapping}
             />
+
+            {Object.values(checked.unrecognized ?? {}).some((values) => values.length > 0) && (
+              <UnrecognizedValuesPanel
+                unrecognized={checked.unrecognized}
+                fields={upload.fields}
+                savedMapping={options.value_mapping}
+                onApply={applyValueMapping}
+                onLeaveAllBlank={leaveAllBlank}
+              />
+            )}
 
             <DuplicatesCard
               action={options.duplicate_action}
@@ -381,6 +379,19 @@ function ReviewStepBody({
             <div className="border-b border-line px-3 py-2 sm:px-4">
               <ReviewFilterTabs filter={filter} counts={counts} onChange={(next) => showFilter(next)} />
             </div>
+
+            {(checked.error_groups ?? []).length > 0 && (
+              <ul className="flex flex-wrap gap-1.5 border-b border-line px-3 py-2 sm:px-4" aria-label="Problems by type">
+                {(checked.error_groups ?? []).map((group) => (
+                  <li key={group.code} className="rounded-full border border-line bg-paper px-2.5 py-0.5 text-xs font-medium text-fg">
+                    {group.label}
+                    <span className="ml-1.5 tabular-nums text-ink-soft">
+                      {group.count.toLocaleString()} {group.count === 1 ? "row" : "rows"}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
 
             {outOfDate && (
               <p className="border-b border-line bg-amber/10 px-3 py-2 text-xs text-fg sm:px-4">

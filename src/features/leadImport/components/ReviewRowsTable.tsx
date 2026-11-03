@@ -1,8 +1,8 @@
 "use client";
 
 import { ChevronRight, Eye, EyeOff } from "lucide-react";
-import { Fragment, useId, useState } from "react";
-import type { ImportRowResult } from "@/features/leadImport/types/leadImport.types";
+import { useId, useState } from "react";
+import type { ImportRowResult, RowProblem } from "@/features/leadImport/types/leadImport.types";
 import RowDetails from "@/features/leadImport/components/RowDetails";
 import RowResultBadge from "@/features/leadImport/components/RowResultBadge";
 import { smallButton, tableHead } from "@/features/leadImport/utils/reviewStyles";
@@ -60,6 +60,32 @@ interface ReviewRowsTableProps {
 
 const stickySelect = "sticky left-0 z-20 w-10 min-w-[2.5rem] bg-surface";
 const stickyRow = "sticky left-10 z-20 w-20 min-w-[5rem] bg-surface";
+const ROW_PREFIX = /^Row \d+:\s*/i;
+const issueCell = "px-3 py-2 align-top";
+
+/** The two issue cells for one problem: which column and value, then what is wrong and how to fix it. */
+function IssueCells({ problem, last }: { problem: RowProblem; last: boolean }) {
+  const border = last ? "border-b border-line" : "border-b border-line/40";
+  return (
+    <>
+      <td className={`${issueCell} ${border} w-[14%]`}>
+        <p className="break-words font-medium text-fg">{problem.column || "—"}</p>
+        <p className="mt-0.5 break-words text-xs text-ink-soft">
+          {problem.value ? `"${problem.value}"` : "(blank)"}
+        </p>
+      </td>
+      <td className={`${issueCell} ${border} w-[26%]`}>
+        <p className="break-words text-fg">{problem.message.replace(ROW_PREFIX, "")}</p>
+        {problem.how_to_fix && (
+          <p className="mt-0.5 line-clamp-3 break-words text-xs text-ink-soft" title={problem.how_to_fix}>
+            <span className="font-medium">Fix:</span> {problem.how_to_fix}
+          </p>
+        )}
+      </td>
+    </>
+  );
+}
+
 const stickyResult = "md:sticky md:left-[7.5rem] md:z-10 bg-surface md:shadow-[1px_0_0_var(--color-line)]";
 
 /** One page of rows: select, row number, key fields, result and details. A row opens to show everything. */
@@ -81,7 +107,7 @@ export default function ReviewRowsTable({
   const pageRows = rows.map((row) => row.row_number);
   const allSelected = pageRows.length > 0 && pageRows.every((row) => selected.has(row));
   const someSelected = !allSelected && pageRows.some((row) => selected.has(row));
-  const columnCount = 5 + columns.length;
+  const columnCount = 6 + columns.length;
 
   function toggleOpen(row: number) {
     setOpen((current) => {
@@ -94,7 +120,7 @@ export default function ReviewRowsTable({
 
   return (
     <div className={`overflow-x-auto transition-opacity ${dimmed ? "opacity-60" : ""}`} aria-busy={dimmed || undefined}>
-      <table className="w-full min-w-[820px] text-left text-sm">
+      <table className="w-full min-w-[960px] text-left text-sm">
         <caption className="sr-only">Rows of your file and what will happen to each</caption>
         <thead>
           <tr className={`border-b border-line ${tableHead}`}>
@@ -113,103 +139,124 @@ export default function ReviewRowsTable({
               </th>
             ))}
             <th scope="col" className={`${stickyResult} px-3 py-2.5`}>Result</th>
-            <th scope="col" className="px-3 py-2.5">Details</th>
+            <th scope="col" className="px-3 py-2.5">Column with issue</th>
+            <th scope="col" className="px-3 py-2.5">What is wrong and how to fix</th>
             <th scope="col" className="px-3 py-2.5 text-right">
               <span className="sr-only">Action</span>
             </th>
           </tr>
         </thead>
-        <tbody>
-          {rows.map((row) => {
-            const override = overrides.get(row.row_number) ?? null;
-            const isOpen = open.has(row.row_number);
-            const isSelected = selected.has(row.row_number);
-            const excluded = override ? override === "excluded" : row.status === "excluded";
-            const detailsId = `${baseId}-${row.row_number}`;
-            const rowBg = isSelected ? "bg-slate-light" : "bg-surface";
-            const detail = rowDetailText(row);
-            return (
-              <Fragment key={row.row_number}>
-                <tr className={`group border-b border-line align-middle hover:bg-paper ${isSelected ? "bg-slate-light" : ""}`}>
-                  <td className={`${stickySelect} px-2 py-2 ${rowBg} group-hover:bg-paper`}>
-                    <RowCheckbox
-                      checked={isSelected}
-                      onChange={() => onToggle(row.row_number)}
-                      label={`Select ${rowLabel(row)}`}
+        {rows.map((row) => {
+          const override = overrides.get(row.row_number) ?? null;
+          const isOpen = open.has(row.row_number);
+          const isSelected = selected.has(row.row_number);
+          const excluded = override ? override === "excluded" : row.status === "excluded";
+          const detailsId = `${baseId}-${row.row_number}`;
+          const rowBg = isSelected ? "bg-slate-light" : "bg-surface";
+          const problems = row.problems;
+          const span = Math.max(problems.length, 1);
+          const line = "border-b border-line";
+          const rowCell = `align-top ${line}`;
+          return (
+            <tbody key={row.row_number} className={`group ${isSelected ? "bg-slate-light" : ""}`}>
+              <tr className="hover:bg-paper">
+                <td rowSpan={span} className={`${stickySelect} ${rowCell} px-2 py-2 ${rowBg} group-hover:bg-paper`}>
+                  <RowCheckbox
+                    checked={isSelected}
+                    onChange={() => onToggle(row.row_number)}
+                    label={`Select ${rowLabel(row)}`}
+                  />
+                </td>
+                <td rowSpan={span} className={`${stickyRow} ${rowCell} px-2 py-2 ${rowBg} group-hover:bg-paper`}>
+                  <button
+                    type="button"
+                    aria-expanded={isOpen}
+                    aria-controls={detailsId}
+                    aria-label={`${isOpen ? "Hide" : "Show"} details for ${rowLabel(row)}`}
+                    onClick={() => toggleOpen(row.row_number)}
+                    className="inline-flex items-center gap-1 rounded px-1 py-0.5 font-medium tabular-nums text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber"
+                  >
+                    <ChevronRight
+                      size={14}
+                      aria-hidden="true"
+                      className={`shrink-0 text-ink-soft transition-transform motion-reduce:transition-none ${isOpen ? "rotate-90" : ""}`}
                     />
-                  </td>
-                  <td className={`${stickyRow} px-2 py-2 ${rowBg} group-hover:bg-paper`}>
-                    <button
-                      type="button"
-                      aria-expanded={isOpen}
-                      aria-controls={detailsId}
-                      aria-label={`${isOpen ? "Hide" : "Show"} details for ${rowLabel(row)}`}
-                      onClick={() => toggleOpen(row.row_number)}
-                      className="inline-flex items-center gap-1 rounded px-1 py-0.5 font-medium tabular-nums text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber"
+                    {row.row_number}
+                  </button>
+                </td>
+                {columns.map((column) => {
+                  const text = column.read(row);
+                  return (
+                    <td
+                      key={column.id}
+                      rowSpan={span}
+                      className={`max-w-[10rem] truncate px-3 py-2 align-top text-fg ${line}`}
+                      title={text || undefined}
                     >
-                      <ChevronRight
-                        size={14}
-                        aria-hidden="true"
-                        className={`shrink-0 text-ink-soft transition-transform motion-reduce:transition-none ${isOpen ? "rotate-90" : ""}`}
-                      />
-                      {row.row_number}
-                    </button>
+                      {text || <span className="text-ink-soft">—</span>}
+                    </td>
+                  );
+                })}
+                <td rowSpan={span} className={`${stickyResult} ${rowCell} px-3 py-2 ${rowBg} group-hover:bg-paper`}>
+                  <RowResultBadge status={row.status} pending={override} />
+                </td>
+                {override ? (
+                  <td colSpan={2} className={`${issueCell} ${line} text-ink-soft`}>
+                    Saved. The counts are updating.
                   </td>
-                  {columns.map((column) => {
-                    const text = column.read(row);
-                    return (
-                      <td key={column.id} className="max-w-[14rem] truncate px-3 py-2 text-fg" title={text || undefined}>
-                        {text || <span className="text-ink-soft">—</span>}
-                      </td>
-                    );
-                  })}
-                  <td className={`${stickyResult} px-3 py-2 ${rowBg} group-hover:bg-paper`}>
-                    <RowResultBadge status={row.status} pending={override} />
-                  </td>
-                  <td className="max-w-[16rem] px-3 py-2 text-ink-soft">
-                    <span className="line-clamp-2 break-words" title={detail || undefined}>
-                      {override ? "Saved. The counts are updating." : detail || "—"}
+                ) : problems.length > 0 ? (
+                  <IssueCells problem={problems[0]} last={problems.length === 1} />
+                ) : (
+                  <td colSpan={2} className={`${issueCell} ${line} text-ink-soft`}>
+                    <span className="line-clamp-2 break-words" title={rowDetailText(row) || undefined}>
+                      {rowDetailText(row) || "—"}
                     </span>
                   </td>
-                  <td className="whitespace-nowrap px-3 py-2 text-right">
-                    {excluded ? (
-                      <button
-                        type="button"
-                        className={smallButton}
-                        disabled={busy}
-                        onClick={() => onInclude(row.row_number)}
-                        aria-label={`Include ${rowLabel(row)} again`}
-                      >
-                        <Eye size={12} aria-hidden="true" />
-                        Include again
-                      </button>
-                    ) : (
-                      <button
-                        type="button"
-                        className={smallButton}
-                        disabled={busy}
-                        onClick={() => onLeaveOut(row.row_number)}
-                        aria-label={`Leave ${rowLabel(row)} out`}
-                      >
-                        <EyeOff size={12} aria-hidden="true" />
-                        Leave out
-                      </button>
-                    )}
+                )}
+                <td rowSpan={span} className={`whitespace-nowrap px-3 py-2 text-right align-top ${line}`}>
+                  {excluded ? (
+                    <button
+                      type="button"
+                      className={smallButton}
+                      disabled={busy}
+                      onClick={() => onInclude(row.row_number)}
+                      aria-label={`Include ${rowLabel(row)} again`}
+                    >
+                      <Eye size={12} aria-hidden="true" />
+                      Include again
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      className={smallButton}
+                      disabled={busy}
+                      onClick={() => onLeaveOut(row.row_number)}
+                      aria-label={`Leave ${rowLabel(row)} out`}
+                    >
+                      <EyeOff size={12} aria-hidden="true" />
+                      Leave out
+                    </button>
+                  )}
+                </td>
+              </tr>
+              {!override &&
+                problems.slice(1).map((problem, index) => (
+                  <tr key={`${problem.code}-${problem.field}-${index}`} className="hover:bg-paper">
+                    <IssueCells problem={problem} last={index === problems.length - 2} />
+                  </tr>
+                ))}
+              {isOpen && (
+                <tr id={detailsId} className="bg-paper">
+                  <td colSpan={columnCount} className={`px-3 py-3 ${line}`}>
+                    <div className="sticky left-3 w-[calc(100vw-4.5rem)] max-w-3xl">
+                      <RowDetails row={row} />
+                    </div>
                   </td>
                 </tr>
-                {isOpen && (
-                  <tr id={detailsId} className="border-b border-line bg-paper">
-                    <td colSpan={columnCount} className="px-3 py-3">
-                      <div className="sticky left-3 w-[calc(100vw-4.5rem)] max-w-3xl">
-                        <RowDetails row={row} />
-                      </div>
-                    </td>
-                  </tr>
-                )}
-              </Fragment>
-            );
-          })}
-        </tbody>
+              )}
+            </tbody>
+          );
+        })}
       </table>
     </div>
   );
