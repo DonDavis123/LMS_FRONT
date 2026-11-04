@@ -1,23 +1,39 @@
 "use client";
 
+import { Table2 } from "lucide-react";
 import type { ImportSampleRow } from "@/features/leadImport/types/leadImport.types";
+import { formatCount } from "@/features/leadImport/utils/format";
+import { secondaryButton } from "@/features/leadImport/utils/reviewStyles";
 
 interface SampleRowsTableProps {
   headers: string[];
   rows: ImportSampleRow[];
+  /** Opens the full file preview. Leave out to hide the button. */
+  onViewAll?: () => void;
+  /** Rows in the whole file, shown on the button. */
+  totalRows?: number;
 }
 
 /** First rows of the file. Scrolls sideways; long cells are cut with a title tooltip. */
-export default function SampleRowsTable({ headers, rows }: SampleRowsTableProps) {
+export default function SampleRowsTable({ headers, rows, onViewAll, totalRows }: SampleRowsTableProps) {
   return (
     <section className="rounded-lg border border-line bg-surface" aria-labelledby="import-sample-title">
-      <div className="border-b border-line px-4 py-3">
-        <h3 id="import-sample-title" className="text-sm font-semibold text-fg">
-          Sample rows
-        </h3>
-        <p className="text-xs text-ink-soft">
-          The first {rows.length} {rows.length === 1 ? "row" : "rows"} of your file, as we read them.
-        </p>
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line px-4 py-3">
+        <div className="min-w-0">
+          <h3 id="import-sample-title" className="text-sm font-semibold text-fg">
+            Sample rows
+          </h3>
+          <p className="text-xs text-ink-soft">
+            The first {rows.length} {rows.length === 1 ? "row" : "rows"} of your file, as we read them.
+          </p>
+        </div>
+        {onViewAll && (
+          <button type="button" onClick={onViewAll} className={secondaryButton}>
+            <Table2 size={14} aria-hidden="true" />
+            View full file
+            {totalRows !== undefined && <span className="text-xs tabular-nums text-ink-soft">({formatCount(totalRows)} rows)</span>}
+          </button>
+        )}
       </div>
 
       {rows.length === 0 ? (

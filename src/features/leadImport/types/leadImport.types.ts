@@ -58,6 +58,14 @@ export interface ImportSampleRow {
   values: Record<string, string>;
 }
 
+/** GET /leads/import/<job_id>/file-rows/: one page of the whole uploaded file, as it was read. */
+export interface ImportFileRowsResponse {
+  headers: string[];
+  results: ImportSampleRow[];
+  pagination: PaginationMeta;
+  total_rows: number;
+}
+
 export interface UploadResponse {
   job_id: string;
   file_name: string;

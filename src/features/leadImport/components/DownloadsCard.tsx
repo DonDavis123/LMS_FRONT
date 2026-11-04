@@ -7,6 +7,7 @@ import ImportToast, { useImportToast } from "@/features/leadImport/components/Im
 import { useReportDownload, type DownloadKind } from "@/features/leadImport/hooks/useReportDownload";
 import type { ImportFileFormat, ImportReport } from "@/features/leadImport/types/leadImport.types";
 import { IMPORT_PATH } from "@/features/leadImport/utils/importRoutes";
+import { isUndoneStatus } from "@/features/leadImport/utils/reportView";
 import { card, primaryButton, secondaryButton } from "@/features/leadImport/utils/reviewStyles";
 import Select from "@/shared/components/Select";
 import Spinner from "@/shared/components/Spinner";
@@ -62,6 +63,8 @@ export default function DownloadsCard({ report }: { report: ImportReport }) {
   const rejectedNote = useId();
   const resultsNote = useId();
 
+  // After an undo the import is rolled back, so there are no rows to fix: the whole section is left out.
+  const undone = isUndoneStatus(report.job.status);
   const rejectedBlock = rejectedReason(report);
   const resultsBlock = resultsReason(report);
   const anyBusy = busy !== null;
@@ -85,68 +88,70 @@ export default function DownloadsCard({ report }: { report: ImportReport }) {
         Downloads
       </h2>
 
-      {/* Rows to fix: the main action */}
-      <div className="mt-3">
-        <h3 className="text-sm font-semibold text-fg">Rows to fix</h3>
-        <p className="mt-0.5 text-xs text-ink-soft">The rows that were not added, with the reason for each.</p>
-        <div className="mt-3 flex flex-wrap items-center gap-2">
-          <FormatSelect value={rejectedFormat} onChange={setRejectedFormat} label="File format for rows to fix" disabled={anyBusy || rejectedBlock !== null} />
-        </div>
-        <label htmlFor={checkboxId} className="mt-3 flex items-center gap-2 text-sm text-fg">
-          <input
-            id={checkboxId}
-            type="checkbox"
-            checked={includeExcluded}
-            disabled={anyBusy || rejectedBlock !== null}
-            onChange={(event) => setIncludeExcluded(event.target.checked)}
-            className="h-4 w-4 rounded border-line accent-slate focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber"
-          />
-          Also include rows I left out
-        </label>
-        <div className="mt-3 flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            className={primaryButton}
-            disabled={anyBusy || rejectedBlock !== null}
-            aria-describedby={rejectedBlock ? rejectedNote : undefined}
-            onClick={() => void download("rejected", rejectedFormat, includeExcluded)}
-          >
-            {busy === "rejected" ? <Spinner size="sm" /> : <Download size={14} aria-hidden="true" />}
-            {busy === "rejected" ? "Preparing..." : "Download rows to fix"}
-          </button>
-          {rejectedBlock ? (
-            <span className={`${secondaryButton} cursor-not-allowed opacity-50`} aria-disabled="true">
-              Upload the fixed file
-            </span>
-          ) : (
-            <Link href={IMPORT_PATH} className={secondaryButton}>
-              Upload the fixed file
-            </Link>
+      {/* Rows to fix: the main action. Not shown once the import was undone. */}
+      {!undone && (
+        <div className="mt-3">
+          <h3 className="text-sm font-semibold text-fg">Rows to fix</h3>
+          <p className="mt-0.5 text-xs text-ink-soft">The rows that were not added, with the reason for each.</p>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <FormatSelect value={rejectedFormat} onChange={setRejectedFormat} label="File format for rows to fix" disabled={anyBusy || rejectedBlock !== null} />
+          </div>
+          <label htmlFor={checkboxId} className="mt-3 flex items-center gap-2 text-sm text-fg">
+            <input
+              id={checkboxId}
+              type="checkbox"
+              checked={includeExcluded}
+              disabled={anyBusy || rejectedBlock !== null}
+              onChange={(event) => setIncludeExcluded(event.target.checked)}
+              className="h-4 w-4 rounded border-line accent-slate focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber"
+            />
+            Also include rows I left out
+          </label>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              className={primaryButton}
+              disabled={anyBusy || rejectedBlock !== null}
+              aria-describedby={rejectedBlock ? rejectedNote : undefined}
+              onClick={() => void download("rejected", rejectedFormat, includeExcluded)}
+            >
+              {busy === "rejected" ? <Spinner size="sm" /> : <Download size={14} aria-hidden="true" />}
+              {busy === "rejected" ? "Preparing..." : "Download rows to fix"}
+            </button>
+            {rejectedBlock ? (
+              <span className={`${secondaryButton} cursor-not-allowed opacity-50`} aria-disabled="true">
+                Upload the fixed file
+              </span>
+            ) : (
+              <Link href={IMPORT_PATH} className={secondaryButton}>
+                Upload the fixed file
+              </Link>
+            )}
+          </div>
+          {rejectedBlock && (
+            <p id={rejectedNote} className="mt-2 text-xs text-ink-soft">
+              {rejectedBlock}
+            </p>
+          )}
+          {banner("rejected")}
+
+          {!rejectedBlock && (
+            <ol className="mt-4 space-y-2 border-t border-line pt-3">
+              {STEPS.map((text, index) => (
+                <li key={text} className="flex items-start gap-2 text-xs text-ink-soft">
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-line bg-paper text-[11px] font-semibold tabular-nums text-fg">
+                    {index + 1}
+                  </span>
+                  <span className="pt-0.5">{text}</span>
+                </li>
+              ))}
+            </ol>
           )}
         </div>
-        {rejectedBlock && (
-          <p id={rejectedNote} className="mt-2 text-xs text-ink-soft">
-            {rejectedBlock}
-          </p>
-        )}
-        {banner("rejected")}
-
-        {!rejectedBlock && (
-          <ol className="mt-4 space-y-2 border-t border-line pt-3">
-            {STEPS.map((text, index) => (
-              <li key={text} className="flex items-start gap-2 text-xs text-ink-soft">
-                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-line bg-paper text-[11px] font-semibold tabular-nums text-fg">
-                  {index + 1}
-                </span>
-                <span className="pt-0.5">{text}</span>
-              </li>
-            ))}
-          </ol>
-        )}
-      </div>
+      )}
 
       {/* Full results: secondary */}
-      <div className="mt-5 border-t border-line pt-4">
+      <div className={undone ? "mt-3" : "mt-5 border-t border-line pt-4"}>
         <h3 className="text-sm font-semibold text-fg">Full results</h3>
         <p className="mt-0.5 text-xs text-ink-soft">Every uploaded row with its result, details and owner.</p>
         <div className="mt-3 flex flex-wrap items-center gap-2">

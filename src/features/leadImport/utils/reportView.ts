@@ -1,4 +1,4 @@
-import type { DuplicateAction, ImportReport, ReportJob, ReportTotals } from "@/features/leadImport/types/leadImport.types";
+import type { DuplicateAction, ImportReport, JobStatus, ReportJob, ReportTotals } from "@/features/leadImport/types/leadImport.types";
 import { formatDuration } from "@/features/leadImport/utils/format";
 import { formatDateTime } from "@/shared/utils/formatDate";
 
@@ -14,6 +14,11 @@ export interface StatusChipInfo {
 /** True while the server is still working on the import (the report is not ready yet). */
 export function isStillRunning(job: ReportJob): boolean {
   return (job.status === "queued" || job.status === "processing") && (job.stage === "running" || job.stage === null);
+}
+
+/** True once the import was undone, fully or partly. Its "rows to fix" no longer apply. */
+export function isUndoneStatus(status: JobStatus): boolean {
+  return status === "undone" || status === "partly_undone";
 }
 
 export function statusChip(job: ReportJob): StatusChipInfo {

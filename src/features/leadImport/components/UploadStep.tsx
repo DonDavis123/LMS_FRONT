@@ -9,6 +9,7 @@ import { formatBytes, formatCount } from "@/features/leadImport/utils/format";
 import BeforeYouStart from "@/features/leadImport/components/BeforeYouStart";
 import FileSettingsFields from "@/features/leadImport/components/FileSettingsFields";
 import ImportConfirmDialog from "@/features/leadImport/components/ImportConfirmDialog";
+import FileRowsModal from "@/features/leadImport/components/FileRowsModal";
 import ImportToast, { useImportToast } from "@/features/leadImport/components/ImportToast";
 import SampleRowsTable from "@/features/leadImport/components/SampleRowsTable";
 import TemplateMenu from "@/features/leadImport/components/TemplateMenu";
@@ -37,6 +38,7 @@ export default function UploadStep({ wizard, onBusyChange }: UploadStepProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const headerInputRef = useRef<HTMLInputElement>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
   const [confirm, setConfirm] = useState<PendingConfirm>(null);
   const { toast, showToast } = useImportToast();
 
@@ -62,6 +64,7 @@ export default function UploadStep({ wizard, onBusyChange }: UploadStepProps) {
     wizard.reset();
     uploader.clearAll();
     setSettingsOpen(false);
+    setPreviewOpen(false);
   }
 
   function requestReplace() {
@@ -212,7 +215,12 @@ export default function UploadStep({ wizard, onBusyChange }: UploadStepProps) {
               replaceDisabled={busy}
             />
             <UploadWarnings warnings={upload.warnings} />
-            <SampleRowsTable headers={upload.headers} rows={upload.sample_rows} />
+            <SampleRowsTable
+              headers={upload.headers}
+              rows={upload.sample_rows}
+              totalRows={upload.total_rows}
+              onViewAll={() => setPreviewOpen(true)}
+            />
             <div>
               <ShowMoreFields
                 id="import-file-settings"
@@ -234,6 +242,16 @@ export default function UploadStep({ wizard, onBusyChange }: UploadStepProps) {
       </p>
 
       <ImportToast toast={toast} />
+
+      {previewOpen && upload && (
+        <FileRowsModal
+          jobId={upload.job_id}
+          fileName={upload.file_name}
+          headers={upload.headers}
+          totalRows={upload.total_rows}
+          onClose={() => setPreviewOpen(false)}
+        />
+      )}
 
       <ImportConfirmDialog
         isOpen={confirm !== null}

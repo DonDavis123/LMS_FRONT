@@ -5,6 +5,7 @@ import type {
   ExclusionsPatch,
   ExclusionsResponse,
   ImportFileFormat,
+  ImportFileRowsResponse,
   ImportHistoryResponse,
   ImportMapping,
   ImportOptions,
@@ -32,6 +33,12 @@ export interface UploadSettings {
   headerRow?: number;
   /** Sheet to read from an Excel file. Omit for the first sheet. */
   sheetName?: string | null;
+}
+
+export interface FileRowsQuery {
+  page?: number;
+  page_size?: number;
+  q?: string;
 }
 
 export interface RowsQuery {
@@ -133,6 +140,15 @@ export const LeadImportService = {
       { mapping, options },
       { signal },
     );
+    return data;
+  },
+
+  /** GET /leads/import/<job_id>/file-rows/?page=&page_size=&q= (the whole uploaded file, no check needed) */
+  async getFileRows(jobId: string, query: FileRowsQuery = {}, signal?: AbortSignal): Promise<ImportFileRowsResponse> {
+    const { data } = await apiClient.get<ImportFileRowsResponse>(`${BASE}/${jobId}/file-rows/`, {
+      params: { page: query.page, page_size: query.page_size, q: query.q || undefined },
+      signal,
+    });
     return data;
   },
 

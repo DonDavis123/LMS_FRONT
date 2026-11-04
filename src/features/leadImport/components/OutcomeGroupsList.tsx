@@ -3,7 +3,7 @@
 import { CheckCircle2 } from "lucide-react";
 import type { ImportReport } from "@/features/leadImport/types/leadImport.types";
 import { formatCount } from "@/features/leadImport/utils/format";
-import { notAddedCount } from "@/features/leadImport/utils/reportView";
+import { isUndoneStatus, notAddedCount } from "@/features/leadImport/utils/reportView";
 import { card } from "@/features/leadImport/utils/reviewStyles";
 
 /** Small chips: "Row 61". They wrap on narrow screens. */
@@ -47,7 +47,8 @@ export default function OutcomeGroupsList({ report }: { report: ImportReport }) 
       <p className="mt-0.5 text-xs text-ink-soft">Here is why each row was not added and how to fix it.</p>
       {report.outcome_groups.length === 0 ? (
         <p className="mt-3 text-sm text-ink-soft">
-          {formatCount(missing)} {missing === 1 ? "row was" : "rows were"} not added. Download the rows to fix to see the reason for each one.
+          {formatCount(missing)} {missing === 1 ? "row was" : "rows were"} not added.
+          {!isUndoneStatus(report.job.status) && " Download the rows to fix to see the reason for each one."}
         </p>
       ) : (
         <ul className="mt-3 space-y-2">
