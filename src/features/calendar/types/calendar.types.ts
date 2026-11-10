@@ -6,7 +6,7 @@
 export const CALENDAR_EVENT_TYPES = ["TASK", "MEETING", "CALL", "REMINDER"] as const;
 export type CalendarEventType = (typeof CALENDAR_EVENT_TYPES)[number];
 
-export type CalendarView = "month" | "week";
+export type CalendarView = "month" | "week" | "day";
 
 /** "mine" = items I own / host / am assigned to; "team" = the whole company (managers only). */
 export type CalendarScope = "mine" | "team";

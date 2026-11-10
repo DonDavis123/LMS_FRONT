@@ -1,5 +1,5 @@
 import { addDays, startOfDay, toDateKey } from "@/features/dashboard/utils/dashboardMetrics";
-import type { CalendarEvent, CalendarEventType } from "@/features/calendar/types/calendar.types";
+import type { CalendarEvent, CalendarEventType, CalendarView } from "@/features/calendar/types/calendar.types";
 
 export { addDays, startOfDay, toDateKey };
 
@@ -31,9 +31,22 @@ export function weekDays(anchor: Date): Date[] {
 }
 
 /** `[start, end)` of dates the given view needs events for. */
-export function visibleRange(view: "month" | "week", anchor: Date): { start: Date; end: Date } {
+export function visibleRange(view: CalendarView, anchor: Date): { start: Date; end: Date } {
+  if (view === "day") {
+    const day = startOfDay(anchor);
+    return { start: day, end: addDays(day, 1) };
+  }
   const days = view === "month" ? monthGridDays(anchor) : weekDays(anchor);
   return { start: days[0], end: addDays(days[days.length - 1], 1) };
+}
+
+/**
+ * A planned call whose time has already passed. The backend job marks these
+ * Missed after a grace period; until then the calendar flags them as overdue
+ * so a stale "Planned" never looks like something still to come.
+ */
+export function isOverdueCall(event: Pick<CalendarEvent, "type" | "status" | "start">, now: number = Date.now()): boolean {
+  return event.type === "CALL" && event.status === "Planned" && event.start.getTime() < now;
 }
 
 export function isSameDay(a: Date, b: Date): boolean {

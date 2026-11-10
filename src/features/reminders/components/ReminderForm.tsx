@@ -16,6 +16,8 @@ interface ReminderFormProps {
   mode?: "create" | "edit";
   /** Required in edit mode: the reminder whose values are preloaded. */
   initialReminder?: Reminder;
+  /** Create mode: pre-selects the day (YYYY-MM-DD), e.g. when adding from the calendar. */
+  initialDate?: string;
   /** Optional hint shown above the fields (e.g. why the user is editing). */
   notice?: string;
   onSubmit: (payload: CreateReminderPayload) => Promise<void>;
@@ -29,8 +31,8 @@ interface FormState {
   enabled: boolean;
 }
 
-function initialState(reminder?: Reminder): FormState {
-  if (!reminder) return { subject: "", date: "", time: "", enabled: true };
+function initialState(reminder?: Reminder, initialDate?: string): FormState {
+  if (!reminder) return { subject: "", date: initialDate ?? "", time: "", enabled: true };
   const parts = isoToLocalParts(reminder.remind_at);
   return {
     subject: reminder.subject,
@@ -43,12 +45,13 @@ function initialState(reminder?: Reminder): FormState {
 export default function ReminderForm({
   mode = "create",
   initialReminder,
+  initialDate,
   notice,
   onSubmit,
   onCancel,
 }: ReminderFormProps) {
   const isEdit = mode === "edit";
-  const [form, setForm] = useState<FormState>(() => initialState(initialReminder));
+  const [form, setForm] = useState<FormState>(() => initialState(initialReminder, initialDate));
   const { warning, isUnchanged } = useNoChangeGuard(form, isEdit);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);

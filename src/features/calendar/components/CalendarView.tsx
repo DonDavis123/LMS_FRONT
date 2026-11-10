@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ChevronLeft, ChevronRight, Plus, RefreshCw } from "lucide-react";
+import { AlertTriangle, CalendarDays, ChevronLeft, ChevronRight, Plus, RefreshCw } from "lucide-react";
 import { authService } from "@/features/auth/services/authService";
 import { normalizeEnumValue } from "@/shared/utils/enumValue";
 import { extractApiError } from "@/shared/utils/apiError";
@@ -18,6 +18,7 @@ import {
   WEEKDAY_LABELS,
   addDays,
   groupEventsByDay,
+  isOverdueCall,
   isSameDay,
   longDayTitle,
   monthGridDays,
@@ -30,11 +31,15 @@ import {
 } from "@/features/calendar/utils/calendarDates";
 import EventChip, { EVENT_TYPE_META, eventStateLabel, eventTimeLabel } from "@/features/calendar/components/EventChip";
 import QuickAddDialog from "@/features/calendar/components/QuickAddDialog";
+import DayTimeGrid from "@/features/calendar/components/DayTimeGrid";
 
 /** Roles that may switch to the whole-company calendar (mirrors the backend). */
 const TEAM_VIEW_ROLES = new Set(["SUPERADMIN", "ADMIN", "SALESMANAGER", "SALES_MANAGER"]);
 
 const MAX_CHIPS_PER_CELL = 3;
+
+const VIEW_MODES: ViewMode[] = ["month", "week", "day"];
+const VIEW_UNIT: Record<ViewMode, string> = { month: "month", week: "week", day: "day" };
 
 export default function CalendarView() {
   const [view, setView] = useState<ViewMode>("month");
@@ -47,6 +52,8 @@ export default function CalendarView() {
   const [error, setError] = useState<string | null>(null);
   const [addDay, setAddDay] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+  // Ticks once a minute so overdue calls and the day view's "now" line stay current.
+  const [now, setNow] = useState<number>(() => Date.now());
   // Only the newest request may update the calendar (fast month switching).
   const latestRequest = useRef(0);
 
@@ -57,6 +64,7 @@ export default function CalendarView() {
 
   const today = useMemo(() => startOfDay(new Date()), []);
   const days = useMemo(() => (view === "month" ? monthGridDays(anchor) : weekDays(anchor)), [view, anchor]);
+
 
   const load = useCallback(async () => {
     const requestId = ++latestRequest.current;
@@ -83,6 +91,11 @@ export default function CalendarView() {
   }, [load]);
 
   useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 60_000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
     if (!toast) return;
     const timer = window.setTimeout(() => setToast(null), 3000);
     return () => window.clearTimeout(timer);
@@ -95,13 +108,36 @@ export default function CalendarView() {
     for (const event of events) counts[event.type] += 1;
     return counts;
   }, [events]);
+  const overdueCount = useMemo(
+    () => visibleEvents.filter((event) => isOverdueCall(event, now)).length,
+    [visibleEvents, now],
+  );
 
   function step(direction: -1 | 1) {
+    if (view === "day") {
+      const next = addDays(anchor, direction);
+      setAnchor(next);
+      setSelectedDay(next);
+      return;
+    }
     setAnchor((current) =>
       view === "month"
         ? new Date(current.getFullYear(), current.getMonth() + direction, 1)
         : addDays(current, direction * 7),
     );
+  }
+
+  function changeView(mode: ViewMode) {
+    if (mode === view) return;
+    // Keep the user's place: the new view opens on the day they were looking at.
+    setAnchor(selectedDay);
+    setView(mode);
+  }
+
+  function openDay(day: Date) {
+    setSelectedDay(day);
+    setAnchor(day);
+    setView("day");
   }
 
   function goToday() {
@@ -127,7 +163,7 @@ export default function CalendarView() {
   }
 
   const selectedEvents = byDay.get(toDateKey(selectedDay)) ?? [];
-  const title = view === "month" ? monthTitle(anchor) : weekTitle(anchor);
+  const title = view === "month" ? monthTitle(anchor) : view === "week" ? weekTitle(anchor) : longDayTitle(anchor);
 
   return (
     <div className="mx-auto w-full max-w-[1400px] px-4 py-5 sm:px-6">
@@ -141,7 +177,7 @@ export default function CalendarView() {
           <button
             type="button"
             onClick={() => step(-1)}
-            aria-label={view === "month" ? "Previous month" : "Previous week"}
+            aria-label={`Previous ${VIEW_UNIT[view]}`}
             className="rounded-md border border-line p-1.5 text-fg hover:bg-paper"
           >
             <ChevronLeft size={16} />
@@ -156,7 +192,7 @@ export default function CalendarView() {
           <button
             type="button"
             onClick={() => step(1)}
-            aria-label={view === "month" ? "Next month" : "Next week"}
+            aria-label={`Next ${VIEW_UNIT[view]}`}
             className="rounded-md border border-line p-1.5 text-fg hover:bg-paper"
           >
             <ChevronRight size={16} />
@@ -164,12 +200,12 @@ export default function CalendarView() {
         </div>
 
         <div role="group" aria-label="Calendar view" className="flex overflow-hidden rounded-md border border-line text-sm">
-          {(["month", "week"] as const).map((mode) => (
+          {VIEW_MODES.map((mode) => (
             <button
               key={mode}
               type="button"
               aria-pressed={view === mode}
-              onClick={() => setView(mode)}
+              onClick={() => changeView(mode)}
               className={`px-3 py-1.5 font-medium capitalize ${view === mode ? "bg-ink text-white" : "text-fg hover:bg-paper"}`}
             >
               {mode}
@@ -237,6 +273,15 @@ export default function CalendarView() {
             </button>
           );
         })}
+        {overdueCount > 0 && (
+          <span
+            className="inline-flex items-center gap-1.5 rounded-full bg-danger-soft px-3 py-1 text-xs font-semibold text-danger"
+            title="Planned calls whose time has passed. They are marked Missed automatically after an hour."
+          >
+            <AlertTriangle size={13} aria-hidden="true" />
+            {overdueCount} overdue {overdueCount === 1 ? "call" : "calls"}
+          </span>
+        )}
         {isLoading && <Spinner size="sm" />}
       </div>
 
@@ -249,6 +294,17 @@ export default function CalendarView() {
         </p>
       )}
 
+      {view === "day" ? (
+        <div className="mt-4">
+          <DayTimeGrid
+            day={anchor}
+            events={byDay.get(toDateKey(anchor)) ?? []}
+            now={now}
+            showOwner={scope === "team"}
+            onAdd={setAddDay}
+          />
+        </div>
+      ) : (
       <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
         {/* Grid */}
         <section aria-label={`${view === "month" ? "Month" : "Week"} calendar`} className="min-w-0">
@@ -278,6 +334,7 @@ export default function CalendarView() {
                 <div
                   key={key}
                   onClick={() => selectDay(day)}
+                  onDoubleClick={() => openDay(day)}
                   className={`group relative min-w-0 cursor-pointer flex-col gap-1 border-b border-r border-line p-1.5 ${
                     view === "month" && !inMonth ? "hidden sm:flex" : "flex"
                   } ${isSelected ? "bg-slate-light/40" : inMonth ? "bg-surface hover:bg-paper/60" : "bg-paper/50"}`}
@@ -315,7 +372,7 @@ export default function CalendarView() {
 
                   <div className="flex min-w-0 flex-col gap-0.5" onClick={(event) => event.stopPropagation()}>
                     {shown.map((event) => (
-                      <EventChip key={`${event.type}-${event.id}-${key}`} event={event} compact={view === "month"} />
+                      <EventChip key={`${event.type}-${event.id}-${key}`} event={event} compact={view === "month"} now={now} />
                     ))}
                     {hidden > 0 && (
                       <button
@@ -344,25 +401,36 @@ export default function CalendarView() {
                   : `${selectedEvents.length} ${selectedEvents.length === 1 ? "item" : "items"}`}
               </p>
             </div>
-            <button
-              type="button"
-              onClick={() => setAddDay(toDateKey(selectedDay))}
-              className="inline-flex shrink-0 items-center gap-1 rounded-md border border-line px-2.5 py-1.5 text-xs font-semibold text-fg hover:bg-paper"
-            >
-              <Plus size={13} aria-hidden="true" /> Add
-            </button>
+            <div className="flex shrink-0 items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => openDay(selectedDay)}
+                aria-label={`Open day view for ${longDayTitle(selectedDay)}`}
+                title="Open day view"
+                className="rounded-md border border-line p-1.5 text-ink-soft hover:bg-paper hover:text-fg"
+              >
+                <CalendarDays size={14} aria-hidden="true" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setAddDay(toDateKey(selectedDay))}
+                className="inline-flex items-center gap-1 rounded-md border border-line px-2.5 py-1.5 text-xs font-semibold text-fg hover:bg-paper"
+              >
+                <Plus size={13} aria-hidden="true" /> Add
+              </button>
+            </div>
           </div>
 
           {selectedEvents.length > 0 && (
             <ul className="mt-3 space-y-2">
               {selectedEvents.map((event) => {
-                const state = eventStateLabel(event);
+                const state = eventStateLabel(event, now);
                 return (
                   <li key={`${event.type}-${event.id}`} className="rounded-md border border-line p-2">
-                    <EventChip event={event} />
+                    <EventChip event={event} now={now} />
                     <p className="mt-1 flex flex-wrap gap-x-2 text-[11px] text-ink-soft">
                       <span>{eventTimeLabel(event)}</span>
-                      {state && <span>· {state}</span>}
+                      {state && <span className={state === "Overdue" ? "font-semibold text-danger" : undefined}>· {state}</span>}
                       {event.related_record_name && <span>· {event.related_record_name}</span>}
                       {scope === "team" && event.owner_name && <span>· {event.owner_name}</span>}
                     </p>
@@ -373,6 +441,7 @@ export default function CalendarView() {
           )}
         </aside>
       </div>
+      )}
 
       <QuickAddDialog
         day={addDay}
