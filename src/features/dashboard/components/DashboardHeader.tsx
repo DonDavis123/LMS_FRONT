@@ -6,6 +6,7 @@ import { AlarmClock, LogOut, PanelLeftClose, PanelLeftOpen } from "lucide-react"
 import type { AuthUser } from "@/features/auth/types/auth.types";
 import ThemeToggle from "@/shared/components/ThemeToggle";
 import NotificationBell from "@/features/notifications/components/NotificationBell";
+import CalendarHeaderButton from "@/features/calendar/components/CalendarHeaderButton";
 import { roleLabel } from "@/features/users/utils/userLabels";
 
 interface DashboardHeaderProps {
@@ -71,6 +72,7 @@ export default function DashboardHeader({
       </div>
 
       <div className="flex items-center gap-1 sm:gap-2">
+        <CalendarHeaderButton />
         <NotificationBell />
         <ThemeToggle />
 
