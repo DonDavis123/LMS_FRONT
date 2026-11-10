@@ -101,7 +101,7 @@ export default function CallDetail({ call, onCallChange, returnTo = null }: Call
                 {call.call_type} call with {recordName}
               </h1>
               <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-ink-soft">
-                <CallOutcomeBadge outcome={call.outcome} />
+                <CallOutcomeBadge outcome={call.outcome} status={call.status} />
                 <span>{formatCallDateTime(call.call_start_time)}</span>
               </p>
             </div>
@@ -149,8 +149,8 @@ export default function CallDetail({ call, onCallChange, returnTo = null }: Call
 
         {/* At-a-glance summary */}
         <div className="mt-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
-          <Stat label="Outcome">
-            <CallOutcomeBadge outcome={call.outcome} />
+          <Stat label={call.status === "Completed" ? "Outcome" : "Status"}>
+            <CallOutcomeBadge outcome={call.outcome} status={call.status} />
           </Stat>
           <Stat label="Duration">{call.duration_label}</Stat>
           <Stat label="Started">{formatCallDateTime(call.call_start_time)}</Stat>
@@ -191,12 +191,13 @@ export default function CallDetail({ call, onCallChange, returnTo = null }: Call
                     editable={canEdit}
                     onSave={(raw) => updateField("call_type", raw)}
                   />
+                  <InlineEditRow label="Status" value={call.status} editable={false} />
                   <InlineEditRow
                     label="Outcome"
-                    value={call.outcome}
+                    value={call.outcome ?? "—"}
                     type="select"
                     options={CALL_OUTCOMES.map((outcome) => ({ value: outcome, label: outcome }))}
-                    editable={canEdit}
+                    editable={canEdit && call.status === "Completed"}
                     onSave={(raw) => updateField("outcome", raw)}
                   />
                   <InlineEditRow label="Start Time" value={formatDateTime(call.call_start_time)} editable={false} />
@@ -246,7 +247,7 @@ export default function CallDetail({ call, onCallChange, returnTo = null }: Call
                           <div className="min-w-0 flex-1">
                             <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
                               <span className="text-sm font-medium text-fg">{formatCallDateTime(other.call_start_time)}</span>
-                              <CallOutcomeBadge outcome={other.outcome} />
+                              <CallOutcomeBadge outcome={other.outcome} status={other.status} />
                               <span className="text-xs text-ink-soft">{other.duration_label}</span>
                             </div>
                             {other.description && (

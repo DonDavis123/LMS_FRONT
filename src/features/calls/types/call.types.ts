@@ -19,13 +19,22 @@ export const CALL_OUTCOMES = [
 export type CallOutcome = (typeof CALL_OUTCOMES)[number];
 export const DEFAULT_CALL_OUTCOME: CallOutcome = "Connected";
 
+/**
+ * Lifecycle of a call. A "Planned" call is scheduled ahead of time (no outcome
+ * or duration yet); "Completed" is a logged call; "Missed" is a planned call
+ * that did not happen.
+ */
+export const CALL_STATUSES = ["Planned", "Completed", "Missed"] as const;
+export type CallStatus = (typeof CALL_STATUSES)[number];
+export const DEFAULT_CALL_STATUS: CallStatus = "Completed";
+
 export const CALL_ENTRY_METHODS = ["MANUAL", "TIMER"] as const;
 export type CallEntryMethod = (typeof CALL_ENTRY_METHODS)[number];
 
 /** Limits enforced by the backend. */
 export const MAX_CALL_DURATION_SECONDS = 86400;
 export const MAX_CALL_NOTES_LENGTH = 1000;
-/** The backend rejects start times more than 5 minutes in the future. */
+/** The backend rejects COMPLETED calls starting more than 5 minutes in the future. */
 export const CALL_FUTURE_TOLERANCE_MS = 5 * 60 * 1000;
 
 export type CallRecordType = "LEAD" | "CONTACT";
@@ -42,7 +51,9 @@ export interface Call {
   owner_id: string;
   owner_name: string | null;
   call_type: CallType;
-  outcome: CallOutcome;
+  status: CallStatus;
+  /** Null for planned / missed calls. */
+  outcome: CallOutcome | null;
   call_start_time: string; // ISO datetime
   duration_seconds: number;
   duration_label: string;
@@ -81,7 +92,8 @@ export interface RelatedCall {
   call_start_time: string;
   duration_seconds: number;
   duration_label: string;
-  outcome: CallOutcome;
+  outcome: CallOutcome | null;
+  status: CallStatus;
   call_type: CallType;
   description: string | null;
   owner_name: string | null;
@@ -107,7 +119,10 @@ export interface CreateCallPayload {
   account_id?: string | null;
   owner_id?: string | null;
   call_type?: CallType;
-  outcome: CallOutcome;
+  /** Required when `status` is "Completed" (the default); omit for a planned call. */
+  outcome?: CallOutcome | null;
+  /** "Planned" schedules a call on a future date. Defaults to "Completed". */
+  status?: CallStatus;
   call_start_time: string; // ISO datetime
   duration_seconds?: number;
   description?: string | null;
@@ -123,7 +138,9 @@ export interface UpdateCallPayload {
   call_start_time?: string;
   duration_seconds?: number;
   call_type?: CallType;
-  outcome?: CallOutcome;
+  outcome?: CallOutcome | null;
+  /** Planned -> Completed / Missed, or reschedule a planned call. A completed call cannot go back. */
+  status?: CallStatus;
   description?: string | null;
 }
 
@@ -161,6 +178,7 @@ export interface CallHistorySnapshot {
   call_start_time: string | null;
   call_type: CallType | null;
   outcome: CallOutcome | null;
+  status?: CallStatus | null;
   duration_seconds: number | null;
   duration_label: string | null;
   description: string | null;

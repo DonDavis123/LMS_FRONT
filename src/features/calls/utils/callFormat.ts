@@ -71,6 +71,7 @@ export const CALL_FIELD_LABELS: Record<string, string> = {
   duration_seconds: "Duration",
   call_type: "Call Type",
   outcome: "Outcome",
+  status: "Status",
   description: "Notes",
 };
 

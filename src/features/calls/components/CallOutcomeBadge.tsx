@@ -1,4 +1,4 @@
-import type { CallOutcome } from "@/features/calls/types/call.types";
+import type { CallOutcome, CallStatus } from "@/features/calls/types/call.types";
 
 const OUTCOME_STYLES: Record<CallOutcome, string> = {
   Connected: "bg-success-soft text-success",
@@ -18,8 +18,39 @@ const DOT_STYLES: Record<CallOutcome, string> = {
   "Wrong Number": "bg-danger",
 };
 
-/** Colour-coded pill for a call outcome, shared by the list, detail and record views. */
-export default function CallOutcomeBadge({ outcome, className = "" }: { outcome: string; className?: string }) {
+const STATUS_STYLES: Record<Exclude<CallStatus, "Completed">, { pill: string; dot: string }> = {
+  Planned: { pill: "bg-slate-light text-slate", dot: "bg-slate" },
+  Missed: { pill: "bg-danger-soft text-danger", dot: "bg-danger" },
+};
+
+/**
+ * Colour-coded pill for a call, shared by the list, detail and record views.
+ * A completed call shows its outcome; a planned / missed call (which has no
+ * outcome yet) shows its status instead.
+ */
+export default function CallOutcomeBadge({
+  outcome,
+  status,
+  className = "",
+}: {
+  outcome: string | null;
+  status?: CallStatus | null;
+  className?: string;
+}) {
+  if (status && status !== "Completed") {
+    const style = STATUS_STYLES[status];
+    return (
+      <span
+        className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-medium ${style.pill} ${className}`}
+      >
+        <span aria-hidden="true" className={`h-1.5 w-1.5 rounded-full ${style.dot}`} />
+        {status}
+      </span>
+    );
+  }
+
+  if (!outcome) return <span className={`text-xs text-ink-soft ${className}`}>—</span>;
+
   const known = outcome as CallOutcome;
   return (
     <span

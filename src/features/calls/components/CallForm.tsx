@@ -20,12 +20,14 @@ import {
   CALL_OUTCOMES,
   CALL_TYPES,
   DEFAULT_CALL_OUTCOME,
+  DEFAULT_CALL_STATUS,
   DEFAULT_CALL_TYPE,
   MAX_CALL_DURATION_SECONDS,
   MAX_CALL_NOTES_LENGTH,
   type Call,
   type CallEntryMethod,
   type CallOutcome,
+  type CallStatus,
   type CallType,
   type CreateCallPayload,
   type UpdateCallPayload,
@@ -37,6 +39,8 @@ type CallFormProps =
       mode: "create";
       /** Pre-selects the lead / contact (and account) the call is being logged for. */
       initialRelated?: RelatedToValue;
+      /** Pre-selects the day (YYYY-MM-DD), e.g. when adding from the calendar. A future day starts as a planned call. */
+      initialDate?: string;
       onSubmit: (payload: CreateCallPayload) => Promise<void>;
       onCancel: () => void;
     }
@@ -51,6 +55,7 @@ interface FormState {
   owner_id: string;
   ownerLabel: string;
   call_type: CallType;
+  status: CallStatus;
   outcome: CallOutcome;
   call_start_time: string; // local "YYYY-MM-DDTHH:mm"
   minutes: string;
@@ -60,13 +65,25 @@ interface FormState {
   related: RelatedToValue;
 }
 
-function emptyForm(related?: RelatedToValue): FormState {
+/** Local "YYYY-MM-DDTHH:mm" for a picked day: now's time-of-day today, 9:00 on other days. */
+function startForDay(day?: string): string {
+  const now = new Date();
+  if (!day || !/^\d{4}-\d{2}-\d{2}$/.test(day)) return toLocalInputValue(now);
+  const [y, m, d] = day.split("-").map(Number);
+  const isToday = y === now.getFullYear() && m === now.getMonth() + 1 && d === now.getDate();
+  return toLocalInputValue(isToday ? now : new Date(y, m - 1, d, 9, 0));
+}
+
+function emptyForm(related?: RelatedToValue, day?: string): FormState {
+  const start = startForDay(day);
+  const isFuture = new Date(start).getTime() > Date.now() + CALL_FUTURE_TOLERANCE_MS;
   return {
     owner_id: "",
     ownerLabel: "",
     call_type: DEFAULT_CALL_TYPE,
+    status: isFuture ? "Planned" : DEFAULT_CALL_STATUS,
     outcome: DEFAULT_CALL_OUTCOME,
-    call_start_time: toLocalInputValue(new Date()),
+    call_start_time: start,
     minutes: "",
     seconds: "",
     description: "",
@@ -81,7 +98,8 @@ function formFromCall(call: Call): FormState {
     owner_id: call.owner_id,
     ownerLabel: call.owner_name ?? "",
     call_type: call.call_type,
-    outcome: call.outcome,
+    status: call.status,
+    outcome: call.outcome ?? DEFAULT_CALL_OUTCOME,
     call_start_time: toLocalInputValue(call.call_start_time),
     minutes: String(Math.floor(call.duration_seconds / 60)),
     seconds: String(call.duration_seconds % 60),
@@ -110,9 +128,15 @@ export default function CallForm(props: CallFormProps) {
   const initialCall = props.mode === "edit" ? props.initialCall : undefined;
 
   const [form, setForm] = useState<FormState>(() =>
-    initialCall ? formFromCall(initialCall) : emptyForm(props.mode === "create" ? props.initialRelated : undefined),
+    initialCall ? formFromCall(initialCall) : emptyForm(
+          props.mode === "create" ? props.initialRelated : undefined,
+          props.mode === "create" ? props.initialDate : undefined,
+        ),
   );
   const { warning, isUnchanged } = useNoChangeGuard(form, mode === "edit");
+  // Only a completed call has an outcome, a duration and a timer; a planned
+  // call is scheduled ahead of time and a missed one never happened.
+  const isCompleted = form.status === "Completed";
   const [owners, setOwners] = useState<LeadOwnerOption[]>([]);
   const [error, setError, errorRef] = useFormError();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -209,12 +233,12 @@ export default function CallForm(props: CallFormProps) {
       setError("Call start time is not a valid date.");
       return;
     }
-    if (start.getTime() > Date.now() + CALL_FUTURE_TOLERANCE_MS) {
-      setError("Call start time cannot be more than 5 minutes in the future.");
+    if (isCompleted && start.getTime() > Date.now() + CALL_FUTURE_TOLERANCE_MS) {
+      setError("A completed call can't start in the future. Choose \"Planned\" to schedule it for later.");
       return;
     }
 
-    const duration = timedSeconds !== null ? { seconds: timedSeconds } : readDuration();
+    const duration = !isCompleted ? { seconds: 0 } : timedSeconds !== null ? { seconds: timedSeconds } : readDuration();
     if ("error" in duration) {
       setError(duration.error);
       return;
@@ -239,7 +263,8 @@ export default function CallForm(props: CallFormProps) {
         if (form.call_start_time !== originalForm.call_start_time) changes.call_start_time = start.toISOString();
         if (duration.seconds !== original.duration_seconds) changes.duration_seconds = duration.seconds;
         if (form.call_type !== original.call_type) changes.call_type = form.call_type;
-        if (form.outcome !== original.outcome) changes.outcome = form.outcome;
+        if (form.status !== original.status) changes.status = form.status;
+        if (isCompleted && form.outcome !== original.outcome) changes.outcome = form.outcome;
         if ((notes || null) !== (original.description || null)) changes.description = notes || null;
 
         await props.onSubmit(changes);
@@ -248,11 +273,12 @@ export default function CallForm(props: CallFormProps) {
         await props.onSubmit({
           owner_id: form.owner_id || null,
           call_type: form.call_type,
-          outcome: form.outcome,
+          status: form.status,
+          outcome: isCompleted ? form.outcome : null,
           call_start_time: start.toISOString(),
           duration_seconds: duration.seconds,
           description: notes || null,
-          entry_method: timedSeconds !== null ? "TIMER" : form.entry_method,
+          entry_method: isCompleted && timedSeconds !== null ? "TIMER" : form.entry_method,
           lead_id: isLead ? form.related.personId : null,
           contact_id: isLead ? null : form.related.personId,
           // The backend only allows an account on a contact call.
@@ -271,7 +297,7 @@ export default function CallForm(props: CallFormProps) {
   return (
     <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
       <div className="flex shrink-0 items-center justify-between border-b border-line px-5 py-3">
-        <h2 className="font-serif text-xl text-fg">{mode === "create" ? "Log a Call" : "Edit Call"}</h2>
+        <h2 className="font-serif text-xl text-fg">{mode === "create" ? (isCompleted ? "Log a Call" : "Schedule a Call") : "Edit Call"}</h2>
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
@@ -308,8 +334,8 @@ export default function CallForm(props: CallFormProps) {
                 />
               </Field>
 
-              {/* Optional live timer */}
-              <div className="sm:self-end">
+              {/* Optional live timer (completed calls only) */}
+              {isCompleted && <div className="sm:self-end">
                 <div className="flex items-center justify-between gap-3 rounded-md border border-line bg-paper/40 px-3 py-2">
                   <div className="flex items-center gap-2 text-sm text-fg">
                     <Timer size={16} className={timerRunning ? "text-success" : "text-ink-soft"} />
@@ -335,7 +361,7 @@ export default function CallForm(props: CallFormProps) {
                     </button>
                   )}
                 </div>
-              </div>
+              </div>}
             </>
           ) : (
             <div className="sm:col-span-2">
@@ -363,14 +389,30 @@ export default function CallForm(props: CallFormProps) {
             />
           </Field>
 
-          <Field label="Outcome" required>
-            <Select
-              value={form.outcome}
-              onChange={(next) => update("outcome", next as CallOutcome)}
-              ariaLabel="Call outcome"
-              options={CALL_OUTCOMES.map((o) => ({ value: o, label: o }))}
-            />
-          </Field>
+          {/* A completed call can't go back to planned / missed; create offers Completed or Planned. */}
+          {!(mode === "edit" && initialCall?.status === "Completed") && (
+            <Field label="Status" required>
+              <Select
+                value={form.status}
+                onChange={(next) => update("status", next as CallStatus)}
+                ariaLabel="Call status"
+                options={(mode === "create" ? (["Completed", "Planned"] as const) : (["Planned", "Completed", "Missed"] as const)).map(
+                  (s) => ({ value: s, label: s === "Completed" ? "Completed (already made)" : s === "Planned" ? "Planned (scheduled)" : s }),
+                )}
+              />
+            </Field>
+          )}
+
+          {isCompleted && (
+            <Field label="Outcome" required>
+              <Select
+                value={form.outcome}
+                onChange={(next) => update("outcome", next as CallOutcome)}
+                ariaLabel="Call outcome"
+                options={CALL_OUTCOMES.map((o) => ({ value: o, label: o }))}
+              />
+            </Field>
+          )}
 
           <Field label="Call Start Time" required>
             <DateTimeInput
@@ -380,7 +422,7 @@ export default function CallForm(props: CallFormProps) {
             />
           </Field>
 
-          <div>
+          {isCompleted && <div>
             <span className="mb-1.5 block text-sm font-medium text-fg">Duration</span>
             <div className="flex items-center gap-2">
               <div className="relative flex-1">
@@ -414,7 +456,7 @@ export default function CallForm(props: CallFormProps) {
                 <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-ink-soft">sec</span>
               </div>
             </div>
-          </div>
+          </div>}
 
           <Field label="Call Notes" fullWidth>
             <textarea
@@ -433,7 +475,7 @@ export default function CallForm(props: CallFormProps) {
 
       <div className="flex shrink-0 items-center justify-between gap-3 border-t border-line px-5 py-3">
         <span className="hidden text-xs text-ink-soft sm:block">
-          {mode === "create" && !timerRunning ? `Duration: ${formatDuration(parseTotal(form))}` : ""}
+          {mode === "create" && isCompleted && !timerRunning ? `Duration: ${formatDuration(parseTotal(form))}` : ""}
         </span>
         <div className="ml-auto flex gap-3">
           <button
@@ -449,7 +491,7 @@ export default function CallForm(props: CallFormProps) {
             className="flex items-center gap-2 rounded-md bg-ink px-4 py-2 text-sm font-semibold text-white transition hover:bg-ink-2 active:scale-[0.98] disabled:opacity-60"
           >
             {isSubmitting && <Spinner size="sm" className="border-white/30 border-t-white" />}
-            {isSubmitting ? "Saving…" : mode === "create" ? "Log Call" : "Save"}
+            {isSubmitting ? "Saving…" : mode === "create" ? (isCompleted ? "Log Call" : "Schedule Call") : "Save"}
           </button>
         </div>
       </div>

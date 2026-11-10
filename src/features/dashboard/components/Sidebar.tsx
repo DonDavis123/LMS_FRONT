@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import {
   Building2,
   CalendarClock,
+  CalendarDays,
   Contact2,
   Home,
   ListChecks,
@@ -35,6 +36,7 @@ const NAV_ITEMS = [
 ];
 
 const ACTIVITY_ITEMS = [
+  { href: "/dashboard/calendar", label: "Calendar", icon: CalendarDays },
   { href: "/dashboard/tasks", label: "Tasks", icon: SquareCheckBig },
   { href: "/dashboard/meetings", label: "Meetings", icon: CalendarClock },
   ...(CALLS_ENABLED ? [{ href: "/dashboard/calls", label: "Calls", icon: Phone }] : []),

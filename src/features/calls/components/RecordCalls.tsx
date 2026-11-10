@@ -125,7 +125,7 @@ export default function RecordCalls({ kind, recordId, recordName, related, retur
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
                       <span className="text-sm font-medium text-fg">{formatCallDateTime(call.call_start_time)}</span>
-                      <CallOutcomeBadge outcome={call.outcome} />
+                      <CallOutcomeBadge outcome={call.outcome} status={call.status} />
                       <span className="text-xs text-ink-soft">
                         {call.call_type} · {call.duration_label}
                       </span>

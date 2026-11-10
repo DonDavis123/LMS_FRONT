@@ -35,6 +35,8 @@ interface TaskFormProps {
   onSubmit: (payload: CreateTaskPayload) => Promise<void>;
   onCancel: () => void;
   initialRelated?: RelatedToValue;
+  /** Pre-fills the due date (YYYY-MM-DD), e.g. when adding from the calendar. */
+  initialDueDate?: string;
 }
 
 interface FormState {
@@ -98,9 +100,11 @@ function formFromTask(task: Task): FormState {
   };
 }
 
-export default function TaskForm({ mode, initialTask, onSubmit, onCancel, initialRelated }: TaskFormProps) {
+export default function TaskForm({ mode, initialTask, onSubmit, onCancel, initialRelated, initialDueDate }: TaskFormProps) {
   const [form, setForm] = useState<FormState>(() =>
-    initialTask ? formFromTask(initialTask) : { ...emptyForm(), related: initialRelated ?? emptyRelatedTo() }
+    initialTask
+      ? formFromTask(initialTask)
+      : { ...emptyForm(), due_date: initialDueDate ?? "", related: initialRelated ?? emptyRelatedTo() }
   );
   const { warning, isUnchanged } = useNoChangeGuard(form, mode === "edit");
   const [owners, setOwners] = useState<LeadOwnerOption[]>([]);

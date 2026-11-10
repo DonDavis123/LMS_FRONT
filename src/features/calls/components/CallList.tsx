@@ -246,7 +246,7 @@ export default function CallList({
                         </span>
                       </td>
                       <td className="px-4 py-3">
-                        <CallOutcomeBadge outcome={call.outcome} />
+                        <CallOutcomeBadge outcome={call.outcome} status={call.status} />
                         <p className="mt-1 text-xs text-ink-soft">{call.call_type}</p>
                       </td>
                       <td className="whitespace-nowrap px-4 py-3 text-ink-soft">{formatCallDateTime(call.call_start_time)}</td>

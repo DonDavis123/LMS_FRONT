@@ -27,6 +27,8 @@ interface Props {
   initialMeeting?: Meeting;
   onSubmit: (payload: CreateMeetingPayload) => Promise<void>;
   onCancel: () => void;
+  /** Pre-selects the day (YYYY-MM-DD), e.g. when adding from the calendar. */
+  initialDate?: string;
 }
 
 type RelatedType = "" | "lead" | "contact";
@@ -66,8 +68,13 @@ function splitDateTime(value?: string | null) {
   ];
 }
 
-function emptyForm(): FormState {
-  const now = new Date();
+function emptyForm(day?: string): FormState {
+  let now = new Date();
+  // A picked day other than today starts at 9:00 AM.
+  if (day && /^\d{4}-\d{2}-\d{2}$/.test(day) && day !== splitDateTime(now.toISOString())[0]) {
+    const [y, m, d] = day.split("-").map(Number);
+    now = new Date(y, m - 1, d, 9, 0);
+  }
   const [date, time] = splitDateTime(now.toISOString());
   const end = new Date(now.getTime() + 60 * 60 * 1000);
   const [toDate, toTime] = splitDateTime(end.toISOString());
@@ -122,9 +129,9 @@ function fromMeeting(m: Meeting): FormState {
 const fieldClass =
   "w-full border-0 border-b border-line bg-transparent px-0 py-2 text-sm text-fg outline-none focus:border-slate focus:ring-0";
 
-export default function MeetingForm({ mode, initialMeeting, onSubmit, onCancel }: Props) {
+export default function MeetingForm({ mode, initialMeeting, onSubmit, onCancel, initialDate }: Props) {
   const [form, setForm] = useState<FormState>(() =>
-    initialMeeting ? fromMeeting(initialMeeting) : emptyForm(),
+    initialMeeting ? fromMeeting(initialMeeting) : emptyForm(initialDate),
   );
   const { warning, isUnchanged } = useNoChangeGuard(form, mode === "edit");
   const [owners, setOwners] = useState<LeadOwnerOption[]>([]);
