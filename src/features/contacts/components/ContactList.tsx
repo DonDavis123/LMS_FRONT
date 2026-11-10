@@ -14,6 +14,7 @@ import type { SortState } from "@/shared/types/sort";
 import SearchBox from "@/shared/components/SearchBox";
 import FilterBar, { type FilterCondition, type FilterFieldConfig } from "@/shared/components/FilterBar";
 import type { LeadOwnerOption } from "@/features/auth/types/auth.types";
+import ExportMenu from "@/features/exports/components/ExportMenu";
 
 import { confirmDelete } from "@/shared/utils/confirmDelete";
 import { useSelectionKeyboard } from "@/shared/hooks/useSelectionKeyboard";
@@ -62,6 +63,9 @@ export default function ContactList({
   const [selectionMode, setSelectionMode] = useState(false);
   const [bulkDeleting, setBulkDeleting] = useState(false);
   const [removingId, setRemovingId] = useState<string | null>(null);
+
+  // The export holds what the list shows: same search, filters and sort, all pages.
+  const exportQuery = useMemo(() => ({ search, filters, sort }), [search, filters, sort]);
 
   useEffect(() => {
     userService.getLeadOwners().then(setOwners).catch(() => setOwners([]));
@@ -156,6 +160,7 @@ export default function ContactList({
           />
         </div>
         <div className="order-2 ml-auto flex gap-2 sm:order-3">
+          <ExportMenu entity="contacts" noun="contacts" query={exportQuery} total={pagination.total} disabled={isLoading} />
           <Link
             href="/dashboard/contacts/new"
             className="whitespace-nowrap rounded-md bg-amber px-3 py-1.5 text-sm font-semibold text-fg transition hover:bg-amber-dark active:scale-[0.98]"
