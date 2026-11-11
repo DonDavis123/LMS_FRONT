@@ -17,6 +17,7 @@ import { useAccountPicklists } from "@/features/picklists/hooks/useLeadPicklists
 import { toSelectOptions } from "@/features/picklists/utils/optionHelpers";
 import { ContactService } from "@/features/contacts/services/ContactService";
 import CreateTaskFromRecord from "@/shared/components/CreateTaskFromRecord";
+import SendMailButton from "@/features/mailing/components/SendMailButton";
 
 import { confirmDelete } from "@/shared/utils/confirmDelete";
 
@@ -119,8 +120,9 @@ export default function AccountDetail({ account, onAccountChange }: AccountDetai
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center justify-end gap-2">
           <CreateTaskFromRecord related={{ personType: "", personId: "", personLabel: "", accountId: account.id, accountLabel: account.account_name }} />
+          <SendMailButton entity="accounts" recordId={account.id} recordName={account.account_name || "Account"} />
           <Link
             href={`/dashboard/accounts/${account.id}?edit=1`}
             className="rounded-md border border-line px-4 py-2 text-sm font-medium text-fg hover:bg-paper"

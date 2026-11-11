@@ -10,6 +10,7 @@ import {
   FileUp,
   Filter,
   Loader2,
+  Mail,
   PhoneCall,
   PlusCircle,
   RefreshCcw,
@@ -99,6 +100,8 @@ function iconFor(eventType: string | null | undefined) {
   if (type.startsWith("CALL_")) {
     return { Icon: PhoneCall, tone: type.includes("DELETED") ? "text-danger" : type.includes("LOGGED") ? "text-success" : "text-slate" };
   }
+  // "Email opened in Gmail" — a draft was started, not necessarily sent.
+  if (type.startsWith("EMAIL_")) return { Icon: Mail, tone: "text-slate" };
   if (type.includes("LEAD_IMPORT")) return { Icon: type.includes("UNDONE") ? Undo2 : FileUp, tone: "text-slate" };
   if (type.includes("STATUS_CHANGED")) return { Icon: RefreshCcw, tone: "text-slate" };
   if (type.includes("CONTACT_CREATED")) return { Icon: UserSquare2, tone: "text-slate" };

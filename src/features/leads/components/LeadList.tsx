@@ -25,6 +25,7 @@ import ExportMenu from "@/features/exports/components/ExportMenu";
 import { confirmDelete } from "@/shared/utils/confirmDelete";
 import { formatDateTime } from "@/shared/utils/formatDate";
 import { useSelectionKeyboard } from "@/shared/hooks/useSelectionKeyboard";
+import { useBulkMail } from "@/features/mailing/hooks/useBulkMail";
 import ServerPagination from "@/shared/components/ServerPagination";
 import type { PaginationMeta } from "@/shared/types/pagination";
 
@@ -114,7 +115,17 @@ export default function LeadList({
 
   const pageItems = leads;
 
-  useSelectionKeyboard(selectionMode, selectedIds.size, handleBulkDelete);
+  const bulkMail = useBulkMail({
+    entity: "leads",
+    selectedIds,
+    pageIds: leads.map((row) => row.id),
+    search,
+    filters,
+    total: pagination.total,
+  });
+
+  // Delete only ever applies to ticked rows, never to "all matching".
+  useSelectionKeyboard(selectionMode && !bulkMail.allMatching, selectedIds.size, handleBulkDelete);
 
   function toggleSelectAll() {
     setSelectedIds((current) => {
@@ -225,7 +236,15 @@ export default function LeadList({
         <p className="border-b border-line bg-danger-soft px-4 py-3 text-sm text-danger">{error}</p>
       )}
 
-      <BulkDeleteBar count={selectedIds.size} onDelete={handleBulkDelete} onClear={() => { setSelectedIds(new Set()); setSelectionMode(false); }} deleting={bulkDeleting} />
+      <BulkDeleteBar
+        count={selectedIds.size}
+        onDelete={handleBulkDelete}
+        onClear={() => { setSelectedIds(new Set()); setSelectionMode(false); }}
+        deleting={bulkDeleting}
+        onSendMail={bulkMail.openBulkMail}
+        selectAllMatching={bulkMail.selectAllMatching}
+      />
+      {bulkMail.dialog}
 
       {isLoading ? (
         <LeadListSkeleton />
@@ -287,6 +306,13 @@ export default function LeadList({
                         onDelete={() => handleDelete(lead)}
                         onSelect={() => setSelectionMode(true)}
                         onConvert={() => router.push(`/dashboard/leads/${lead.id}/convert`)}
+                        onSendMail={() => bulkMail.composeSingle({
+                          recordType: "LEAD",
+                          recordId: lead.id,
+                          name: lead.name,
+                          email: lead.email,
+                        })}
+                        sendMailDisabled={!lead.email}
                         recordId={lead.id}
                         disabled={deletingId === lead.id}
                       />

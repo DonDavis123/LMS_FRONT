@@ -18,6 +18,7 @@ import ExportMenu from "@/features/exports/components/ExportMenu";
 
 import { confirmDelete } from "@/shared/utils/confirmDelete";
 import { useSelectionKeyboard } from "@/shared/hooks/useSelectionKeyboard";
+import { useBulkMail } from "@/features/mailing/hooks/useBulkMail";
 import ServerPagination from "@/shared/components/ServerPagination";
 import type { PaginationMeta } from "@/shared/types/pagination";
 
@@ -91,7 +92,17 @@ export default function AccountList({
 
   const pageItems = accounts;
 
-  useSelectionKeyboard(selectionMode, selectedIds.size, handleBulkDelete);
+  const bulkMail = useBulkMail({
+    entity: "accounts",
+    selectedIds,
+    pageIds: accounts.map((row) => row.id),
+    search,
+    filters,
+    total: pagination.total,
+  });
+
+  // Delete only ever applies to ticked rows, never to "all matching".
+  useSelectionKeyboard(selectionMode && !bulkMail.allMatching, selectedIds.size, handleBulkDelete);
 
   function toggleSelectAll() {
     setSelectedIds((current) => {
@@ -170,7 +181,15 @@ export default function AccountList({
         <p className="border-b border-line bg-danger-soft px-4 py-3 text-sm text-danger">{error}</p>
       )}
 
-      <BulkDeleteBar count={selectedIds.size} onDelete={handleBulkDelete} onClear={() => { setSelectedIds(new Set()); setSelectionMode(false); }} deleting={bulkDeleting} />
+      <BulkDeleteBar
+        count={selectedIds.size}
+        onDelete={handleBulkDelete}
+        onClear={() => { setSelectedIds(new Set()); setSelectionMode(false); }}
+        deleting={bulkDeleting}
+        onSendMail={bulkMail.openBulkMail}
+        selectAllMatching={bulkMail.selectAllMatching}
+      />
+      {bulkMail.dialog}
 
       {isLoading ? (
         <div className="space-y-3 p-4">

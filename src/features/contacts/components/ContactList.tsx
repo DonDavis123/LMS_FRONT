@@ -18,6 +18,7 @@ import ExportMenu from "@/features/exports/components/ExportMenu";
 
 import { confirmDelete } from "@/shared/utils/confirmDelete";
 import { useSelectionKeyboard } from "@/shared/hooks/useSelectionKeyboard";
+import { useBulkMail } from "@/features/mailing/hooks/useBulkMail";
 import ServerPagination from "@/shared/components/ServerPagination";
 import type { PaginationMeta } from "@/shared/types/pagination";
 
@@ -94,7 +95,17 @@ export default function ContactList({
 
   const pageItems = contacts;
 
-  useSelectionKeyboard(selectionMode, selectedIds.size, handleBulkDelete);
+  const bulkMail = useBulkMail({
+    entity: "contacts",
+    selectedIds,
+    pageIds: contacts.map((row) => row.id),
+    search,
+    filters,
+    total: pagination.total,
+  });
+
+  // Delete only ever applies to ticked rows, never to "all matching".
+  useSelectionKeyboard(selectionMode && !bulkMail.allMatching, selectedIds.size, handleBulkDelete);
 
   function toggleSelectAll() {
     setSelectedIds((current) => {
@@ -173,7 +184,15 @@ export default function ContactList({
         <p className="border-b border-line bg-danger-soft px-4 py-3 text-sm text-danger">{error}</p>
       )}
 
-      <BulkDeleteBar count={selectedIds.size} onDelete={handleBulkDelete} onClear={() => { setSelectedIds(new Set()); setSelectionMode(false); }} deleting={bulkDeleting} />
+      <BulkDeleteBar
+        count={selectedIds.size}
+        onDelete={handleBulkDelete}
+        onClear={() => { setSelectedIds(new Set()); setSelectionMode(false); }}
+        deleting={bulkDeleting}
+        onSendMail={bulkMail.openBulkMail}
+        selectAllMatching={bulkMail.selectAllMatching}
+      />
+      {bulkMail.dialog}
 
       {isLoading ? (
         <div className="space-y-3 p-4">
@@ -253,6 +272,14 @@ export default function ContactList({
                         onEdit={() => router.push(`/dashboard/contacts/${contact.id}?edit=1`)}
                         onDelete={() => handleDelete(contact)}
                         onSelect={() => setSelectionMode(true)}
+                        onSendMail={() => bulkMail.composeSingle({
+                          recordType: "CONTACT",
+                          recordId: contact.id,
+                          name: contact.name,
+                          email: contact.email,
+                          emailOptOut: contact.email_opt_out,
+                        })}
+                        sendMailDisabled={!contact.email}
                         recordId={contact.id}
                       />
                       </div>

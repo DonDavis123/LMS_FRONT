@@ -16,6 +16,7 @@ import { toSelectOptions } from "@/features/picklists/utils/optionHelpers";
 import type { Lead, LeadStatus } from "@/features/leads/types/lead.types";
 
 import CreateTaskFromRecord from "@/shared/components/CreateTaskFromRecord";
+import SendMailButton from "@/features/mailing/components/SendMailButton";
 import { confirmDelete } from "@/shared/utils/confirmDelete";
 import { CALLS_ENABLED } from "@/features/calls/config";
 import LogCallFromRecord from "@/features/calls/components/LogCallFromRecord";
@@ -115,7 +116,7 @@ async function handleStatusClick(status: LeadStatus) {
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center justify-end gap-2">
           <Link
             href={`/dashboard/leads/${lead.id}/convert`}
             className="rounded-md bg-ink px-4 py-2 text-sm font-semibold text-white hover:bg-ink-2"
@@ -124,6 +125,7 @@ async function handleStatusClick(status: LeadStatus) {
           </Link>
           {CALLS_ENABLED && <LogCallFromRecord related={callRelated} onLogged={() => setCallsVersion((v) => v + 1)} />}
           <CreateTaskFromRecord related={{ personType: "lead", personId: lead.id, personLabel: lead.name || lead.email || "Lead", accountId: "", accountLabel: "" }} />
+          <SendMailButton entity="leads" recordId={lead.id} recordName={lead.name || lead.email || "Lead"} email={lead.email} />
           <Link
             href={`/dashboard/leads/${lead.id}/edit`}
             className="rounded-md border border-line px-4 py-2 text-sm font-medium text-fg hover:bg-paper"

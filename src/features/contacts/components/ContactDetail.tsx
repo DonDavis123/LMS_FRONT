@@ -16,6 +16,7 @@ import { formatDateTime } from "@/shared/utils/formatDate";
 import { useContactPicklists } from "@/features/picklists/hooks/useLeadPicklists";
 import { toSelectOptions } from "@/features/picklists/utils/optionHelpers";
 import CreateTaskFromRecord from "@/shared/components/CreateTaskFromRecord";
+import SendMailButton from "@/features/mailing/components/SendMailButton";
 import { confirmDelete } from "@/shared/utils/confirmDelete";
 import { CALLS_ENABLED } from "@/features/calls/config";
 import LogCallFromRecord from "@/features/calls/components/LogCallFromRecord";
@@ -76,9 +77,10 @@ export default function ContactDetail({ contact, onContactChange }: ContactDetai
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center justify-end gap-2">
           {CALLS_ENABLED && <LogCallFromRecord related={callRelated} onLogged={() => setCallsVersion((v) => v + 1)} />}
           <CreateTaskFromRecord related={{ personType: "contact", personId: contact.id, personLabel: contact.name || contact.email || "Contact", accountId: contact.account_id || "", accountLabel: contact.account_name || "" }} />
+          <SendMailButton entity="contacts" recordId={contact.id} recordName={contact.name || contact.email || "Contact"} email={contact.email} emailOptOut={contact.email_opt_out} />
           <Link href={`/dashboard/contacts/${contact.id}?edit=1`} className="rounded-md border border-line px-4 py-2 text-sm font-medium text-fg hover:bg-paper">Edit</Link>
           <div className="relative">
             <button type="button" onClick={() => setIsMenuOpen((v) => !v)} className="rounded-md border border-line p-2 text-ink-soft hover:bg-paper" aria-label="Contact actions">

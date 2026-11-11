@@ -25,6 +25,21 @@ export interface AuthUser {
   email: string;
   role: UserRole;
   company?: AuthUserCompany | null;
+  /**
+   * Optional Google account the user sends mail from (set by the user in the
+   * Send Mail menu). `null`/missing means "use the login email".
+   */
+  google_email?: string | null;
+  /** `google_email` when set, otherwise the login email (from GET /users/me/). */
+  mail_account_email?: string;
+}
+
+/**
+ * The Google account a Gmail draft should open in. Sessions cached before
+ * this field existed lack `mail_account_email`, so fall back to the login email.
+ */
+export function getMailAccountEmail(user: AuthUser | null): string {
+  return user?.google_email || user?.mail_account_email || user?.email || "";
 }
 
 function normalizeRole(role: string | null | undefined): string {
