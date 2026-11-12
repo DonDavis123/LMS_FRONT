@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
+import { useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { Check, ListFilter, Plus, Search, SlidersHorizontal, X } from "lucide-react";
 import DateInput, { DateTimeInput } from "@/shared/components/DateInput";
@@ -549,7 +549,7 @@ function FilterValueInput({
     "w-full rounded-md border border-line bg-paper px-2.5 py-2 text-sm text-fg outline-none transition focus:border-slate focus:bg-surface focus:ring-2 focus:ring-slate-light";
   const isDateTime = config.type === "datetime";
   const DateField = isDateTime ? DateTimeInput : DateInput;
-  const submitOnEnter = (e: KeyboardEvent) => {
+  const submitOnEnter = (e: ReactKeyboardEvent) => {
     if (e.key === "Enter") {
       e.preventDefault();
       onSubmit();
