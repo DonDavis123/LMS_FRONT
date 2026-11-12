@@ -13,6 +13,13 @@ export function formatDuration(totalSeconds: number): string {
   return `${seconds} sec`;
 }
 
+/** Toast text after a call was logged; mentions a recording that could not be uploaded with it. */
+export function callLoggedMessage(recordingError: string | null, base = "Call logged successfully"): string {
+  return recordingError
+    ? `Call logged, but its recording wasn't uploaded (${recordingError}). Add it from the call's Recordings tab.`
+    : base;
+}
+
 /** "04:10" / "1:04:10" — for the live call timer. */
 export function formatClock(totalSeconds: number): string {
   const total = Math.max(0, Math.floor(totalSeconds));

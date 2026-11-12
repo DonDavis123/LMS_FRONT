@@ -11,6 +11,9 @@ import type {
   CreateCallPayload,
   UpdateCallPayload,
 } from "@/features/calls/types/call.types";
+import { CallRecordingService } from "@/features/calls/services/CallRecordingService";
+import type { PendingRecording } from "@/features/calls/types/callRecording.types";
+import { extractApiError } from "@/shared/utils/apiError";
 
 const DEFAULT_PAGE_SIZE = 10;
 const MAX_PAGE_SIZE = 50;
@@ -104,6 +107,28 @@ export const CallService = {
   async createCall(payload: CreateCallPayload): Promise<Call> {
     const { data } = await apiClient.post<Call>("/calls/", payload);
     return data;
+  },
+
+  /**
+   * Logs a call and, when one was attached in the form, uploads its recording.
+   * The call is already saved when the upload runs, so a failed upload is
+   * returned as `recordingError` (never thrown): retrying the form would log
+   * the call twice. The recording can be added later from the call's page.
+   */
+  async createCallWithRecording(
+    payload: CreateCallPayload,
+    recording: PendingRecording | null = null,
+  ): Promise<{ call: Call; recordingError: string | null }> {
+    const call = await this.createCall(payload);
+    if (!recording) return { call, recordingError: null };
+    try {
+      await CallRecordingService.uploadRecording(call.id, recording.file, recording.name, {
+        durationSeconds: recording.durationSeconds,
+      });
+      return { call, recordingError: null };
+    } catch (error) {
+      return { call, recordingError: extractApiError(error, "the upload failed") };
+    }
   },
 
   async updateCall(id: string, payload: UpdateCallPayload): Promise<Call> {

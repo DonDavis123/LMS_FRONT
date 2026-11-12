@@ -8,6 +8,8 @@ import CallForm from "@/features/calls/components/CallForm";
 import Modal from "@/shared/components/Modal";
 import { CallService } from "@/features/calls/services/CallService";
 import type { Call, CallRecordRow, CreateCallPayload, UpdateCallPayload } from "@/features/calls/types/call.types";
+import type { PendingRecording } from "@/features/calls/types/callRecording.types";
+import { callLoggedMessage } from "@/features/calls/utils/callFormat";
 import type { FilterCondition } from "@/shared/components/FilterBar";
 import type { PaginationMeta } from "@/shared/types/pagination";
 import type { SortState } from "@/shared/types/sort";
@@ -92,9 +94,9 @@ export default function CallsPage() {
     return () => window.clearTimeout(timer);
   }, [toast]);
 
-  async function handleCreate(payload: CreateCallPayload) {
-    await CallService.createCall(payload);
-    setToast("Call logged successfully");
+  async function handleCreate(payload: CreateCallPayload, recording?: PendingRecording | null) {
+    const { recordingError } = await CallService.createCallWithRecording(payload, recording);
+    setToast(callLoggedMessage(recordingError));
     setModalState(null);
     setPage(1);
     await load(1);

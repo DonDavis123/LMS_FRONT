@@ -5,6 +5,8 @@ import { useNoChangeGuard } from "@/shared/hooks/useNoChangeGuard";
 import { DateTimeInput } from "@/shared/components/DateInput";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Lock, Play, Square, Timer } from "lucide-react";
+import RecordingPicker from "@/features/calls/components/RecordingPicker";
+import type { PendingRecording } from "@/features/calls/types/callRecording.types";
 import { userService } from "@/features/users/services/userService";
 import type { LeadOwnerOption } from "@/features/auth/types/auth.types";
 import { authService } from "@/features/auth/services/authService";
@@ -41,7 +43,8 @@ type CallFormProps =
       initialRelated?: RelatedToValue;
       /** Pre-selects the day (YYYY-MM-DD), e.g. when adding from the calendar. A future day starts as a planned call. */
       initialDate?: string;
-      onSubmit: (payload: CreateCallPayload) => Promise<void>;
+      /** `recording` is the optional audio attached in the form; the parent uploads it once the call exists. */
+      onSubmit: (payload: CreateCallPayload, recording?: PendingRecording | null) => Promise<void>;
       onCancel: () => void;
     }
   | {
@@ -140,6 +143,7 @@ export default function CallForm(props: CallFormProps) {
   const [owners, setOwners] = useState<LeadOwnerOption[]>([]);
   const [error, setError, errorRef] = useFormError();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [recording, setRecording] = useState<PendingRecording | null>(null);
 
   // Call timer (create only): Start -> Stop fills the start time and duration.
   const timerStartRef = useRef<number | null>(null);
@@ -283,7 +287,7 @@ export default function CallForm(props: CallFormProps) {
           contact_id: isLead ? null : form.related.personId,
           // The backend only allows an account on a contact call.
           account_id: isLead ? null : form.related.accountId || null,
-        });
+        }, isCompleted ? recording : null);
       }
     } catch (caught) {
       setError(extractApiError(caught, "Couldn't save this call. Check the fields and try again."));
@@ -470,6 +474,12 @@ export default function CallForm(props: CallFormProps) {
               {notesLength}/{MAX_CALL_NOTES_LENGTH}
             </span>
           </Field>
+
+          {mode === "create" && isCompleted && (
+            <Field label="Call Recording (optional)" fullWidth>
+              <RecordingPicker value={recording} onChange={setRecording} disabled={isSubmitting} />
+            </Field>
+          )}
         </div>
       </div>
 
@@ -491,7 +501,7 @@ export default function CallForm(props: CallFormProps) {
             className="flex items-center gap-2 rounded-md bg-ink px-4 py-2 text-sm font-semibold text-white transition hover:bg-ink-2 active:scale-[0.98] disabled:opacity-60"
           >
             {isSubmitting && <Spinner size="sm" className="border-white/30 border-t-white" />}
-            {isSubmitting ? "Saving…" : mode === "create" ? (isCompleted ? "Log Call" : "Schedule Call") : "Save"}
+            {isSubmitting ? (recording && isCompleted ? "Uploading…" : "Saving…") : mode === "create" ? (isCompleted ? "Log Call" : "Schedule Call") : "Save"}
           </button>
         </div>
       </div>

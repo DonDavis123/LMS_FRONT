@@ -50,3 +50,11 @@ export const RECORDING_EXTENSIONS = [
   "3gp",
   "flac",
 ] as const;
+
+/** A recording chosen (or recorded) in the browser, waiting to be uploaded. */
+export interface PendingRecording {
+  file: File | Blob;
+  name: string;
+  /** Null when the length could not be read from the audio. */
+  durationSeconds: number | null;
+}

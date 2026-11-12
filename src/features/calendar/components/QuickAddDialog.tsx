@@ -10,6 +10,7 @@ import ReminderForm from "@/features/reminders/components/ReminderForm";
 import { TaskService } from "@/features/tasks/services/TaskService";
 import { MeetingService } from "@/features/meetings/services/MeetingService";
 import { CallService } from "@/features/calls/services/CallService";
+import { callLoggedMessage } from "@/features/calls/utils/callFormat";
 import { ReminderService } from "@/features/reminders/services/ReminderService";
 import { parseDateKey } from "@/features/dashboard/utils/dashboardMetrics";
 import { longDayTitle } from "@/features/calendar/utils/calendarDates";
@@ -106,10 +107,10 @@ export default function QuickAddDialog({ day, onClose, onCreated }: QuickAddDial
           mode="create"
           initialDate={day}
           onCancel={close}
-          onSubmit={async (payload) => {
-            await CallService.createCall(payload);
+          onSubmit={async (payload, recording) => {
+            const { recordingError } = await CallService.createCallWithRecording(payload, recording);
             close();
-            onCreated(payload.status === "Planned" ? "Call scheduled successfully" : "Call logged successfully");
+            onCreated(callLoggedMessage(recordingError, payload.status === "Planned" ? "Call scheduled successfully" : "Call logged successfully"));
           }}
         />
       )}

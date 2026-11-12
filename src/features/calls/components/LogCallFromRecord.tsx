@@ -7,6 +7,8 @@ import type { RelatedToValue } from "@/shared/components/RelatedToPicker";
 import CallForm from "@/features/calls/components/CallForm";
 import { CallService } from "@/features/calls/services/CallService";
 import type { CreateCallPayload } from "@/features/calls/types/call.types";
+import type { PendingRecording } from "@/features/calls/types/callRecording.types";
+import { callLoggedMessage } from "@/features/calls/utils/callFormat";
 
 interface LogCallFromRecordProps {
   /** The lead / contact (and account) the call is logged for. */
@@ -34,10 +36,10 @@ export default function LogCallFromRecord({
     return () => window.clearTimeout(timer);
   }, [message]);
 
-  async function submit(payload: CreateCallPayload) {
-    await CallService.createCall(payload);
+  async function submit(payload: CreateCallPayload, recording?: PendingRecording | null) {
+    const { recordingError } = await CallService.createCallWithRecording(payload, recording);
     setOpen(false);
-    setMessage("Call logged successfully");
+    setMessage(callLoggedMessage(recordingError));
     onLogged?.();
   }
 
