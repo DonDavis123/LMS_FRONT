@@ -8,6 +8,7 @@ import type { Notification } from "@/features/notifications/types/notification.t
 import { getNotificationTarget } from "@/features/notifications/utils/notificationTarget";
 import NotificationDropdown from "@/features/notifications/components/NotificationDropdown";
 import NotificationDetailDialog from "@/features/notifications/components/NotificationDetailDialog";
+import { initNotificationSound, playNotificationSound } from "@/features/notifications/utils/notificationSound";
 
 const POLL_INTERVAL_MS = 10_000;
 
@@ -44,6 +45,9 @@ export default function NotificationBell() {
   const previousUnreadRef = useRef(0);
   const rootRef = useRef<HTMLDivElement>(null);
   const inFlightRef = useRef(false);
+  // Ids already delivered to this tab. `null` until the first poll finishes, so
+  // notifications that were already waiting when the page loaded stay silent.
+  const knownIdsRef = useRef<Set<string> | null>(null);
 
   // Always holds the list currently on screen, so handlers never act on a stale closure.
   const notificationsRef = useRef<Notification[]>([]);
@@ -72,6 +76,15 @@ export default function NotificationBell() {
     try {
       const data = await NotificationService.getNotifications();
       const now = new Date().toISOString();
+
+      // Ring only for an unread notification this tab has never seen before.
+      // (Read/delete rollbacks and the first page load don't count.)
+      const known = knownIdsRef.current;
+      if (known && data.some((n) => !n.is_read && !known.has(n.id) && !removedIdsRef.current.has(n.id))) {
+        playNotificationSound();
+      }
+      knownIdsRef.current = new Set([...(known ?? []), ...data.map((n) => n.id)]);
+
       commit(
         data
           .filter((n) => !removedIdsRef.current.has(n.id))
@@ -87,6 +100,8 @@ export default function NotificationBell() {
       setIsLoading(false);
     }
   }, [commit]);
+
+  useEffect(() => initNotificationSound(), []);
 
   useEffect(() => {
     refresh();
