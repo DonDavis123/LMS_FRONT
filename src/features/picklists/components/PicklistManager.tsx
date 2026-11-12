@@ -14,6 +14,8 @@ import {
   type PicklistModule,
   type PicklistOption,
 } from "@/features/picklists/types/picklist.types";
+import OptionColorPicker from "@/features/picklists/components/OptionColorPicker";
+import { effectiveOptionColor } from "@/features/picklists/utils/optionHelpers";
 import PicklistOptionRow from "@/features/picklists/components/PicklistOptionRow";
 import DeletePicklistOptionDialog from "@/features/picklists/components/DeletePicklistOptionDialog";
 
@@ -50,7 +52,7 @@ function moveItem(list: PicklistOption[], from: number, to: number): PicklistOpt
 
 /**
  * Superadmin screen for the company's own dropdown options of Leads,
- * Contacts and Accounts: add, rename, hide, delete and reorder.
+ * Contacts and Accounts: add, rename, recolour, hide, delete and reorder.
  * Every change is saved straight away through /api/picklists/…
  */
 export default function PicklistManager() {
@@ -65,6 +67,7 @@ export default function PicklistManager() {
   const toastTimer = useRef<number | null>(null);
 
   const [newValue, setNewValue] = useState("");
+  const [newColor, setNewColor] = useState("");
   const [addError, setAddError] = useState<string | null>(null);
   const [isAdding, setIsAdding] = useState(false);
   const addInputRef = useRef<HTMLInputElement>(null);
@@ -146,6 +149,7 @@ export default function PicklistManager() {
 
   function resetPanelState() {
     setNewValue("");
+    setNewColor("");
     setAddError(null);
     setDragId(null);
     setOverId(null);
@@ -187,10 +191,11 @@ export default function PicklistManager() {
     setIsAdding(true);
     setAddError(null);
     try {
-      const created = await PicklistService.createOption(field, value, activeModule);
+      const created = await PicklistService.createOption(field, value, activeModule, newColor);
       patchField(field, (list) => [...list, created]);
       invalidatePicklists(activeModule);
       setNewValue("");
+      setNewColor("");
       showToast("success", `Added “${created.value}” to ${meta.label}`);
       addInputRef.current?.focus();
     } catch (error) {
@@ -219,6 +224,26 @@ export default function PicklistManager() {
       return null;
     } catch (error) {
       return extractApiError(error, "Couldn't rename this option. Try again.");
+    }
+  }
+
+  /* ── Colour ──────────────────────────────────────────────────────── */
+
+  async function handleColorChange(option: PicklistOption, color: string) {
+    if (option.color === color) return;
+    const field = activeField;
+    setBusy(option.id, true);
+    try {
+      const updated = await PicklistService.updateOption(option.id, { color });
+      patchField(field, (list) =>
+        list.map((item) => (item.id === option.id ? { ...item, ...updated, usage_count: item.usage_count } : item)),
+      );
+      invalidatePicklists(activeModule);
+      showToast("success", `Colour updated for “${updated.value}”`);
+    } catch (error) {
+      showToast("error", extractApiError(error, "Couldn't change the colour. Try again."));
+    } finally {
+      setBusy(option.id, false);
     }
   }
 
@@ -350,7 +375,7 @@ export default function PicklistManager() {
           <h1 className="font-serif text-lg leading-tight text-fg">Dropdown Options</h1>
           <p className="text-xs text-ink-soft">
             Customise the choices your team sees on {moduleMeta.recordPlural}. These lists belong to your company
-            only.
+            only. Give an option a colour to make it stand out in lists and status menus.
           </p>
           {/* Module switcher: Leads / Contacts / Accounts */}
           <div className="[&>div]:!mt-3 overflow-x-auto">
@@ -442,6 +467,15 @@ export default function PicklistManager() {
                       Add
                     </button>
                   </div>
+                  <div className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-2">
+                    <span className="text-xs font-medium text-ink-soft">Colour</span>
+                    <OptionColorPicker
+                      value={newColor}
+                      onChange={setNewColor}
+                      disabled={isAdding}
+                      ariaLabel="Colour of the new option"
+                    />
+                  </div>
                   {addError && (
                     <p role="alert" className="mt-1.5 text-xs text-danger">
                       {addError}
@@ -477,12 +511,14 @@ export default function PicklistManager() {
                       canMoveUp={index > 0 && !options[index - 1].is_system}
                       canMoveDown={index < options.length - 1}
                       maxLength={meta.maxLength}
+                      color={effectiveOptionColor(meta.field, option.value, option.color)}
                       recordSingular={moduleMeta.recordSingular}
                       recordPlural={moduleMeta.recordPlural}
                       isDragging={dragId === option.id}
                       isDropTarget={dragId !== null && overId === option.id && dragId !== option.id}
                       onRename={handleRename}
                       onToggleActive={handleToggleActive}
+                      onColorChange={handleColorChange}
                       onDelete={requestDelete}
                       onMove={handleMove}
                       onDragStart={(item) => setDragId(item.id)}

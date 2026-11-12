@@ -41,13 +41,17 @@ export const PicklistService = {
     field: PicklistFieldKey,
     value: string,
     module: PicklistModule = "leads",
+    color?: string,
   ): Promise<PicklistOption> {
-    const { data } = await apiClient.post<PicklistOption>(`${base(module)}/${field}/create/`, { value });
+    const { data } = await apiClient.post<PicklistOption>(`${base(module)}/${field}/create/`, {
+      value,
+      ...(color ? { color } : {}),
+    });
     return data;
   },
 
   /**
-   * PATCH /picklists/options/{id}/update/ — rename and/or show/hide.
+   * PATCH /picklists/options/{id}/update/ — rename, recolour and/or show/hide.
    * Renaming also moves every record that uses the option to the new text.
    * The response has `usage_count: null`, so callers keep the count they had.
    */

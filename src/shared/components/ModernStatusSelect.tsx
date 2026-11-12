@@ -3,11 +3,14 @@
 import { Check, ChevronDown, Loader2 } from "lucide-react";
 import { createPortal } from "react-dom";
 import { useEffect, useRef, useState } from "react";
+import { getOptionColorStyle } from "@/shared/utils/optionColors";
 
 export interface ModernStatusOption {
   value: string;
   label: string;
   tone?: "neutral" | "info" | "success" | "warning" | "danger";
+  /** Admin-chosen palette key (see `shared/utils/optionColors`). Wins over `tone`. */
+  color?: string;
   description?: string;
 }
 
@@ -18,6 +21,10 @@ const TONE = {
   warning: { dot: "bg-amber-500", pill: "bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300", active: "bg-amber-50 dark:bg-amber-950/40" },
   danger: { dot: "bg-rose-500", pill: "bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300", active: "bg-rose-50 dark:bg-rose-950/40" },
 } as const;
+
+function styleOf(option?: ModernStatusOption) {
+  return getOptionColorStyle(option?.color) ?? TONE[option?.tone ?? "neutral"];
+}
 
 export default function ModernStatusSelect({
   value,
@@ -39,7 +46,7 @@ export default function ModernStatusSelect({
   const [open, setOpen] = useState(false);
   const [position, setPosition] = useState({ top: 0, left: 0, width: 220, maxHeight: 320 });
   const current = options.find((option) => option.value === value) ?? options[0];
-  const tone = TONE[current?.tone ?? "neutral"];
+  const tone = styleOf(current);
 
   useEffect(() => {
     if (!open) return;
@@ -117,7 +124,7 @@ export default function ModernStatusSelect({
           <div className="shrink-0 px-2.5 pb-1.5 pt-1 text-[10px] font-bold uppercase tracking-[0.14em] text-ink-soft">Choose status</div>
           <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pr-0.5" onWheel={(event) => event.stopPropagation()}>
           {options.map((option) => {
-            const optionTone = TONE[option.tone ?? "neutral"];
+            const optionTone = styleOf(option);
             const selected = option.value === value;
             return (
               <button

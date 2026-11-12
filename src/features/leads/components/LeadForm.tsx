@@ -131,7 +131,7 @@ export default function LeadForm({
   const { warning, isUnchanged } = useNoChangeGuard(form, mode === "edit");
   const [owners, setOwners] = useState<LeadOwnerOption[]>([]);
   // The company's own Lead Source / Status / Industry / Rating options.
-  const { options: picklists } = useLeadPicklists();
+  const { options: picklists, colors: picklistColors } = useLeadPicklists();
   const [error, setError, errorRef] = useFormError();
   const [notice, setNotice] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -405,7 +405,7 @@ export default function LeadForm({
                 value={form.lead_status}
                 onChange={(value) => update("lead_status", value as LeadStatus)}
                 fullWidth
-                options={toStatusOptions(picklists.lead_status, form.lead_status)}
+                options={toStatusOptions(picklists.lead_status, form.lead_status, picklistColors.lead_status)}
               />
             </Field>
 

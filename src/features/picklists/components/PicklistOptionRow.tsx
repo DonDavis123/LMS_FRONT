@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useRef, useState, type DragEvent, type FormEvent } from "react";
-import { Check, ChevronDown, ChevronUp, GripVertical, Lock, Pencil, Trash2, X } from "lucide-react";
+import { Check, ChevronDown, ChevronUp, GripVertical, Lock, Palette, Pencil, Trash2, X } from "lucide-react";
 import Switch from "@/shared/components/Switch";
 import Spinner from "@/shared/components/Spinner";
+import OptionColorPicker from "@/features/picklists/components/OptionColorPicker";
+import { getOptionColorStyle } from "@/shared/utils/optionColors";
 import type { PicklistOption } from "@/features/picklists/types/picklist.types";
 
 interface PicklistOptionRowProps {
@@ -15,6 +17,8 @@ interface PicklistOptionRowProps {
   canMoveUp: boolean;
   canMoveDown: boolean;
   maxLength: number;
+  /** The colour shown for this option: the admin's choice, or the built-in default. */
+  color: string;
   /** Singular / plural noun of the records using the option (lead, contact, account). */
   recordSingular?: string;
   recordPlural?: string;
@@ -23,6 +27,7 @@ interface PicklistOptionRowProps {
   /** Resolves to an error message, or `null` once the rename was saved. */
   onRename: (option: PicklistOption, value: string) => Promise<string | null>;
   onToggleActive: (option: PicklistOption) => void;
+  onColorChange: (option: PicklistOption, color: string) => void;
   onDelete: (option: PicklistOption) => void;
   onMove: (option: PicklistOption, direction: -1 | 1) => void;
   onDragStart: (option: PicklistOption) => void;
@@ -48,12 +53,14 @@ export default function PicklistOptionRow({
   canMoveUp,
   canMoveDown,
   maxLength,
+  color,
   recordSingular = "lead",
   recordPlural = "leads",
   isDragging,
   isDropTarget,
   onRename,
   onToggleActive,
+  onColorChange,
   onDelete,
   onMove,
   onDragStart,
@@ -65,17 +72,20 @@ export default function PicklistOptionRow({
   const [draft, setDraft] = useState(option.value);
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [isPickingColor, setIsPickingColor] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const usage = option.usage_count;
   const locked = option.is_system;
   const canDrag = !locked && !isEditing && !isBusy && !isReorderLocked;
+  const colorStyle = getOptionColorStyle(color);
 
   useEffect(() => {
     if (isEditing) inputRef.current?.select();
   }, [isEditing]);
 
   function startEditing() {
+    setIsPickingColor(false);
     setDraft(option.value);
     setError(null);
     setIsEditing(true);
@@ -208,7 +218,11 @@ export default function PicklistOptionRow({
             <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
               <span
                 className={`min-w-0 truncate text-sm font-medium ${
-                  option.is_active ? "text-fg" : "text-ink-soft line-through decoration-ink-soft/40"
+                  !option.is_active
+                    ? "text-ink-soft line-through decoration-ink-soft/40"
+                    : colorStyle
+                      ? `rounded-full px-2.5 py-0.5 ${colorStyle.pill}`
+                      : "text-fg"
                 }`}
                 title={option.value}
               >
@@ -282,6 +296,21 @@ export default function PicklistOptionRow({
 
             <button
               type="button"
+              onClick={() => setIsPickingColor((open) => !open)}
+              disabled={isBusy}
+              aria-label={`Change colour of ${option.value}`}
+              aria-expanded={isPickingColor}
+              title="Colour"
+              className={`${iconButton} ${isPickingColor ? "bg-paper text-fg" : ""}`}
+            >
+              {colorStyle ? (
+                <span className={`h-3.5 w-3.5 rounded-full ${colorStyle.dot}`} />
+              ) : (
+                <Palette size={15} />
+              )}
+            </button>
+            <button
+              type="button"
               onClick={startEditing}
               disabled={isBusy}
               aria-label={`Rename ${option.value}`}
@@ -301,6 +330,18 @@ export default function PicklistOptionRow({
           </div>
         )}
       </div>
+
+      {isPickingColor && !locked && !isEditing && (
+        <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-lg bg-paper/70 px-3 py-2.5 sm:ml-8">
+          <span className="text-xs font-medium text-ink-soft">Colour</span>
+          <OptionColorPicker
+            value={color}
+            disabled={isBusy}
+            ariaLabel={`Colour of ${option.value}`}
+            onChange={(next) => onColorChange(option, next)}
+          />
+        </div>
+      )}
     </li>
   );
 }

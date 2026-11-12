@@ -22,6 +22,9 @@ export type LeadPicklists = Record<LeadPicklistField, string[]>;
 export type ContactPicklists = Record<ContactPicklistField, string[]>;
 export type AccountPicklists = Record<AccountPicklistField, string[]>;
 
+/** The company's chosen colour (a palette key) per option text, per field. Options without one are absent. */
+export type PicklistColors = Record<string, Record<string, string>>;
+
 export interface PicklistsByModule {
   leads: LeadPicklists;
   contacts: ContactPicklists;
@@ -87,6 +90,7 @@ interface CacheEntry<T> {
   at: number;
   /** The signed-in user the list belongs to — never reuse it for another company. */
   ownerId: string | null;
+  colors: PicklistColors;
 }
 
 interface ModuleState<T> {
@@ -130,16 +134,20 @@ export function loadPicklists<M extends PicklistModule>(
   const request = PicklistService.getPicklists(module)
     .then((fields) => {
       const data = { ...DEFAULTS[module] } as Record<string, string[]>;
+      const colors: PicklistColors = {};
       for (const key of Object.keys(DEFAULTS[module])) {
         const match = fields.find((item) => item.field === key);
         if (!match) continue;
-        data[key] = [...match.options]
+        const active = [...match.options]
           .filter((option) => option.is_active)
-          .sort((a, b) => a.sort_order - b.sort_order)
-          .map((option) => option.value);
+          .sort((a, b) => a.sort_order - b.sort_order);
+        data[key] = active.map((option) => option.value);
+        colors[key] = Object.fromEntries(
+          active.filter((option) => option.color).map((option) => [option.value, option.color]),
+        );
       }
       const result = data as unknown as PicklistsByModule[M];
-      slot.cache = { data: result, at: Date.now(), ownerId: owner };
+      slot.cache = { data: result, at: Date.now(), ownerId: owner, colors };
       return result;
     })
     .finally(() => {
@@ -178,12 +186,15 @@ export function usePicklists<M extends PicklistModule>(
   module: M,
 ): {
   options: PicklistsByModule[M];
+  /** Chosen colour per option text, per field — e.g. `colors.lead_status["Hot Lead"]`. */
+  colors: PicklistColors;
   isLoading: boolean;
   error: boolean;
 } {
   const [options, setOptions] = useState<PicklistsByModule[M]>(
     () => validCache(module)?.data ?? (DEFAULTS[module] as PicklistsByModule[M]),
   );
+  const [colors, setColors] = useState<PicklistColors>(() => validCache(module)?.colors ?? {});
   const [isLoading, setIsLoading] = useState(() => validCache(module) === null);
   const [error, setError] = useState(false);
 
@@ -193,6 +204,7 @@ export function usePicklists<M extends PicklistModule>(
       .then((data) => {
         if (cancelled) return;
         setOptions(data);
+        setColors(validCache(module)?.colors ?? {});
         setError(false);
       })
       .catch(() => {
@@ -207,7 +219,7 @@ export function usePicklists<M extends PicklistModule>(
     };
   }, [module]);
 
-  return { options, isLoading, error };
+  return { options, colors, isLoading, error };
 }
 
 /** The company's own Lead Source / Status / Industry / Rating options. */

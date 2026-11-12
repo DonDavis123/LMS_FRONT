@@ -23,6 +23,8 @@ export interface PicklistOption {
   is_active: boolean;
   /** The built-in "None" option: it can't be renamed, hidden, deleted or moved. */
   is_system: boolean;
+  /** Palette key (see `shared/utils/optionColors`), or "" when no colour was chosen. */
+  color: string;
   /** Records using this option. Only sent in the superadmin (include_inactive) view. */
   usage_count: number | null;
 }
@@ -42,6 +44,8 @@ export interface PicklistModuleResponse {
 export interface UpdatePicklistOptionPayload {
   value?: string;
   is_active?: boolean;
+  /** Palette key, or "" to go back to the default colour. */
+  color?: string;
 }
 
 export interface DeletePicklistOptionResult {

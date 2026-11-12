@@ -8,6 +8,7 @@ import { Upload } from "lucide-react";
 import type { Lead, LeadStatus } from "@/features/leads/types/lead.types";
 import { useLeadPicklists } from "@/features/picklists/hooks/useLeadPicklists";
 import { toStatusOptions } from "@/features/picklists/utils/optionHelpers";
+import { getOptionColorStyle } from "@/shared/utils/optionColors";
 import { LeadService } from "@/features/leads/services/LeadService";
 import { userService } from "@/features/users/services/userService";
 import RecordActionsMenu from "@/shared/components/RecordActionsMenu";
@@ -73,7 +74,7 @@ export default function LeadList({
   const router = useRouter();
   const [owners, setOwners] = useState<LeadOwnerOption[]>([]);
   // The company's own Lead Source / Status / Industry / Rating options.
-  const { options: picklists } = useLeadPicklists();
+  const { options: picklists, colors: picklistColors } = useLeadPicklists();
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [selectionMode, setSelectionMode] = useState(false);
   const [bulkDeleting, setBulkDeleting] = useState(false);
@@ -341,7 +342,11 @@ export default function LeadList({
                     <td className="px-4 py-3 text-ink-soft">{lead.phone || "—"}</td>
                     <td className="px-4 py-3 text-ink-soft">{lead.email || "—"}</td>
                     <td className="px-4 py-3">
-                      <span className="rounded-full bg-slate-light px-2.5 py-1 text-xs font-medium text-slate">
+                      <span
+                        className={`rounded-full px-2.5 py-1 text-xs font-medium ${
+                          getOptionColorStyle(picklistColors.lead_source?.[lead.lead_source])?.pill ?? "bg-slate-light text-slate"
+                        }`}
+                      >
                         {lead.lead_source}
                       </span>
                     </td>
@@ -351,7 +356,7 @@ export default function LeadList({
                         disabled={updatingStatusId === lead.id}
                         ariaLabel={`Change status for ${lead.name || "lead"}`}
                         onChange={(next) => handleStatusChange(lead, next as LeadStatus)}
-                        options={toStatusOptions(picklists.lead_status, lead.lead_status || "None")}
+                        options={toStatusOptions(picklists.lead_status, lead.lead_status || "None", picklistColors.lead_status)}
                       />
                     </td>
                     <td className="px-4 py-3 text-ink-soft">{lead.owner?.name ?? "Unassigned"}</td>
