@@ -1,9 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import { createPortal } from "react-dom";
-import { ListFilter, Plus, SlidersHorizontal, X } from "lucide-react";
-import Select from "@/shared/components/Select";
+import { Check, ListFilter, Plus, Search, SlidersHorizontal, X } from "lucide-react";
 import DateInput, { DateTimeInput } from "@/shared/components/DateInput";
 import { formatLocalDateTime } from "@/shared/utils/dateTime";
 
@@ -82,6 +81,8 @@ const OPERATORS_BY_TYPE: Record<FilterFieldType, { value: string; label: string 
   ],
 };
 
+const POPOVER_WIDTH = 384;
+
 function toApiDatetime(localValue: string): string {
   return localValue ? new Date(localValue).toISOString() : localValue;
 }
@@ -136,7 +137,7 @@ export default function FilterBar({ fields, filters, onChange }: FilterBarProps)
   const triggerRef = useRef<HTMLButtonElement>(null);
   const popoverRef = useRef<HTMLDivElement>(null);
   const [isOpen, setIsOpen] = useState(false);
-  const [position, setPosition] = useState({ top: 0, left: 0 });
+  const [position, setPosition] = useState({ top: 0, left: 0, maxHeight: 560 });
 
   const [draftField, setDraftField] = useState(fields[0]?.field ?? "");
   const [draftOperator, setDraftOperator] = useState(
@@ -153,10 +154,10 @@ export default function FilterBar({ fields, filters, onChange }: FilterBarProps)
   function reposition() {
     if (!triggerRef.current) return;
     const rect = triggerRef.current.getBoundingClientRect();
-    const popoverWidth = 304;
+    const popoverWidth = Math.min(POPOVER_WIDTH, window.innerWidth - 16);
     const left = Math.min(Math.max(8, rect.left), window.innerWidth - popoverWidth - 8);
     const top = rect.bottom + 8;
-    setPosition({ top, left });
+    setPosition({ top, left, maxHeight: Math.max(280, window.innerHeight - top - 12) });
   }
 
   useEffect(() => {
@@ -201,32 +202,34 @@ export default function FilterBar({ fields, filters, onChange }: FilterBarProps)
     setIsOpen((v) => !v);
   }
 
-  function handleAdd() {
-    if (!draftConfig) return;
+  /** Returns the value to submit for the current draft, or undefined while it is incomplete. */
+  function buildValue(): unknown {
+    if (!draftConfig) return undefined;
     const isDatetime = draftConfig.type === "datetime";
-    let value: unknown;
 
     if (draftOperator === "between") {
-      if (!draftFrom || !draftTo) return;
-      value = {
+      if (!draftFrom || !draftTo) return undefined;
+      return {
         from: isDatetime ? toApiDatetime(draftFrom) : draftFrom,
         to: isDatetime ? toApiDatetime(draftTo) : draftTo,
       };
-    } else if (draftOperator === "in" || draftOperator === "not_in") {
-      if (draftValues.length === 0) return;
-      value = draftConfig.type === "number" ? draftValues.map(Number) : draftValues;
-    } else if (draftConfig.type === "boolean") {
-      value = draftValue !== "false";
-    } else if (draftConfig.type === "number") {
-      if (draftValue === "") return;
-      value = Number(draftValue);
-    } else if (isDatetime) {
-      if (!draftValue) return;
-      value = toApiDatetime(draftValue);
-    } else {
-      if (draftValue.trim() === "") return;
-      value = draftValue.trim();
     }
+    if (draftOperator === "in" || draftOperator === "not_in") {
+      if (draftValues.length === 0) return undefined;
+      return draftConfig.type === "number" ? draftValues.map(Number) : draftValues;
+    }
+    if (draftConfig.type === "boolean") return draftValue !== "false";
+    if (draftConfig.type === "number") return draftValue === "" ? undefined : Number(draftValue);
+    if (isDatetime) return draftValue ? toApiDatetime(draftValue) : undefined;
+    return draftValue.trim() === "" ? undefined : draftValue.trim();
+  }
+
+  const canApply = buildValue() !== undefined;
+
+  function handleAdd() {
+    if (!draftConfig) return;
+    const value = buildValue();
+    if (value === undefined) return;
 
     onChange([
       ...filters.filter((f) => f.field !== draftConfig.field),
@@ -234,6 +237,15 @@ export default function FilterBar({ fields, filters, onChange }: FilterBarProps)
     ]);
     setIsOpen(false);
     resetDraft();
+  }
+
+  function handleOperatorChange(next: string) {
+    setDraftOperator(next);
+    // Single-value and multi-value pickers use different state, so start clean.
+    setDraftValue("");
+    setDraftValues([]);
+    setDraftFrom("");
+    setDraftTo("");
   }
 
   function handleRemove(field: string) {
@@ -293,10 +305,10 @@ export default function FilterBar({ fields, filters, onChange }: FilterBarProps)
         ? createPortal(
             <div
               ref={popoverRef}
-              style={{ top: position.top, left: position.left }}
-              className="fixed z-[100] w-[304px] animate-menu-in rounded-xl border border-line bg-surface p-4 shadow-2xl ring-1 ring-black/5"
+              style={{ top: position.top, left: position.left, maxHeight: position.maxHeight, width: POPOVER_WIDTH }}
+              className="fixed z-[100] flex max-w-[calc(100vw-16px)] animate-menu-in flex-col rounded-xl border border-line bg-surface shadow-2xl ring-1 ring-black/5"
             >
-              <div className="mb-3 flex items-center justify-between">
+              <div className="flex items-center justify-between px-4 pb-2 pt-4">
                 <p className="text-sm font-semibold text-fg">Add filter</p>
                 <button
                   onClick={() => setIsOpen(false)}
@@ -307,24 +319,30 @@ export default function FilterBar({ fields, filters, onChange }: FilterBarProps)
                 </button>
               </div>
 
-              <div className="space-y-2.5">
-                <FieldSelect
-                  label="Field"
-                  value={draftField}
-                  onChange={(value) => resetDraft(value)}
-                  options={fields.map((f) => ({ value: f.field, label: f.label }))}
-                />
+              <div className="flex-1 space-y-4 overflow-y-auto px-4 pb-3 pt-1">
+                <Section label="Field">
+                  <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label="Field">
+                    {fields.map((f) => (
+                      <Chip key={f.field} selected={f.field === draftField} onClick={() => resetDraft(f.field)}>
+                        {f.label}
+                      </Chip>
+                    ))}
+                  </div>
+                </Section>
 
-                <FieldSelect
-                  label="Condition"
-                  value={draftOperator}
-                  onChange={setDraftOperator}
-                  options={draftOperators}
-                />
+                <Section label="Condition">
+                  <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label="Condition">
+                    {draftOperators.map((op) => (
+                      <Chip key={op.value} selected={op.value === draftOperator} onClick={() => handleOperatorChange(op.value)}>
+                        {op.label}
+                      </Chip>
+                    ))}
+                  </div>
+                </Section>
 
-                <div>
-                  <p className="mb-1 text-xs font-medium text-ink-soft">Value</p>
+                <Section label="Value">
                   <FilterValueInput
+                    key={`${draftField}:${draftOperator}`}
                     config={draftConfig}
                     operator={draftOperator}
                     value={draftValue}
@@ -335,11 +353,12 @@ export default function FilterBar({ fields, filters, onChange }: FilterBarProps)
                     onValuesChange={setDraftValues}
                     onFromChange={setDraftFrom}
                     onToChange={setDraftTo}
+                    onSubmit={handleAdd}
                   />
-                </div>
+                </Section>
               </div>
 
-              <div className="mt-4 flex justify-end gap-2 border-t border-line pt-3">
+              <div className="flex justify-end gap-2 border-t border-line px-4 py-3">
                 <button
                   onClick={() => setIsOpen(false)}
                   className="rounded-md px-3 py-1.5 text-xs font-medium text-ink-soft transition hover:bg-paper"
@@ -348,7 +367,8 @@ export default function FilterBar({ fields, filters, onChange }: FilterBarProps)
                 </button>
                 <button
                   onClick={handleAdd}
-                  className="flex items-center gap-1 rounded-md bg-ink px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-ink-2 active:scale-[0.98]"
+                  disabled={!canApply}
+                  className="flex items-center gap-1 rounded-md bg-ink px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-ink-2 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40 disabled:active:scale-100"
                 >
                   <Plus size={13} /> Apply
                 </button>
@@ -361,22 +381,141 @@ export default function FilterBar({ fields, filters, onChange }: FilterBarProps)
   );
 }
 
-function FieldSelect({
-  label,
-  value,
-  onChange,
-  options,
+function Section({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div>
+      <p className="mb-1.5 text-xs font-medium text-ink-soft">{label}</p>
+      {children}
+    </div>
+  );
+}
+
+function Chip({
+  selected,
+  onClick,
+  children,
+  multi = false,
 }: {
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-  options: { value: string; label: string }[];
+  selected: boolean;
+  onClick: () => void;
+  children: ReactNode;
+  /** Multi-select chips show a check mark when selected. */
+  multi?: boolean;
 }) {
   return (
-    <label className="block">
-      <span className="mb-1 block text-xs font-medium text-ink-soft">{label}</span>
-      <Select value={value} onChange={onChange} options={options} ariaLabel={label} size="sm" />
-    </label>
+    <button
+      type="button"
+      role={multi ? "checkbox" : "radio"}
+      aria-checked={selected}
+      onClick={onClick}
+      className={`flex items-center gap-1 rounded-full border px-3 py-1.5 text-xs font-medium transition active:scale-[0.97] ${
+        selected
+          ? "border-ink bg-ink text-white shadow-sm"
+          : "border-line bg-paper text-fg hover:border-slate hover:bg-surface"
+      }`}
+    >
+      {multi && selected && <Check size={12} />}
+      {children}
+    </button>
+  );
+}
+
+/** Chip picker for known choices — single or multi-select, with search once the list gets long. */
+function ChoicePicker({
+  choices,
+  multi,
+  value,
+  values,
+  onValueChange,
+  onValuesChange,
+}: {
+  choices: FilterFieldOption[];
+  multi: boolean;
+  value: string;
+  values: string[];
+  onValueChange: (v: string) => void;
+  onValuesChange: (v: string[]) => void;
+}) {
+  const [query, setQuery] = useState("");
+  const searchable = choices.length > 8;
+  const visible = query.trim()
+    ? choices.filter((c) => c.label.toLowerCase().includes(query.trim().toLowerCase()))
+    : choices;
+
+  return (
+    <div className="space-y-2">
+      {searchable && (
+        <div className="relative">
+          <Search size={13} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-soft" />
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search…"
+            className="w-full rounded-md border border-line bg-paper py-1.5 pl-8 pr-2.5 text-sm text-fg outline-none transition focus:border-slate focus:bg-surface focus:ring-2 focus:ring-slate-light"
+          />
+        </div>
+      )}
+
+      {multi && (
+        <div className="flex items-center justify-between text-xs">
+          <span className="text-ink-soft">{values.length} selected</span>
+          <span className="flex gap-3">
+            <button
+              type="button"
+              onClick={() => onValuesChange(Array.from(new Set([...values, ...visible.map((c) => c.value)])))}
+              className="font-medium text-slate hover:underline"
+            >
+              Select all
+            </button>
+            <button
+              type="button"
+              onClick={() => onValuesChange([])}
+              disabled={values.length === 0}
+              className="font-medium text-ink-soft hover:text-danger disabled:opacity-40"
+            >
+              Clear
+            </button>
+          </span>
+        </div>
+      )}
+
+      <div
+        className="flex max-h-44 flex-wrap gap-1.5 overflow-y-auto"
+        role={multi ? "group" : "radiogroup"}
+        aria-label="Filter value"
+      >
+        {visible.length === 0 ? (
+          <p className="py-1 text-xs text-ink-soft">No matches</p>
+        ) : (
+          visible.map((choice) =>
+            multi ? (
+              <Chip
+                key={choice.value}
+                multi
+                selected={values.includes(choice.value)}
+                onClick={() =>
+                  onValuesChange(
+                    values.includes(choice.value)
+                      ? values.filter((v) => v !== choice.value)
+                      : [...values, choice.value]
+                  )
+                }
+              >
+                {choice.label}
+              </Chip>
+            ) : (
+              <Chip
+                key={choice.value}
+                selected={value === choice.value}
+                onClick={() => onValueChange(value === choice.value ? "" : choice.value)}
+              >
+                {choice.label}
+              </Chip>
+            )
+          )
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -391,6 +530,7 @@ function FilterValueInput({
   onValuesChange,
   onFromChange,
   onToChange,
+  onSubmit,
 }: {
   config?: FilterFieldConfig;
   operator: string;
@@ -402,16 +542,23 @@ function FilterValueInput({
   onValuesChange: (v: string[]) => void;
   onFromChange: (v: string) => void;
   onToChange: (v: string) => void;
+  onSubmit: () => void;
 }) {
   if (!config) return null;
   const inputClass =
     "w-full rounded-md border border-line bg-paper px-2.5 py-2 text-sm text-fg outline-none transition focus:border-slate focus:bg-surface focus:ring-2 focus:ring-slate-light";
   const isDateTime = config.type === "datetime";
   const DateField = isDateTime ? DateTimeInput : DateInput;
+  const submitOnEnter = (e: KeyboardEvent) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      onSubmit();
+    }
+  };
 
   if (operator === "between" && (config.type === "date" || isDateTime)) {
     return (
-      <div className="space-y-2">
+      <div className="grid grid-cols-2 gap-2">
         <DateField value={from} onChange={onFromChange} ariaLabel="From" placeholder="From" popoverZIndex={110} />
         <DateField value={to} onChange={onToChange} ariaLabel="To" placeholder="To" popoverZIndex={110} />
       </div>
@@ -421,29 +568,22 @@ function FilterValueInput({
   if (operator === "in" || operator === "not_in") {
     if (config.choices) {
       return (
-        <div className="max-h-32 space-y-1 overflow-y-auto rounded-md border border-line bg-paper p-2">
-          {config.choices.map((choice) => (
-            <label key={choice.value} className="flex items-center gap-2 rounded px-1 py-1 text-sm text-fg hover:bg-surface">
-              <input
-                type="checkbox"
-                checked={values.includes(choice.value)}
-                onChange={(e) =>
-                  onValuesChange(
-                    e.target.checked ? [...values, choice.value] : values.filter((v) => v !== choice.value)
-                  )
-                }
-                className="rounded border-line accent-ink"
-              />
-              {choice.label}
-            </label>
-          ))}
-        </div>
+        <ChoicePicker
+          multi
+          choices={config.choices}
+          value={value}
+          values={values}
+          onValueChange={onValueChange}
+          onValuesChange={onValuesChange}
+        />
       );
     }
     return (
       <input
+        autoFocus
         value={values.join(", ")}
         onChange={(e) => onValuesChange(e.target.value.split(",").map((v) => v.trim()).filter(Boolean))}
+        onKeyDown={submitOnEnter}
         placeholder="Comma-separated values"
         className={inputClass}
       />
@@ -451,32 +591,40 @@ function FilterValueInput({
   }
 
   if (config.type === "boolean") {
+    const current = value || "true";
     return (
-      <Select
-        value={value || "true"}
-        onChange={onValueChange}
-        ariaLabel="Filter value"
-        options={[
-          { value: "true", label: "Yes" },
-          { value: "false", label: "No" },
-        ]}
-      />
+      <div className="flex gap-1.5" role="radiogroup" aria-label="Filter value">
+        <Chip selected={current === "true"} onClick={() => onValueChange("true")}>Yes</Chip>
+        <Chip selected={current === "false"} onClick={() => onValueChange("false")}>No</Chip>
+      </div>
     );
   }
 
   if ((config.type === "choice" || config.type === "uuid") && config.choices) {
     return (
-      <Select
+      <ChoicePicker
+        multi={false}
+        choices={config.choices}
         value={value}
-        onChange={onValueChange}
-        ariaLabel="Filter value"
-        options={[{ value: "", label: "Select…" }, ...config.choices.map((choice) => ({ value: choice.value, label: choice.label }))]}
+        values={values}
+        onValueChange={onValueChange}
+        onValuesChange={onValuesChange}
       />
     );
   }
 
   if (config.type === "number") {
-    return <input type="number" value={value} onChange={(e) => onValueChange(e.target.value)} className={inputClass} />;
+    return (
+      <input
+        autoFocus
+        type="number"
+        value={value}
+        onChange={(e) => onValueChange(e.target.value)}
+        onKeyDown={submitOnEnter}
+        placeholder="Enter a number"
+        className={inputClass}
+      />
+    );
   }
 
   if (config.type === "date" || config.type === "datetime") {
@@ -485,8 +633,10 @@ function FilterValueInput({
 
   return (
     <input
+      autoFocus
       value={value}
       onChange={(e) => onValueChange(e.target.value)}
+      onKeyDown={submitOnEnter}
       placeholder={config.type === "uuid" ? "UUID" : "Value"}
       className={inputClass}
     />
