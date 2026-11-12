@@ -3,7 +3,7 @@
 import { useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowRight, MoreVertical } from "lucide-react";
+import { ArrowRight, Mic, MoreVertical } from "lucide-react";
 import Modal from "@/shared/components/Modal";
 import InlineEditRow from "@/shared/components/InlineEditRow";
 import { Tabs } from "@/shared/components/Tabs";
@@ -33,7 +33,7 @@ interface CallDetailProps {
   onNotice?: (message: string) => void;
 }
 
-type DetailTab = "overview" | "history";
+type DetailTab = "overview" | "recordings" | "history";
 
 function backLabel(returnTo: string | null | undefined): string {
   if (!returnTo) return "← Back to Calls";
@@ -115,6 +115,14 @@ export default function CallDetail({ call, onCallChange, returnTo = null, onNoti
           <div className="flex shrink-0 items-center gap-2">
             <button
               type="button"
+              onClick={() => setActiveTab("recordings")}
+              className="flex items-center gap-1.5 rounded-md border border-line px-4 py-2 text-sm font-medium text-fg hover:bg-paper"
+            >
+              <Mic size={15} />
+              Recordings
+            </button>
+            <button
+              type="button"
               onClick={() => setEditing(true)}
               disabled={!canEdit}
               title={canEdit ? undefined : "Only the latest call can be edited"}
@@ -167,6 +175,7 @@ export default function CallDetail({ call, onCallChange, returnTo = null, onNoti
         <Tabs
           tabs={[
             { value: "overview", label: "Overview" },
+            { value: "recordings", label: "Recordings" },
             { value: "history", label: "History" },
           ]}
           active={activeTab}
@@ -174,7 +183,16 @@ export default function CallDetail({ call, onCallChange, returnTo = null, onNoti
         />
 
         <div key={activeTab} className="animate-fade-in">
-          {activeTab === "overview" ? (
+          {activeTab === "recordings" ? (
+            <CallRecordings
+              callId={call.id}
+              completed={call.status === "Completed"}
+              onChanged={(message) => {
+                setRecordingsVersion((value) => value + 1);
+                onNotice?.(message);
+              }}
+            />
+          ) : activeTab === "overview" ? (
             <>
               <div className="mt-4 rounded-lg border border-line bg-surface p-6">
                 <h2 className="mb-4 text-xs font-semibold uppercase tracking-wide text-ink-soft">Call Information</h2>
@@ -227,15 +245,6 @@ export default function CallDetail({ call, onCallChange, returnTo = null, onNoti
                   onSave={(raw) => updateField("description", raw)}
                 />
               </div>
-
-              <CallRecordings
-                callId={call.id}
-                completed={call.status === "Completed"}
-                onChanged={(message) => {
-                  setRecordingsVersion((value) => value + 1);
-                  onNotice?.(message);
-                }}
-              />
 
               <div className="mt-4 rounded-lg border border-line bg-surface p-6">
                 <div className="mb-4 flex items-center justify-between gap-3">

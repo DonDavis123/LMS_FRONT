@@ -2,15 +2,17 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, PhoneCall } from "lucide-react";
+import { ArrowRight, CheckCircle2, Mic, PhoneCall } from "lucide-react";
 import type { RelatedToValue } from "@/shared/components/RelatedToPicker";
 import type { PaginationMeta } from "@/shared/types/pagination";
 import { withReturnTo } from "@/shared/utils/returnTo";
 import CallDirectionIcon from "@/features/calls/components/CallDirectionIcon";
 import CallOutcomeBadge from "@/features/calls/components/CallOutcomeBadge";
 import LogCallFromRecord from "@/features/calls/components/LogCallFromRecord";
+import RecordingUploadDialog from "@/features/calls/components/RecordingUploadDialog";
 import { CallService, type CallRecordKind } from "@/features/calls/services/CallService";
 import type { Call } from "@/features/calls/types/call.types";
+import { MAX_RECORDINGS_PER_CALL } from "@/features/calls/types/callRecording.types";
 import { formatCallDateTime } from "@/features/calls/utils/callFormat";
 
 interface RecordCallsProps {
@@ -34,6 +36,9 @@ export default function RecordCalls({ kind, recordId, recordName, related, retur
   const [page, setPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // Call a recording is being added to from this list, and the confirmation after it.
+  const [recordingFor, setRecordingFor] = useState<Call | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
 
   const load = useCallback(
     async (requestedPage: number) => {
@@ -60,6 +65,12 @@ export default function RecordCalls({ kind, recordId, recordName, related, retur
   useEffect(() => {
     void load(page);
   }, [load, page, refreshKey]);
+
+  useEffect(() => {
+    if (!notice) return;
+    const timer = window.setTimeout(() => setNotice(null), 3000);
+    return () => window.clearTimeout(timer);
+  }, [notice]);
 
   // A freshly logged call is the newest: jump back to the first page.
   useEffect(() => {
@@ -116,10 +127,10 @@ export default function RecordCalls({ kind, recordId, recordName, related, retur
         ) : (
           <ul className={`divide-y divide-line transition-opacity ${isLoading ? "opacity-60" : ""}`}>
             {calls.map((call) => (
-              <li key={call.id}>
+              <li key={call.id} className="-mx-2 flex items-start gap-1 rounded-md pr-2 transition hover:bg-paper">
                 <Link
                   href={withReturnTo(`/dashboard/calls/${call.id}`, returnTo)}
-                  className="-mx-2 flex items-start gap-3 rounded-md px-2 py-3.5 transition hover:bg-paper"
+                  className="flex min-w-0 flex-1 items-start gap-3 rounded-md px-2 py-3.5"
                 >
                   <CallDirectionIcon callType={call.call_type} className="mt-0.5 h-9 w-9" size={16} />
                   <div className="min-w-0 flex-1">
@@ -137,11 +148,41 @@ export default function RecordCalls({ kind, recordId, recordName, related, retur
                   </div>
                   <ArrowRight size={14} className="mt-2 shrink-0 text-ink-soft" />
                 </Link>
+                {call.status === "Completed" && (
+                  <button
+                    type="button"
+                    onClick={() => setRecordingFor(call)}
+                    title="Add a recording to this call"
+                    aria-label={`Add a recording to the call on ${formatCallDateTime(call.call_start_time)}`}
+                    className="mt-3 flex shrink-0 items-center gap-1.5 rounded-md border border-line px-2.5 py-1.5 text-xs font-medium text-ink-soft transition hover:bg-surface hover:text-fg"
+                  >
+                    <Mic size={13} />
+                    <span className="hidden sm:inline">Recording</span>
+                  </button>
+                )}
               </li>
             ))}
           </ul>
         )}
       </div>
+
+      {notice && (
+        <div className="fixed bottom-6 right-6 z-[60] flex items-center gap-2 rounded-md border border-success/30 bg-success-soft px-4 py-3 text-sm font-medium text-success shadow-lg animate-toast-in">
+          <CheckCircle2 size={16} className="shrink-0 animate-pop-in" />
+          {notice}
+        </div>
+      )}
+
+      <RecordingUploadDialog
+        isOpen={recordingFor !== null}
+        callId={recordingFor?.id ?? ""}
+        slotsLeft={MAX_RECORDINGS_PER_CALL}
+        onClose={() => setRecordingFor(null)}
+        onUploaded={() => {
+          setRecordingFor(null);
+          setNotice("Recording uploaded successfully");
+        }}
+      />
 
       {total > PAGE_SIZE && (
         <div className="flex items-center justify-between border-t border-line px-5 py-2.5 text-sm text-ink-soft">
