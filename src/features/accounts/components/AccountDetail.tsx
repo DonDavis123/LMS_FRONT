@@ -18,6 +18,7 @@ import { toSelectOptions } from "@/features/picklists/utils/optionHelpers";
 import { ContactService } from "@/features/contacts/services/ContactService";
 import CreateTaskFromRecord from "@/shared/components/CreateTaskFromRecord";
 import SendMailButton from "@/features/mailing/components/SendMailButton";
+import AccountDocuments from "@/features/accounts/components/AccountDocuments";
 
 import { confirmDelete } from "@/shared/utils/confirmDelete";
 
@@ -182,6 +183,8 @@ export default function AccountDetail({ account, onAccountChange }: AccountDetai
               <Row label="Industry" value={account.industry} type="select" options={toSelectOptions(picklists.industry, account.industry)} onSave={(raw) => updateField("industry", raw)} />
             </div>
           </div>
+
+          <AccountDocuments accountId={account.id} initialDocuments={account.documents} />
 
           <button
             type="button"

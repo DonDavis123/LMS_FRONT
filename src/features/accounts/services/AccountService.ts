@@ -4,6 +4,8 @@ import { apiClient } from "@/infrastructure/api/client";
 import type {
   CreateAccountPayload,
   Account,
+  AccountDocument,
+  AccountDocumentPayload,
   UpdateAccountPayload,
 } from "@/features/accounts/types/account.types";
 
@@ -69,5 +71,36 @@ export const AccountService = {
       `/accounts/${id}/delete/`
     );
     return data?.message ?? data?.detail ?? "Account deleted successfully";
+  },
+
+  // ---- Documents (name + URL links attached to an account) ----
+
+  async getDocuments(accountId: string): Promise<AccountDocument[]> {
+    const { data } = await apiClient.get<AccountDocument[]>(`/accounts/${accountId}/documents/`);
+    return data;
+  },
+
+  async addDocument(accountId: string, payload: AccountDocumentPayload): Promise<AccountDocument> {
+    const { data } = await apiClient.post<AccountDocument>(`/accounts/${accountId}/documents/`, payload);
+    return data;
+  },
+
+  async updateDocument(
+    accountId: string,
+    documentId: string,
+    payload: AccountDocumentPayload
+  ): Promise<AccountDocument> {
+    const { data } = await apiClient.put<AccountDocument>(
+      `/accounts/${accountId}/documents/${documentId}/`,
+      payload
+    );
+    return data;
+  },
+
+  async deleteDocument(accountId: string, documentId: string): Promise<string> {
+    const { data } = await apiClient.delete<{ message?: string; detail?: string } | undefined>(
+      `/accounts/${accountId}/documents/${documentId}/`
+    );
+    return data?.message ?? data?.detail ?? "Document deleted successfully.";
   },
 };

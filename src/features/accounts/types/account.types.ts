@@ -23,6 +23,24 @@ export type AccountOwnership = string;
 
 export interface AccountContactSummary { id: string; name: string; email?: string | null; phone?: string | null; mobile?: string | null; }
 
+/** A named link to a document of an account (`/accounts/<id>/documents/`). */
+export interface AccountDocument {
+  id: string;
+  account_id: string;
+  name: string;
+  url: string;
+  created_by_id?: string;
+  created_by_name?: string | null;
+  created_at: string;
+  modified_by_id?: string;
+  updated_at: string;
+}
+
+export interface AccountDocumentPayload {
+  name: string;
+  url: string;
+}
+
 export interface Account {
   id: string;
   account_owner_id: string;
@@ -51,6 +69,7 @@ export interface Account {
   created_at: string;
   updated_at: string;
   contacts?: AccountContactSummary[];
+  documents?: AccountDocument[];
 }
 
 /** Only account_name and owner_id are required — everything else is optional. */
