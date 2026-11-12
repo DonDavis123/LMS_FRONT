@@ -8,6 +8,7 @@ import Modal from "@/shared/components/Modal";
 import InlineEditRow from "@/shared/components/InlineEditRow";
 import { Tabs } from "@/shared/components/Tabs";
 import CallForm from "@/features/calls/components/CallForm";
+import CallRecordings from "@/features/calls/components/CallRecordings";
 import CallHistory from "@/features/calls/components/CallHistory";
 import CallOutcomeBadge from "@/features/calls/components/CallOutcomeBadge";
 import CallDirectionIcon from "@/features/calls/components/CallDirectionIcon";
@@ -28,6 +29,8 @@ interface CallDetailProps {
   onCallChange: (call: CallDetailData) => void;
   /** Safe in-app path the user came from (e.g. the lead page); drives the back link. */
   returnTo?: string | null;
+  /** Shows a short success toast (used after a recording is added or deleted). */
+  onNotice?: (message: string) => void;
 }
 
 type DetailTab = "overview" | "history";
@@ -39,11 +42,13 @@ function backLabel(returnTo: string | null | undefined): string {
   return "← Back";
 }
 
-export default function CallDetail({ call, onCallChange, returnTo = null }: CallDetailProps) {
+export default function CallDetail({ call, onCallChange, returnTo = null, onNotice }: CallDetailProps) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<DetailTab>("overview");
   const [menu, setMenu] = useState(false);
   const [editing, setEditing] = useState(false);
+  // Bumped when a recording is added / deleted so the History tab reloads.
+  const [recordingsVersion, setRecordingsVersion] = useState(0);
 
   const record = call.related_record;
   const recordName = record.name || `Unnamed ${recordLabel(record.type).toLowerCase()}`;
@@ -223,6 +228,15 @@ export default function CallDetail({ call, onCallChange, returnTo = null }: Call
                 />
               </div>
 
+              <CallRecordings
+                callId={call.id}
+                completed={call.status === "Completed"}
+                onChanged={(message) => {
+                  setRecordingsVersion((value) => value + 1);
+                  onNotice?.(message);
+                }}
+              />
+
               <div className="mt-4 rounded-lg border border-line bg-surface p-6">
                 <div className="mb-4 flex items-center justify-between gap-3">
                   <h2 className="text-xs font-semibold uppercase tracking-wide text-ink-soft">
@@ -276,7 +290,7 @@ export default function CallDetail({ call, onCallChange, returnTo = null }: Call
               </div>
             </>
           ) : (
-            <CallHistory callId={call.id} updatedAt={call.updated_at} recordName={recordName} returnTo={selfReturn} />
+            <CallHistory callId={call.id} updatedAt={`${call.updated_at}:${recordingsVersion}`} recordName={recordName} returnTo={selfReturn} />
           )}
         </div>
       </div>

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, CalendarClock, Clock3, FileEdit, PhoneCall, PhoneOff, Timer } from "lucide-react";
+import { ArrowRight, CalendarClock, Clock3, FileEdit, Mic, PhoneCall, PhoneOff, Timer, Trash2 } from "lucide-react";
 import CallOutcomeBadge from "@/features/calls/components/CallOutcomeBadge";
 import { CallService } from "@/features/calls/services/CallService";
 import type { CallRecordHistory, CallRecordHistoryEvent } from "@/features/calls/types/call.types";
@@ -31,7 +31,11 @@ const EVENT_META: Record<string, { title: string; icon: typeof PhoneCall; tone: 
   CALL_LOGGED: { title: "Call logged", icon: PhoneCall, tone: "text-success" },
   CALL_UPDATED: { title: "Call updated", icon: FileEdit, tone: "text-slate" },
   CALL_DELETED: { title: "Call deleted", icon: PhoneOff, tone: "text-danger" },
+  CALL_RECORDING_ADDED: { title: "Recording added", icon: Mic, tone: "text-success" },
+  CALL_RECORDING_DELETED: { title: "Recording deleted", icon: Trash2, tone: "text-danger" },
 };
+
+const isRecordingEvent = (eventType: string) => eventType.startsWith("CALL_RECORDING_");
 
 /**
  * History tab: every call logged on the same lead / contact, newest first.
@@ -144,6 +148,7 @@ function HistoryItem({
   const changes = Object.entries(event.changes ?? {});
   const hasDuration = typeof call.duration_seconds === "number" && call.duration_seconds > 0;
   const canOpen = event.call_id && !isCurrent && event.event_type !== "CALL_DELETED";
+  const recordingEvent = isRecordingEvent(event.event_type);
 
   return (
     <li className="relative flex gap-3">
@@ -170,7 +175,14 @@ function HistoryItem({
           {formatDateTime(event.created_at)}
         </p>
 
+        {recordingEvent && (
+          <p className="mt-2 break-words rounded-md border border-line bg-paper/50 px-3 py-2.5 text-sm text-ink-soft">
+            {event.message}
+          </p>
+        )}
+
         {/* The call as it was at this moment */}
+        {!recordingEvent && (
         <div className="mt-2 rounded-md border border-line bg-paper/50 px-3 py-2.5 text-sm">
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
             {call.call_start_time && (
@@ -194,6 +206,7 @@ function HistoryItem({
             <p className="mt-2 whitespace-pre-wrap break-words text-sm text-ink-soft">{call.description}</p>
           )}
         </div>
+        )}
 
         {changes.length > 0 && (
           <ul className="mt-2 space-y-2">

@@ -67,6 +67,7 @@ function CallDetailPageInner() {
       <CallDetail
         call={call}
         returnTo={returnTo}
+        onNotice={setToast}
         onCallChange={(next) => {
           setCall(next);
           setToast("Call updated successfully");

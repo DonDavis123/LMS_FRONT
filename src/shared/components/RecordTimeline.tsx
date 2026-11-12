@@ -11,6 +11,7 @@ import {
   Filter,
   Loader2,
   Mail,
+  Mic,
   PhoneCall,
   PlusCircle,
   RefreshCcw,
@@ -97,6 +98,9 @@ function highlightMessage(
 
 function iconFor(eventType: string | null | undefined) {
   const type = (eventType ?? "").toUpperCase();
+  if (type.startsWith("CALL_RECORDING_")) {
+    return { Icon: Mic, tone: type.includes("DELETED") ? "text-danger" : "text-success" };
+  }
   if (type.startsWith("CALL_")) {
     return { Icon: PhoneCall, tone: type.includes("DELETED") ? "text-danger" : type.includes("LOGGED") ? "text-success" : "text-slate" };
   }
