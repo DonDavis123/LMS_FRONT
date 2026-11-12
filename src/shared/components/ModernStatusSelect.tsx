@@ -35,8 +35,9 @@ export default function ModernStatusSelect({
   fullWidth?: boolean;
 }) {
   const triggerRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
-  const [position, setPosition] = useState({ top: 0, left: 0, width: 220 });
+  const [position, setPosition] = useState({ top: 0, left: 0, width: 220, maxHeight: 320 });
   const current = options.find((option) => option.value === value) ?? options[0];
   const tone = TONE[current?.tone ?? "neutral"];
 
@@ -47,21 +48,33 @@ export default function ModernStatusSelect({
       if (!rect) return;
       const width = Math.max(220, rect.width);
       const left = Math.min(Math.max(8, rect.left), window.innerWidth - width - 8);
-      const menuHeight = Math.min(320, options.length * 56 + 16);
-      const top = rect.bottom + 8 + menuHeight <= window.innerHeight ? rect.bottom + 8 : rect.top - menuHeight - 8;
-      setPosition({ top: Math.max(8, top), left, width });
+      const margin = 8;
+      const desiredHeight = Math.min(420, options.length * 56 + 48);
+      const spaceBelow = window.innerHeight - rect.bottom - margin * 2;
+      const spaceAbove = rect.top - margin * 2;
+      const openUp = spaceBelow < Math.min(desiredHeight, 240) && spaceAbove > spaceBelow;
+      const maxHeight = Math.max(120, Math.min(desiredHeight, openUp ? spaceAbove : spaceBelow));
+      const top = openUp ? Math.max(margin, rect.top - margin - maxHeight) : rect.bottom + margin;
+      setPosition({ top, left, width, maxHeight });
     };
     const close = (event: MouseEvent) => {
-      if (!triggerRef.current?.contains(event.target as Node)) setOpen(false);
+      const target = event.target as Node;
+      if (triggerRef.current?.contains(target) || menuRef.current?.contains(target)) return;
+      setOpen(false);
+    };
+    const onScroll = (event: Event) => {
+      // Scrolling inside the menu itself must not reposition/close it.
+      if (menuRef.current?.contains(event.target as Node)) return;
+      reposition();
     };
     reposition();
     document.addEventListener("mousedown", close);
     window.addEventListener("resize", reposition);
-    window.addEventListener("scroll", reposition, true);
+    window.addEventListener("scroll", onScroll, true);
     return () => {
       document.removeEventListener("mousedown", close);
       window.removeEventListener("resize", reposition);
-      window.removeEventListener("scroll", reposition, true);
+      window.removeEventListener("scroll", onScroll, true);
     };
   }, [open, options.length]);
 
@@ -93,14 +106,16 @@ export default function ModernStatusSelect({
 
       {open && typeof document !== "undefined" && createPortal(
         <div
+          ref={menuRef}
           role="listbox"
           aria-label={ariaLabel}
-          className="fixed z-[200] overflow-hidden rounded-2xl border border-line bg-surface/95 p-1.5 shadow-[0_20px_60px_rgba(15,23,42,0.18)] backdrop-blur-xl animate-status-menu"
-          style={{ top: position.top, left: position.left, width: position.width }}
+          className="fixed z-[200] flex flex-col overflow-hidden rounded-2xl border border-line bg-surface/95 p-1.5 shadow-[0_20px_60px_rgba(15,23,42,0.18)] backdrop-blur-xl animate-status-menu"
+          style={{ top: position.top, left: position.left, width: position.width, maxHeight: position.maxHeight }}
           onMouseDown={(event) => event.stopPropagation()}
           onClick={(event) => event.stopPropagation()}
         >
-          <div className="px-2.5 pb-1.5 pt-1 text-[10px] font-bold uppercase tracking-[0.14em] text-ink-soft">Choose status</div>
+          <div className="shrink-0 px-2.5 pb-1.5 pt-1 text-[10px] font-bold uppercase tracking-[0.14em] text-ink-soft">Choose status</div>
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pr-0.5" onWheel={(event) => event.stopPropagation()}>
           {options.map((option) => {
             const optionTone = TONE[option.tone ?? "neutral"];
             const selected = option.value === value;
@@ -124,6 +139,7 @@ export default function ModernStatusSelect({
               </button>
             );
           })}
+          </div>
         </div>,
         document.body
       )}
