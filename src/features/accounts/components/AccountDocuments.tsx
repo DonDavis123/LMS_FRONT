@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { ExternalLink, Pencil, Plus, Trash2, X } from "lucide-react";
 import { AccountService } from "@/features/accounts/services/AccountService";
 import type { AccountDocument } from "@/features/accounts/types/account.types";
+import { normalizeDocumentUrl } from "@/features/accounts/utils/documentUrl";
 import { inputClass } from "@/shared/components/FormLayout";
 import { extractApiError } from "@/shared/utils/apiError";
 import { confirmDelete } from "@/shared/utils/confirmDelete";
@@ -26,13 +27,6 @@ interface Draft {
 
 let draftCounter = 0;
 const newDraftKey = () => `draft-${++draftCounter}`;
-
-/** Accepts a link typed without a scheme ("example.com/a.pdf") by adding https://. */
-function normalizeUrl(raw: string): string {
-  const value = raw.trim();
-  if (!value) return value;
-  return /^[a-z][a-z0-9+.-]*:/i.test(value) ? value : `https://${value}`;
-}
 
 export default function AccountDocuments({ accountId, initialDocuments }: AccountDocumentsProps) {
   const [documents, setDocuments] = useState<AccountDocument[]>(initialDocuments ?? []);
@@ -82,7 +76,7 @@ export default function AccountDocuments({ accountId, initialDocuments }: Accoun
 
   async function saveDraft(draft: Draft) {
     const name = draft.name.trim();
-    const url = normalizeUrl(draft.url);
+    const url = normalizeDocumentUrl(draft.url);
 
     if (!name) return patchDraft(draft.key, { error: "Enter a document name." });
     if (!url) return patchDraft(draft.key, { error: "Enter the document URL." });

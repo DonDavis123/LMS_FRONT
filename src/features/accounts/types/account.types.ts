@@ -72,10 +72,11 @@ export interface Account {
   documents?: AccountDocument[];
 }
 
-/** Only account_name and owner_id are required — everything else is optional. */
+/** Only account_name is required — everything else is optional. */
 export interface CreateAccountPayload {
   account_name: string;
-  owner_id: string;
+  /** Account Owner (user id). Omitted/null keeps the current owner (the creator on create). */
+  account_owner_id?: string | null;
   account_site?: string | null;
   account_number?: string | null;
   account_type?: string | null;
@@ -94,6 +95,9 @@ export interface CreateAccountPayload {
   billing_country?: string | null;
   billing_postal_code?: string | null;
   description?: string | null;
+  /** Documents (name + URL) attached while creating the account. */
+  documents?: AccountDocumentPayload[];
 }
 
-export type UpdateAccountPayload = Partial<CreateAccountPayload>;
+/** Documents are managed separately after creation (see AccountService). */
+export type UpdateAccountPayload = Partial<Omit<CreateAccountPayload, "documents">>;

@@ -17,6 +17,11 @@ import {
 } from "@/features/accounts/types/account.types";
 import Select from "@/shared/components/Select";
 import { useFormError } from "@/shared/hooks/useFormError";
+import { extractApiError } from "@/shared/utils/apiError";
+import AccountDocumentsInput, {
+  buildDocumentPayload,
+  type DocumentDraft,
+} from "@/features/accounts/components/AccountDocumentsInput";
 
 interface AccountFormProps {
   mode: "create" | "edit";
@@ -111,6 +116,9 @@ export default function AccountForm({ mode, initialAccount, onSubmit, onCancel }
   const { options: picklists } = useAccountPicklists();
   const [error, setError, errorRef] = useFormError();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // Documents are only collected here when creating; an existing account
+  // manages its documents from the detail page.
+  const [documentDrafts, setDocumentDrafts] = useState<DocumentDraft[]>([]);
 
   useEffect(() => {
     userService
@@ -139,12 +147,18 @@ export default function AccountForm({ mode, initialAccount, onSubmit, onCancel }
       return;
     }
 
+    const { documents, error: documentError } = buildDocumentPayload(documentDrafts);
+    if (mode === "create" && documentError) {
+      setError(documentError);
+      return;
+    }
+
     setError(null);
     setIsSubmitting(true);
     try {
       await onSubmit({
         account_name: form.account_name.trim(),
-        owner_id: form.owner_id,
+        account_owner_id: form.owner_id || null,
         account_site: form.account_site.trim() || null,
         account_number: form.account_number.trim() || null,
         account_type: form.account_type.trim() || null,
@@ -163,9 +177,10 @@ export default function AccountForm({ mode, initialAccount, onSubmit, onCancel }
         billing_country: form.billing_country.trim() || null,
         billing_postal_code: form.billing_postal_code.trim() || null,
         description: form.description.trim() || null,
+        ...(mode === "create" && documents.length > 0 ? { documents } : {}),
       });
-    } catch {
-      setError("Couldn't save this account. Check the fields and try again.");
+    } catch (submitError) {
+      setError(extractApiError(submitError, "Couldn't save this account. Check the fields and try again."));
       setIsSubmitting(false);
     }
   }
@@ -361,7 +376,7 @@ export default function AccountForm({ mode, initialAccount, onSubmit, onCancel }
         </Field>
       </Section>
 
-      <Section title="Description Information" last>
+      <Section title="Description Information" last={mode !== "create"}>
         <Field label="Description" fullWidth>
           <textarea
             value={form.description}
@@ -370,6 +385,12 @@ export default function AccountForm({ mode, initialAccount, onSubmit, onCancel }
           />
         </Field>
       </Section>
+
+      {mode === "create" && (
+        <Section title="Documents" last>
+          <AccountDocumentsInput drafts={documentDrafts} onChange={setDocumentDrafts} />
+        </Section>
+      )}
     </form>
   );
 }

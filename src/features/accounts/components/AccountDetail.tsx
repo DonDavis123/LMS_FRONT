@@ -66,7 +66,7 @@ export default function AccountDetail({ account, onAccountChange }: AccountDetai
     // account payload. Inline editing sends only one changed field, so
     // merge that field with the current record before sending it.
     const payload = {
-      owner_id: account.account_owner_id,
+      account_owner_id: account.account_owner_id,
       account_name: account.account_name,
       account_site: account.account_site,
       account_number: account.account_number,
