@@ -1,9 +1,16 @@
 import { apiClient } from "@/infrastructure/api/client";
 import type { PaginatedResponse } from "@/shared/types/pagination";
 import type { SortState } from "@/shared/types/sort";
+import {
+  toMeetingApiError,
+} from "@/features/meetings/services/meetingErrors";
 import type {
+  ConferenceProvider,
+  ConferenceStatus,
   CreateMeetingPayload,
   Meeting,
+  MeetingConferenceResponse,
+  MeetingCreateResult,
   MeetingListItem,
   MeetingParticipant,
   MeetingRelatedRecord,
@@ -23,6 +30,8 @@ interface BackendMeetingListItem {
   contact_names: string[];
   host_id: string;
   host_name: string;
+  meet_link?: string | null;
+  conference_status?: ConferenceStatus;
 }
 
 interface BackendMeetingDetail {
@@ -53,10 +62,18 @@ interface BackendMeetingDetail {
     participant_type: "LEAD" | "USER" | "CONTACT";
     name: string;
   }>;
+  meet_link?: string | null;
+  conference_provider?: ConferenceProvider | null;
+  conference_status?: ConferenceStatus;
+  conference_error?: string | null;
 }
 
 function mapListItem(item: BackendMeetingListItem): MeetingListItem {
-  return item;
+  return {
+    ...item,
+    meet_link: item.meet_link ?? null,
+    conference_status: item.conference_status ?? "none",
+  };
 }
 
 function mapParticipant(
@@ -102,6 +119,10 @@ function mapDetail(data: BackendMeetingDetail): Meeting {
     updated_at: data.updated_at,
     related_to: data.related_to.map(mapRelatedRecord),
     participants: data.participants.map(mapParticipant),
+    meet_link: data.meet_link ?? null,
+    conference_provider: data.conference_provider ?? null,
+    conference_status: data.conference_status ?? "none",
+    conference_error: data.conference_error ?? null,
   };
 }
 
@@ -138,17 +159,62 @@ export const MeetingService = {
     return mapDetail(data);
   },
 
-  async createMeeting(payload: CreateMeetingPayload): Promise<Meeting> {
-    const { data } = await apiClient.post<MeetingWriteResponse>("/meetings/", payload);
-    return this.getMeeting(data.id);
+  /**
+   * Creates a meeting. A `201` with `conference_status: "failed"` still
+   * resolves (the meeting exists); the caller gets it as `warning`.
+   * Rejects with a MeetingApiError (`code`, `status`) on failure.
+   */
+  async createMeeting(payload: CreateMeetingPayload): Promise<MeetingCreateResult> {
+    try {
+      const { data } = await apiClient.post<MeetingWriteResponse>("/meetings/", payload);
+      return {
+        ...data,
+        warning: data.conference_status === "failed" ? data.message : null,
+      };
+    } catch (error) {
+      throw toMeetingApiError(error, "Couldn't save this meeting. Check the fields and try again.");
+    }
   },
 
+  /**
+   * Updates a meeting and returns the fresh detail, which includes the
+   * conference fields (`conference_error` is set when Google could not be
+   * updated while the meeting itself saved).
+   */
   async updateMeeting(id: string, payload: UpdateMeetingPayload): Promise<Meeting> {
-    const { data } = await apiClient.patch<MeetingWriteResponse>(
-      `/meetings/${id}/`,
-      payload,
-    );
-    return this.getMeeting(data.id);
+    let writtenId = id;
+    try {
+      const { data } = await apiClient.patch<MeetingWriteResponse>(
+        `/meetings/${id}/`,
+        payload,
+      );
+      writtenId = data.id;
+    } catch (error) {
+      throw toMeetingApiError(error, "Couldn't save this meeting. Check the fields and try again.");
+    }
+    return this.getMeeting(writtenId);
+  },
+
+  /**
+   * Adds Google Meet to a meeting, retries a failed attempt, or re-syncs a
+   * meeting whose last Google update failed. Rejects with a MeetingApiError:
+   * `code === "google_not_connected"` (400) or, for 502, with `conference`
+   * holding the state the server saved.
+   */
+  async addConference(id: string): Promise<MeetingConferenceResponse> {
+    try {
+      const { data } = await apiClient.post<MeetingConferenceResponse>(
+        `/meetings/${id}/conference/`,
+      );
+      return {
+        ...data,
+        meet_link: data.meet_link ?? null,
+        conference_provider: data.conference_provider ?? null,
+        conference_error: data.conference_error ?? null,
+      };
+    } catch (error) {
+      throw toMeetingApiError(error, "Couldn't set up Google Meet. Try again.");
+    }
   },
 
   async deleteMeeting(id: string): Promise<string> {

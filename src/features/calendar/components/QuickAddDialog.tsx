@@ -95,9 +95,9 @@ export default function QuickAddDialog({ day, onClose, onCreated }: QuickAddDial
           initialDate={day}
           onCancel={close}
           onSubmit={async (payload) => {
-            await MeetingService.createMeeting(payload);
+            const created = await MeetingService.createMeeting(payload);
             close();
-            onCreated("Meeting scheduled successfully");
+            onCreated(created.warning ?? "Meeting scheduled successfully");
           }}
         />
       )}

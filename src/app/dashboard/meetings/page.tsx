@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import MeetingList from "@/features/meetings/components/MeetingList";
 import MeetingForm from "@/features/meetings/components/MeetingForm";
 import Modal from "@/shared/components/Modal";
+import GoogleConnectionChip from "@/features/googleIntegration/components/GoogleConnectionChip";
 import { MeetingService } from "@/features/meetings/services/MeetingService";
 import type {
   CreateMeetingPayload,
@@ -35,7 +36,7 @@ export default function MeetingsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [modalState, setModalState] = useState<ModalState>(null);
-  const [toast, setToast] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ message: string; tone: "success" | "warning" } | null>(null);
 
   const load = useCallback(async (requestedPage = page) => {
     setIsLoading(true);
@@ -75,24 +76,44 @@ export default function MeetingsPage() {
 
   useEffect(() => {
     if (!toast) return;
-    const timer = window.setTimeout(() => setToast(null), 3000);
+    // Warnings stay longer so they can be read.
+    const timer = window.setTimeout(
+      () => setToast(null),
+      toast.tone === "warning" ? 8000 : 3000,
+    );
     return () => window.clearTimeout(timer);
   }, [toast]);
 
   async function handleSubmit(payload: CreateMeetingPayload) {
     if (modalState?.mode === "edit" && modalState.meeting) {
-      await MeetingService.updateMeeting(modalState.meeting.id, payload);
-      setToast("Meeting updated successfully");
+      const updated = await MeetingService.updateMeeting(modalState.meeting.id, payload);
+      setToast(
+        updated.conference_error
+          ? {
+              message:
+                "Meeting saved, but Google Calendar couldn\u2019t be updated. Open the meeting to retry.",
+              tone: "warning",
+            }
+          : { message: "Meeting updated successfully", tone: "success" },
+      );
       setModalState(null);
       await load(page);
       return;
     }
 
-    await MeetingService.createMeeting(payload);
-    setToast("Meeting created successfully");
+    const created = await MeetingService.createMeeting(payload);
+    // A saved meeting whose Meet failed is a warning, not an error.
+    setToast(
+      created.warning
+        ? { message: created.warning, tone: "warning" }
+        : { message: "Meeting created successfully", tone: "success" },
+    );
     setModalState(null);
-    setPage(1);
-    await load(1);
+    if (page !== 1) {
+      setPage(1); // the page effect reloads page 1
+    } else {
+      await load(1);
+    }
   }
 
   async function openEdit(listItem: MeetingListItem) {
@@ -130,6 +151,7 @@ export default function MeetingsPage() {
           }
         }}
         onRefresh={refreshAfterDelete}
+        headerExtra={<GoogleConnectionChip />}
         sort={sort}
         onSortChange={(next) => {
           setSort(next);
@@ -152,8 +174,16 @@ export default function MeetingsPage() {
       </Modal>
 
       {toast && (
-        <div className="fixed bottom-6 left-1/2 z-[60] -translate-x-1/2 animate-toast-in rounded-md border border-line bg-surface px-4 py-2.5 text-sm font-medium text-fg shadow-lg">
-          {toast}
+        <div
+          role="status"
+          aria-live="polite"
+          className={`fixed bottom-6 left-1/2 z-[60] w-[calc(100%-2rem)] max-w-md -translate-x-1/2 animate-toast-in rounded-md border px-4 py-2.5 text-sm font-medium shadow-lg sm:w-auto ${
+            toast.tone === "warning"
+              ? "border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-500/40 dark:bg-amber-950 dark:text-amber-300"
+              : "border-line bg-surface text-fg"
+          }`}
+        >
+          {toast.message}
         </div>
       )}
     </>

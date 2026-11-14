@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
+import { AlertTriangle, Video } from "lucide-react";
 import RecordActionsMenu from "@/shared/components/RecordActionsMenu";
 import BulkDeleteBar from "@/shared/components/BulkDeleteBar";
 import SelectionIndicator from "@/shared/components/SelectionIndicator";
@@ -24,6 +25,8 @@ interface MeetingListProps {
   onRefresh: () => Promise<void>;
   sort: SortState | null;
   onSortChange: (sort: SortState | null) => void;
+  /** Extra header content placed beside "Create Meeting" (e.g. the Google connection chip). */
+  headerExtra?: ReactNode;
 }
 
 function formatDateTime(iso: string | null): string {
@@ -49,6 +52,7 @@ export default function MeetingList({
   onRefresh,
   sort,
   onSortChange,
+  headerExtra,
 }: MeetingListProps) {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [selectionMode, setSelectionMode] = useState(false);
@@ -178,13 +182,16 @@ export default function MeetingList({
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={onCreateClick}
-          className="whitespace-nowrap rounded-md bg-amber px-3 py-1.5 text-sm font-semibold text-fg transition hover:bg-amber-dark active:scale-[0.98]"
-        >
-          + Create Meeting
-        </button>
+        <div className="flex min-w-0 flex-wrap items-center justify-end gap-x-3 gap-y-2">
+          {headerExtra}
+          <button
+            type="button"
+            onClick={onCreateClick}
+            className="whitespace-nowrap rounded-md bg-amber px-3 py-1.5 text-sm font-semibold text-fg transition hover:bg-amber-dark active:scale-[0.98]"
+          >
+            + Create Meeting
+          </button>
+        </div>
       </div>
 
       {error && (
@@ -331,6 +338,29 @@ export default function MeetingList({
                       >
                         {meeting.title}
                       </button>
+                      {meeting.meet_link && meeting.conference_status === "created" && (
+                        <a
+                          href={meeting.meet_link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title="Join Google Meet"
+                          aria-label={`Join Google Meet for ${meeting.title}`}
+                          onClick={(event) => event.stopPropagation()}
+                          onDoubleClick={(event) => event.stopPropagation()}
+                          className="ml-2 inline-flex items-center gap-1 rounded border border-line px-1.5 py-0.5 align-middle text-xs font-medium text-slate hover:bg-surface hover:text-fg"
+                        >
+                          <Video size={12} /> Join
+                        </a>
+                      )}
+                      {meeting.conference_status === "failed" && (
+                        <span
+                          title="Google Meet couldn't be created. Open the meeting to retry."
+                          className="ml-2 inline-flex items-center align-middle text-danger"
+                        >
+                          <AlertTriangle size={14} aria-hidden="true" />
+                          <span className="sr-only">Google Meet failed. Open the meeting to retry.</span>
+                        </span>
+                      )}
                     </td>
 
                     <td className="px-4 py-3 text-ink-soft">

@@ -3,7 +3,7 @@
 import FormWarning from "@/shared/components/FormWarning";
 import { useNoChangeGuard } from "@/shared/hooks/useNoChangeGuard";
 import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react";
-import { Check, ChevronDown, Plus, Search, X } from "lucide-react";
+import { Check, ChevronDown, Link2, Plus, Search, X } from "lucide-react";
 import { userService } from "@/features/users/services/userService";
 import type { LeadOwnerOption } from "@/features/auth/types/auth.types";
 import { authService } from "@/features/auth/services/authService";
@@ -20,7 +20,11 @@ import {
   type CreateMeetingPayload,
 } from "@/features/meetings/types/meeting.types";
 import Select from "@/shared/components/Select";
+import Switch from "@/shared/components/Switch";
 import { useFormError } from "@/shared/hooks/useFormError";
+import { MeetingApiError } from "@/features/meetings/services/meetingErrors";
+import { useGoogleConnection } from "@/features/googleIntegration/hooks/useGoogleConnection";
+import { isGoogleUsable } from "@/features/googleIntegration/types/google.types";
 
 interface Props {
   mode: "create" | "edit";
@@ -56,6 +60,7 @@ interface FormState {
   relatedId: string;
   relatedLabel: string;
   description: string;
+  add_google_meet: boolean;
 }
 
 function splitDateTime(value?: string | null) {
@@ -94,6 +99,7 @@ function emptyForm(day?: string): FormState {
     relatedId: "",
     relatedLabel: "",
     description: "",
+    add_google_meet: false,
   };
 }
 
@@ -123,6 +129,7 @@ function fromMeeting(m: Meeting): FormState {
     relatedId: firstRelated?.id ?? "",
     relatedLabel: firstRelated?.name ?? "",
     description: m.description ?? "",
+    add_google_meet: false,
   };
 }
 
@@ -143,6 +150,28 @@ export default function MeetingForm({ mode, initialMeeting, onSubmit, onCancel, 
   const [participantCategory, setParticipantCategory] = useState<ParticipantCategory>("user");
   const [participantTab, setParticipantTab] = useState<"all" | "selected">("all");
   const [showMore, setShowMore] = useState(false);
+
+  // Google Meet is only offered when creating. The status request is skipped
+  // while editing. The popup connect flow never touches `form`, so a
+  // half-filled form survives it.
+  const google = useGoogleConnection({ enabled: mode === "create" });
+  const [currentUserId] = useState(() => authService.getSessionUser()?.id ?? null);
+  const hostIsMe = Boolean(currentUserId) && form.owner_id === currentUserId;
+  const meetAvailable = mode === "create" && google.status?.configured !== false;
+  const needsConnect =
+    meetAvailable &&
+    hostIsMe &&
+    google.status !== null &&
+    !isGoogleUsable(google.status);
+  const googleRevoked = google.status?.status === "revoked";
+  const sendMeet =
+    meetAvailable && form.add_google_meet && !form.all_day && !needsConnect;
+  // Participants the server will silently skip for lack of an email address.
+  const participantsWithoutEmail = form.participants.filter(
+    (participant) => !participant.email || !participant.email.includes("@"),
+  );
+  const meetLockedByExisting =
+    mode === "edit" && initialMeeting?.conference_status === "created";
 
   useEffect(() => {
     let cancelled = false;
@@ -339,9 +368,16 @@ export default function MeetingForm({ mode, initialMeeting, onSubmit, onCancel, 
               }
             : null,
         participants: participantPayload,
+        ...(sendMeet ? { add_google_meet: true } : {}),
       });
-    } catch {
-      setError("Couldn't save this meeting. Check the fields and try again.");
+    } catch (caught) {
+      // Keep the form filled so the user can fix the problem and save again.
+      if (caught instanceof MeetingApiError) {
+        setError(caught.message);
+        if (caught.isGoogleNotConnected) void google.refresh();
+      } else {
+        setError("Couldn't save this meeting. Check the fields and try again.");
+      }
       setSaving(false);
     }
   }
@@ -383,9 +419,23 @@ export default function MeetingForm({ mode, initialMeeting, onSubmit, onCancel, 
           <input
             type="checkbox"
             checked={form.all_day}
-            onChange={(e) => update("all_day", e.target.checked)}
-            className="h-3.5 w-3.5 rounded border-line accent-indigo-500"
+            disabled={meetLockedByExisting}
+            aria-describedby={meetLockedByExisting ? "all-day-meet-note" : undefined}
+            onChange={(e) =>
+              // Meet can't be added to all-day meetings, so switching to all-day turns it off.
+              setForm((current) => ({
+                ...current,
+                all_day: e.target.checked,
+                add_google_meet: e.target.checked ? false : current.add_google_meet,
+              }))
+            }
+            className="h-3.5 w-3.5 rounded border-line accent-indigo-500 disabled:opacity-50"
           />
+          {meetLockedByExisting && (
+            <p id="all-day-meet-note" className="mt-1 text-xs text-ink-soft">
+              A meeting with Google Meet can&apos;t be changed to all-day.
+            </p>
+          )}
         </ZohoRow>
 
         <DateLine
@@ -446,6 +496,77 @@ export default function MeetingForm({ mode, initialMeeting, onSubmit, onCancel, 
             </button>
           </div>
         </ZohoRow>
+
+        {meetAvailable && (
+          <ZohoRow label="Google Meet">
+            <div className="py-1.5">
+              {needsConnect ? (
+                <div>
+                  <button
+                    type="button"
+                    onClick={() => void google.connect()}
+                    disabled={google.connecting || form.all_day}
+                    className="inline-flex items-center gap-1.5 rounded-md border border-line bg-surface px-3 py-1.5 text-sm font-medium text-fg hover:bg-paper disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {google.connecting ? <Spinner size="sm" /> : <Link2 size={14} />}
+                    {google.connecting
+                      ? "Waiting for Google…"
+                      : googleRevoked
+                        ? "Reconnect Google"
+                        : "Connect Google"}
+                  </button>
+                  <p className="mt-1 text-xs text-ink-soft">
+                    {form.all_day
+                      ? "Google Meet isn\u2019t available for all-day meetings."
+                      : googleRevoked
+                        ? "Your Google connection expired. Reconnect to add a Meet link and send invites. The form stays as it is."
+                        : "Connect your Google account to add a Meet link and send calendar invites. The form stays as it is."}
+                  </p>
+                </div>
+              ) : google.loading && google.status === null && hostIsMe ? (
+                <span className="inline-flex items-center gap-2 text-xs text-ink-soft">
+                  <Spinner size="sm" /> Checking Google connection…
+                </span>
+              ) : (
+                <div>
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      checked={sendMeet}
+                      onChange={(next) => update("add_google_meet", next)}
+                      ariaLabel="Add Google Meet"
+                      disabled={form.all_day}
+                    />
+                    <span className="text-sm text-fg">Add Google Meet</span>
+                  </div>
+                  <p className="text-xs text-ink-soft">
+                    {form.all_day
+                      ? "Google Meet isn\u2019t available for all-day meetings."
+                      : "Participants will receive a Google Calendar invite by email."}
+                  </p>
+                  {!hostIsMe && form.owner_id && !form.all_day && (
+                    <p className="mt-1 text-xs text-ink-soft">
+                      The host ({form.ownerLabel || "selected user"}) must have connected their
+                      Google account, otherwise the meeting can&apos;t be saved with Meet.
+                    </p>
+                  )}
+                  {sendMeet && participantsWithoutEmail.length > 0 && (
+                    <p className="mt-1 text-xs text-amber-700 dark:text-amber-300">
+                      No email on file for {participantsWithoutEmail.map((p) => p.name).join(", ")}
+                      {" "}— they won&apos;t receive the invite.
+                    </p>
+                  )}
+                </div>
+              )}
+              <p
+                role="status"
+                aria-live="polite"
+                className={google.error ? "mt-1 text-xs text-danger" : "sr-only"}
+              >
+                {google.error ?? ""}
+              </p>
+            </div>
+          </ZohoRow>
+        )}
 
         <ZohoRow label="Related To">
           <RelatedTypeSelect

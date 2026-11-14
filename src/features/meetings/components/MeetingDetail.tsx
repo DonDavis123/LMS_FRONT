@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import Modal from "@/shared/components/Modal";
 import InlineEditRow from "@/shared/components/InlineEditRow";
 import MeetingForm from "@/features/meetings/components/MeetingForm";
+import MeetingConference from "@/features/meetings/components/MeetingConference";
 import { MeetingService } from "@/features/meetings/services/MeetingService";
 import type {
   CreateMeetingPayload,
@@ -159,6 +160,8 @@ export default function MeetingDetail({ meeting, onMeetingChange }: Props) {
         <div key={activeTab} className="animate-fade-in">
           {activeTab === "overview" ? (
             <>
+              <MeetingConference meeting={meeting} onMeetingChange={onMeetingChange} />
+
               <div className="mt-4 rounded-lg border border-line bg-surface p-6">
                 <h2 className="mb-4 text-xs font-semibold uppercase tracking-wide text-ink-soft">Overview</h2>
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
