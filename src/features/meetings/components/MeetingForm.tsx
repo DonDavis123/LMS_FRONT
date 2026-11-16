@@ -541,12 +541,20 @@ export default function MeetingForm({ mode, initialMeeting, onSubmit, onCancel, 
                   <p className="text-xs text-ink-soft">
                     {form.all_day
                       ? "Google Meet isn\u2019t available for all-day meetings."
-                      : "Participants will receive a Google Calendar invite by email."}
+                      : sendMeet
+                        ? "A Meet link is created when you save. Participants get a Google Calendar invite by email, plus a reminder email with the link 15 minutes before the meeting."
+                        : "Turn on to create a Meet link and email invites to participants."}
                   </p>
                   {!hostIsMe && form.owner_id && !form.all_day && (
                     <p className="mt-1 text-xs text-ink-soft">
                       The host ({form.ownerLabel || "selected user"}) must have connected their
                       Google account, otherwise the meeting can&apos;t be saved with Meet.
+                    </p>
+                  )}
+                  {sendMeet && form.participants.length === 0 && (
+                    <p className="mt-1 text-xs text-amber-700 dark:text-amber-300">
+                      No participants added yet. The Meet link will be created, but nobody will be
+                      emailed. Use “Add” next to Participants to invite people.
                     </p>
                   )}
                   {sendMeet && participantsWithoutEmail.length > 0 && (

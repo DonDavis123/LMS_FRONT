@@ -106,7 +106,13 @@ export default function MeetingsPage() {
     setToast(
       created.warning
         ? { message: created.warning, tone: "warning" }
-        : { message: "Meeting created successfully", tone: "success" },
+        : {
+            message:
+              created.conference_status === "created" && created.meet_link
+                ? "Meeting created. Google Meet link generated and invites sent."
+                : "Meeting created successfully",
+            tone: "success",
+          },
     );
     setModalState(null);
     if (page !== 1) {
