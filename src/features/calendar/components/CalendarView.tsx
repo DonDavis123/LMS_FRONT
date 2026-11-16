@@ -227,7 +227,7 @@ export default function CalendarView() {
       style={theme ? themeCssVars(theme) : undefined}
       className={
         theme
-          ? "relative isolate mx-auto my-2 w-full max-w-[1400px] overflow-hidden rounded-3xl border border-[var(--cal-line)] bg-[var(--cal-paper)] px-3 py-4 sm:px-12 sm:py-6 dark:border-[var(--cal-line-dk)] dark:bg-[var(--cal-paper-dk)]"
+          ? "relative isolate mx-auto w-full max-w-[1400px] overflow-hidden rounded-3xl border border-[var(--cal-line)] bg-[var(--cal-paper)] px-2 py-2 sm:px-3 sm:py-3 dark:border-[var(--cal-line-dk)] dark:bg-[var(--cal-paper-dk)]"
           : "mx-auto w-full max-w-[1400px] px-4 py-5 sm:px-6"
       }
     >
