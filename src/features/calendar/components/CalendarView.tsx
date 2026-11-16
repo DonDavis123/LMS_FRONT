@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { AlertTriangle, BellRing, CalendarDays, ChevronLeft, ChevronRight, Plus, RefreshCw, X } from "lucide-react";
+import { AlertTriangle, BellRing, CalendarDays, ChevronLeft, ChevronRight, Plus, RefreshCw, Sparkles, X } from "lucide-react";
 import { authService } from "@/features/auth/services/authService";
 import { normalizeEnumValue } from "@/shared/utils/enumValue";
 import { extractApiError } from "@/shared/utils/apiError";
@@ -37,6 +37,9 @@ import {
   weekTitle,
 } from "@/features/calendar/utils/calendarDates";
 import EventChip, { EVENT_TYPE_META, eventStateLabel, eventTimeLabel } from "@/features/calendar/components/EventChip";
+import SeasonalBanner from "@/features/calendar/components/SeasonalBanner";
+import { getFestival } from "@/features/calendar/config/seasonalThemes";
+import { useSeasonalTheme } from "@/features/calendar/hooks/useSeasonalTheme";
 import QuickAddDialog from "@/features/calendar/components/QuickAddDialog";
 import DayTimeGrid from "@/features/calendar/components/DayTimeGrid";
 
@@ -75,6 +78,8 @@ export default function CalendarView() {
 
   const today = useMemo(() => startOfDay(new Date()), []);
   const days = useMemo(() => (view === "month" ? monthGridDays(anchor) : weekDays(anchor)), [view, anchor]);
+  // Seasonal decoration follows the month being viewed; the user can switch it off.
+  const { theme, enabled: themeOn, toggle: toggleTheme } = useSeasonalTheme(anchor.getMonth());
 
 
   const load = useCallback(async () => {
@@ -199,10 +204,13 @@ export default function CalendarView() {
   }
 
   const selectedEvents = byDay.get(toDateKey(selectedDay)) ?? [];
+  const selectedFestival = theme ? getFestival(view === "day" ? anchor : selectedDay) : null;
   const title = view === "month" ? monthTitle(anchor) : view === "week" ? weekTitle(anchor) : longDayTitle(anchor);
 
   return (
     <div className="mx-auto w-full max-w-[1400px] px-4 py-5 sm:px-6">
+      {theme && <SeasonalBanner theme={theme} />}
+
       {/* Toolbar */}
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
         <h1 className="mr-2 font-serif text-2xl text-fg" aria-live="polite">
@@ -269,6 +277,17 @@ export default function CalendarView() {
         )}
 
         <div className="ml-auto flex items-center gap-2">
+          <button
+            type="button"
+            onClick={toggleTheme}
+            aria-pressed={themeOn}
+            title={themeOn ? "Turn off the seasonal theme" : "Turn on the seasonal theme"}
+            className="inline-flex items-center gap-1.5 rounded-md border border-line px-2.5 py-1.5 text-xs font-medium text-ink-soft hover:bg-paper hover:text-fg"
+          >
+            <Sparkles size={14} aria-hidden="true" />
+            <span className="hidden sm:inline">Theme: {themeOn ? "On" : "Off"}</span>
+            <span className="sr-only sm:hidden">Seasonal theme {themeOn ? "on" : "off"}</span>
+          </button>
           <button
             type="button"
             onClick={() => void load()}
@@ -383,6 +402,11 @@ export default function CalendarView() {
 
       {view === "day" ? (
         <div className="mt-4">
+          {selectedFestival && (
+            <p className="mb-2 text-sm font-medium" style={{ color: theme?.accent }}>
+              <span aria-hidden="true">{selectedFestival.emoji}</span> {selectedFestival.label}
+            </p>
+          )}
           <DayTimeGrid
             day={anchor}
             events={byDay.get(toDateKey(anchor)) ?? []}
@@ -416,6 +440,7 @@ export default function CalendarView() {
               const isSelected = isSameDay(day, selectedDay);
               const shown = view === "month" ? dayEvents.slice(0, MAX_CHIPS_PER_CELL) : dayEvents;
               const hidden = dayEvents.length - shown.length;
+              const festival = theme ? getFestival(day) : null;
 
               return (
                 <div
@@ -435,12 +460,23 @@ export default function CalendarView() {
                       }}
                       aria-label={`${longDayTitle(day)}${dayEvents.length ? `, ${dayEvents.length} items` : ""}`}
                       aria-current={isToday ? "date" : undefined}
+                      style={isToday && theme ? { backgroundColor: theme.accent } : undefined}
                       className={`grid h-6 min-w-6 place-items-center rounded-full px-1 text-xs font-semibold ${
                         isToday ? "bg-ink text-white" : inMonth ? "text-fg" : "text-ink-soft"
                       }`}
                     >
                       {day.getDate()}
                     </button>
+                    {festival && (
+                      <span
+                        title={festival.label}
+                        className="min-w-0 flex-1 truncate px-1 text-[11px] leading-none text-ink-soft"
+                      >
+                        <span aria-hidden="true">{festival.emoji}</span>
+                        <span className="ml-1 hidden xl:inline">{festival.label}</span>
+                        <span className="sr-only">{festival.label}</span>
+                      </span>
+                    )}
                     <button
                       type="button"
                       onClick={(event) => {
@@ -488,6 +524,11 @@ export default function CalendarView() {
           <div className="flex items-start justify-between gap-2">
             <div>
               <h2 className="font-serif text-lg leading-tight text-fg">{longDayTitle(selectedDay)}</h2>
+              {selectedFestival && (
+                <p className="mt-0.5 text-xs font-medium" style={{ color: theme?.accent }}>
+                  <span aria-hidden="true">{selectedFestival.emoji}</span> {selectedFestival.label}
+                </p>
+              )}
               <p className="mt-0.5 text-xs text-ink-soft">
                 {selectedEvents.length === 0
                   ? "Nothing scheduled"
