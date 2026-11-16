@@ -49,6 +49,10 @@ const TEAM_VIEW_ROLES = new Set(["SUPERADMIN", "ADMIN", "SALESMANAGER", "SALES_M
 
 const MAX_CHIPS_PER_CELL = 3;
 
+function isSameMonth(a: Date, b: Date): boolean {
+  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth();
+}
+
 const VIEW_MODES: ViewMode[] = ["month", "week", "day"];
 const VIEW_UNIT: Record<ViewMode, string> = { month: "month", week: "week", day: "day" };
 
@@ -78,7 +82,12 @@ export default function CalendarView() {
   }, []);
 
   const today = useMemo(() => startOfDay(new Date()), []);
-  const days = useMemo(() => (view === "month" ? monthGridDays(anchor) : weekDays(anchor)), [view, anchor]);
+  const days = useMemo(() => {
+    if (view !== "month") return weekDays(anchor);
+    // Drop a trailing week made only of next-month days, so short months fit the screen.
+    const grid = monthGridDays(anchor);
+    return grid.slice(0, grid.slice(35).every((day) => day.getMonth() !== anchor.getMonth()) ? 35 : 42);
+  }, [view, anchor]);
   // Seasonal decoration follows the month being viewed; the user can switch it off.
   const { theme, enabled: themeOn, toggle: toggleTheme } = useSeasonalTheme(anchor.getMonth());
 
@@ -162,11 +171,14 @@ export default function CalendarView() {
       setSelectedDay(next);
       return;
     }
-    setAnchor((current) =>
+    const next =
       view === "month"
-        ? new Date(current.getFullYear(), current.getMonth() + direction, 1)
-        : addDays(current, direction * 7),
-    );
+        ? new Date(anchor.getFullYear(), anchor.getMonth() + direction, 1)
+        : addDays(anchor, direction * 7);
+    setAnchor(next);
+    // Keep the side panel on a day that is actually on screen: today if it is
+    // in the new month, otherwise the first day of the new range.
+    setSelectedDay(view === "month" && isSameMonth(next, today) ? today : next);
   }
 
   function changeView(mode: ViewMode) {
@@ -215,7 +227,7 @@ export default function CalendarView() {
       style={theme ? themeCssVars(theme) : undefined}
       className={
         theme
-          ? "relative isolate mx-auto my-3 w-full max-w-[1400px] overflow-hidden rounded-3xl border border-[var(--cal-line)] bg-[var(--cal-paper)] px-4 py-5 sm:px-10 sm:py-8 dark:border-[var(--cal-line-dk)] dark:bg-[var(--cal-paper-dk)]"
+          ? "relative isolate mx-auto my-2 w-full max-w-[1400px] overflow-hidden rounded-3xl border border-[var(--cal-line)] bg-[var(--cal-paper)] px-3 py-4 sm:px-12 sm:py-6 dark:border-[var(--cal-line-dk)] dark:bg-[var(--cal-paper-dk)]"
           : "mx-auto w-full max-w-[1400px] px-4 py-5 sm:px-6"
       }
     >
@@ -448,7 +460,11 @@ export default function CalendarView() {
 
           <div
             className={`grid grid-cols-1 border-l ${lineCls} sm:grid-cols-7 ${
-              view === "month" ? "sm:auto-rows-[minmax(104px,1fr)]" : "sm:auto-rows-[minmax(320px,1fr)]"
+              view === "month"
+                ? theme
+                  ? "sm:auto-rows-[minmax(84px,1fr)]"
+                  : "sm:auto-rows-[minmax(104px,1fr)]"
+                : "sm:auto-rows-[minmax(320px,1fr)]"
             }`}
           >
             {days.map((day) => {
