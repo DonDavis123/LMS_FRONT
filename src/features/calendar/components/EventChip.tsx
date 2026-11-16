@@ -47,9 +47,11 @@ interface EventChipProps {
   compact?: boolean;
   /** Current time in ms, so every chip on screen agrees on what is overdue. Defaults to now. */
   now?: number;
+  /** Marks an item the user has just been shown for the first time. */
+  isNew?: boolean;
 }
 
-export default function EventChip({ event, compact = false, now = Date.now() }: EventChipProps) {
+export default function EventChip({ event, compact = false, now = Date.now(), isNew = false }: EventChipProps) {
   const meta = EVENT_TYPE_META[event.type];
   const Icon = meta.icon;
   const time = event.all_day || event.type === "TASK" ? null : formatTime(event.start);
@@ -65,7 +67,9 @@ export default function EventChip({ event, compact = false, now = Date.now() }: 
       <Icon size={compact ? 11 : 13} aria-hidden="true" className="shrink-0" />
       {time && <span className="shrink-0 tabular-nums opacity-80">{time}</span>}
       <span className="truncate">{event.title}</span>
+      {isNew && <span aria-hidden="true" className="ml-auto h-1.5 w-1.5 shrink-0 rounded-full bg-danger" />}
       <span className="sr-only">
+        {isNew ? "New, " : ""}
         {meta.label}
         {eventStateLabel(event, now) ? `, ${eventStateLabel(event, now)}` : ""}
       </span>

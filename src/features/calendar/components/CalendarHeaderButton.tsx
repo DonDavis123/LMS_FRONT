@@ -1,12 +1,18 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { CalendarDays } from "lucide-react";
 import { CalendarService } from "@/features/calendar/services/CalendarService";
 import type { CalendarEvent } from "@/features/calendar/types/calendar.types";
 import { addDays, startOfDay } from "@/features/calendar/utils/calendarDates";
+import {
+  eventSeenKey,
+  getSeenKeys,
+  isPendingEvent,
+  subscribeToSeenChanges,
+} from "@/features/calendar/utils/calendarAttention";
 
 const CALENDAR_HREF = "/dashboard/calendar";
 const REFRESH_INTERVAL_MS = 60_000;
@@ -16,34 +22,20 @@ function badgeLabel(count: number): string {
 }
 
 /**
- * Whether an item on today's calendar is still something to act on: open
- * tasks, planned calls (overdue ones included), meetings that have not ended
- * and enabled reminders that have not fired yet.
- */
-function isPendingToday(event: CalendarEvent, now: number): boolean {
-  switch (event.type) {
-    case "TASK":
-      return event.status !== "Completed";
-    case "CALL":
-      return event.status === "Planned";
-    case "MEETING":
-      return event.all_day || (event.end ?? event.start).getTime() >= now;
-    case "REMINDER":
-      return event.status !== "Disabled" && event.start.getTime() >= now;
-  }
-}
-
-/**
  * Calendar shortcut shown in the dashboard header, right beside the
  * notification bell. It links to the full calendar page and carries a small
- * badge with the number of items still pending today.
+ * badge with the number of items that are pending today and that the user has
+ * not been shown yet. Opening the calendar marks them as seen, which clears
+ * the badge immediately.
  *
  * The badge is a convenience: if the request fails the icon simply shows
  * without it, and a failed refresh keeps the last known count.
  */
 export default function CalendarHeaderButton() {
   const pathname = usePathname();
-  const [pendingToday, setPendingToday] = useState(0);
+  const [pendingToday, setPendingToday] = useState<CalendarEvent[]>([]);
+  // Bumped whenever the calendar page marks items as seen, to recompute the badge.
+  const [seenVersion, setSeenVersion] = useState(0);
   const isActive = pathname.startsWith(CALENDAR_HREF);
 
   const refresh = useCallback(async () => {
@@ -51,7 +43,7 @@ export default function CalendarHeaderButton() {
       const today = startOfDay(new Date());
       const events = await CalendarService.getEvents({ start: today, end: addDays(today, 1) });
       const now = Date.now();
-      setPendingToday(events.filter((event) => isPendingToday(event, now)).length);
+      setPendingToday(events.filter((event) => isPendingEvent(event, now)));
     } catch {
       // Keep the last known count — a failed poll shouldn't disturb the header.
     }
@@ -62,6 +54,15 @@ export default function CalendarHeaderButton() {
   useEffect(() => {
     void refresh();
   }, [refresh, pathname]);
+
+  useEffect(() => subscribeToSeenChanges(() => setSeenVersion((version) => version + 1)), []);
+
+  const unseenCount = useMemo(() => {
+    const seen = getSeenKeys();
+    return pendingToday.filter((event) => !seen.has(eventSeenKey(event))).length;
+    // seenVersion is a deliberate trigger: the seen set lives in storage, not in React state.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pendingToday, seenVersion]);
 
   useEffect(() => {
     const interval = window.setInterval(() => void refresh(), REFRESH_INTERVAL_MS);
@@ -80,7 +81,7 @@ export default function CalendarHeaderButton() {
     };
   }, [refresh]);
 
-  const label = pendingToday > 0 ? `Calendar, ${pendingToday} pending today` : "Calendar";
+  const label = unseenCount > 0 ? `Calendar, ${unseenCount} new today` : "Calendar";
 
   return (
     <Link
@@ -93,9 +94,9 @@ export default function CalendarHeaderButton() {
       }`}
     >
       <CalendarDays size={18} aria-hidden="true" />
-      {pendingToday > 0 && (
+      {unseenCount > 0 && (
         <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-slate px-1 text-[10px] font-semibold leading-none text-white">
-          {badgeLabel(pendingToday)}
+          {badgeLabel(unseenCount)}
         </span>
       )}
     </Link>

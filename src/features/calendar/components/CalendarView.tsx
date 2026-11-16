@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { AlertTriangle, CalendarDays, ChevronLeft, ChevronRight, Plus, RefreshCw } from "lucide-react";
+import { AlertTriangle, BellRing, CalendarDays, ChevronLeft, ChevronRight, Plus, RefreshCw, X } from "lucide-react";
 import { authService } from "@/features/auth/services/authService";
 import { normalizeEnumValue } from "@/shared/utils/enumValue";
 import { extractApiError } from "@/shared/utils/apiError";
@@ -15,8 +15,15 @@ import {
   type CalendarView as ViewMode,
 } from "@/features/calendar/types/calendar.types";
 import {
+  eventSeenKey,
+  getSeenKeys,
+  isPendingEvent,
+  markEventsSeen,
+} from "@/features/calendar/utils/calendarAttention";
+import {
   WEEKDAY_LABELS,
   addDays,
+  eventDayKeys,
   groupEventsByDay,
   isOverdueCall,
   isSameDay,
@@ -54,6 +61,10 @@ export default function CalendarView() {
   const [toast, setToast] = useState<string | null>(null);
   // Ticks once a minute so overdue calls and the day view's "now" line stay current.
   const [now, setNow] = useState<number>(() => Date.now());
+  // Items that were new to the user when this page opened. They stay highlighted
+  // (and listed in the "New today" panel) for this visit, even though the header
+  // badge has already been cleared.
+  const [freshKeys, setFreshKeys] = useState<Set<string>>(() => new Set());
   // Only the newest request may update the calendar (fast month switching).
   const latestRequest = useRef(0);
 
@@ -103,6 +114,31 @@ export default function CalendarView() {
 
   const visibleEvents = useMemo(() => events.filter((event) => enabledTypes.has(event.type)), [events, enabledTypes]);
   const byDay = useMemo(() => groupEventsByDay(visibleEvents), [visibleEvents]);
+
+  // Showing today's pending items counts as the user seeing them: remember that
+  // right away so the header badge clears, and keep them highlighted here.
+  useEffect(() => {
+    if (isLoading || scope !== "mine") return;
+    const { start, end } = visibleRange(view, anchor);
+    if (today.getTime() < start.getTime() || today.getTime() >= end.getTime()) return;
+
+    const todayKey = toDateKey(today);
+    const seen = getSeenKeys();
+    const unseen = visibleEvents.filter(
+      (event) =>
+        isPendingEvent(event, Date.now()) && eventDayKeys(event).includes(todayKey) && !seen.has(eventSeenKey(event)),
+    );
+    if (unseen.length === 0) return;
+
+    const keys = unseen.map(eventSeenKey);
+    setFreshKeys((current) => new Set([...current, ...keys]));
+    markEventsSeen(keys);
+  }, [isLoading, scope, view, anchor, today, visibleEvents]);
+
+  const freshEvents = useMemo(
+    () => visibleEvents.filter((event) => freshKeys.has(eventSeenKey(event))),
+    [visibleEvents, freshKeys],
+  );
   const typeCounts = useMemo(() => {
     const counts: Record<CalendarEventType, number> = { TASK: 0, MEETING: 0, CALL: 0, REMINDER: 0 };
     for (const event of events) counts[event.type] += 1;
@@ -294,6 +330,57 @@ export default function CalendarView() {
         </p>
       )}
 
+      {freshEvents.length > 0 && (
+        <section
+          aria-label="New today"
+          className="mt-3 rounded-lg border border-amber/40 bg-amber/10 p-3"
+        >
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <BellRing size={16} className="text-amber-dark" aria-hidden="true" />
+              <h2 className="text-sm font-semibold text-fg">
+                New today · {freshEvents.length} {freshEvents.length === 1 ? "item needs" : "items need"} your attention
+              </h2>
+            </div>
+            <div className="flex shrink-0 items-center gap-1.5">
+              {view !== "day" && (
+                <button
+                  type="button"
+                  onClick={() => openDay(today)}
+                  className="rounded-md border border-line bg-surface px-2.5 py-1 text-xs font-semibold text-fg hover:bg-paper"
+                >
+                  Open today
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => setFreshKeys(new Set())}
+                aria-label="Dismiss"
+                title="Dismiss"
+                className="rounded-md p-1 text-ink-soft hover:bg-paper hover:text-fg"
+              >
+                <X size={14} aria-hidden="true" />
+              </button>
+            </div>
+          </div>
+          <ul className="mt-2 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+            {freshEvents.map((event) => {
+              const state = eventStateLabel(event, now);
+              return (
+                <li key={`fresh-${event.type}-${event.id}`} className="rounded-md border border-line bg-surface p-2">
+                  <EventChip event={event} now={now} isNew />
+                  <p className="mt-1 flex flex-wrap gap-x-2 text-[11px] text-ink-soft">
+                    <span>{eventTimeLabel(event)}</span>
+                    {state && <span className={state === "Overdue" ? "font-semibold text-danger" : undefined}>· {state}</span>}
+                    {event.related_record_name && <span>· {event.related_record_name}</span>}
+                  </p>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
+
       {view === "day" ? (
         <div className="mt-4">
           <DayTimeGrid
@@ -372,7 +459,13 @@ export default function CalendarView() {
 
                   <div className="flex min-w-0 flex-col gap-0.5" onClick={(event) => event.stopPropagation()}>
                     {shown.map((event) => (
-                      <EventChip key={`${event.type}-${event.id}-${key}`} event={event} compact={view === "month"} now={now} />
+                      <EventChip
+                        key={`${event.type}-${event.id}-${key}`}
+                        event={event}
+                        compact={view === "month"}
+                        now={now}
+                        isNew={freshKeys.has(eventSeenKey(event))}
+                      />
                     ))}
                     {hidden > 0 && (
                       <button
@@ -427,7 +520,7 @@ export default function CalendarView() {
                 const state = eventStateLabel(event, now);
                 return (
                   <li key={`${event.type}-${event.id}`} className="rounded-md border border-line p-2">
-                    <EventChip event={event} now={now} />
+                    <EventChip event={event} now={now} isNew={freshKeys.has(eventSeenKey(event))} />
                     <p className="mt-1 flex flex-wrap gap-x-2 text-[11px] text-ink-soft">
                       <span>{eventTimeLabel(event)}</span>
                       {state && <span className={state === "Overdue" ? "font-semibold text-danger" : undefined}>· {state}</span>}
