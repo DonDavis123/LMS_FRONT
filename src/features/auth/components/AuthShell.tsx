@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import BrandMark from "@/features/auth/components/BrandMark";
 import LoginShowcase from "@/features/auth/components/LoginShowcase";
+import LegalLinks from "@/features/legal/components/LegalLinks";
 import ThemeToggle from "@/shared/components/ThemeToggle";
 // Imported here (not only in LoginForm) so /forgot-password and
 // /reset-password get the auth styles and motion tokens as well — Next.js
@@ -48,6 +49,10 @@ export default function AuthShell({ children, compactPanel = false }: AuthShellP
           )}
           {children}
         </div>
+
+        {/* Public Privacy Policy / Terms links. Required on the app home page
+            for Google OAuth verification, so they are always visible here. */}
+        <LegalLinks className="absolute inset-x-0 bottom-5 justify-center" />
       </main>
     </div>
   );

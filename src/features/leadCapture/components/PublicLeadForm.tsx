@@ -12,6 +12,7 @@ import {
 } from "react";
 import { AlertCircle, CheckCircle2, Link2Off, PauseCircle } from "lucide-react";
 import Spinner from "@/shared/components/Spinner";
+import LegalLinks from "@/features/legal/components/LegalLinks";
 import { inputClass } from "@/shared/components/FormLayout";
 import { PublicLeadFormService } from "@/features/leadCapture/services/PublicLeadFormService";
 import {
@@ -407,6 +408,9 @@ export default function PublicLeadForm({ token }: { token: string }) {
           )}
         </div>
       </main>
+      <footer className="px-4 pb-8">
+        <LegalLinks className="justify-center" />
+      </footer>
     </div>
   );
 }
