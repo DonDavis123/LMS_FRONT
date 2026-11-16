@@ -6,6 +6,7 @@ import {
 } from "@/features/meetings/services/meetingErrors";
 import type {
   ConferenceProvider,
+  EmailSkippedRecipient,
   ConferenceStatus,
   CreateMeetingPayload,
   Meeting,
@@ -19,6 +20,20 @@ import type {
 } from "@/features/meetings/types/meeting.types";
 
 const DEFAULT_PAGE_SIZE = 10;
+
+/**
+ * Warning for people the server could not email (no address on file), or
+ * `null` when everyone could be reached.
+ */
+export function emailSkippedMessage(
+  skipped: EmailSkippedRecipient[] | undefined,
+): string | null {
+  if (!skipped || skipped.length === 0) return null;
+  const names = Array.from(new Set(skipped.map((item) => item.name)));
+  const shown = names.slice(0, 4).join(", ");
+  const more = names.length > 4 ? ` and ${names.length - 4} more` : "";
+  return `No usable email for ${shown}${more}, so they won\u2019t be emailed.`;
+}
 
 interface BackendMeetingListItem {
   id: string;
@@ -57,16 +72,19 @@ interface BackendMeetingDetail {
     id: string;
     record_type: "LEAD" | "CONTACT";
     name: string;
+    email?: string | null;
   }>;
   participants: Array<{
     id: string;
     participant_type: "LEAD" | "USER" | "CONTACT";
     name: string;
+    email?: string | null;
   }>;
   meet_link?: string | null;
   conference_provider?: ConferenceProvider | null;
   conference_status?: ConferenceStatus;
   conference_error?: string | null;
+  send_email_notifications?: boolean;
 }
 
 function mapListItem(item: BackendMeetingListItem): MeetingListItem {
@@ -97,6 +115,7 @@ function mapParticipant(
   return {
     id: participant.id,
     name: participant.name,
+    email: participant.email ?? null,
     type: typeMap[participant.participant_type],
   };
 }
@@ -107,6 +126,7 @@ function mapRelatedRecord(
   return {
     id: record.id,
     name: record.name,
+    email: record.email ?? null,
     type: record.record_type,
   };
 }
@@ -132,6 +152,7 @@ function mapDetail(data: BackendMeetingDetail): Meeting {
     conference_provider: data.conference_provider ?? null,
     conference_status: data.conference_status ?? "none",
     conference_error: data.conference_error ?? null,
+    send_email_notifications: data.send_email_notifications ?? false,
   };
 }
 
@@ -176,9 +197,13 @@ export const MeetingService = {
   async createMeeting(payload: CreateMeetingPayload): Promise<MeetingCreateResult> {
     try {
       const { data } = await apiClient.post<MeetingWriteResponse>("/meetings/", payload);
+      const warnings = [
+        data.conference_status === "failed" ? data.message : null,
+        emailSkippedMessage(data.email_skipped),
+      ].filter((item): item is string => Boolean(item));
       return {
         ...data,
-        warning: data.conference_status === "failed" ? data.message : null,
+        warning: warnings.length > 0 ? warnings.join(" ") : null,
       };
     } catch (error) {
       throw toMeetingApiError(error, "Couldn't save this meeting. Check the fields and try again.");
@@ -192,16 +217,19 @@ export const MeetingService = {
    */
   async updateMeeting(id: string, payload: UpdateMeetingPayload): Promise<Meeting> {
     let writtenId = id;
+    let emailSkipped: EmailSkippedRecipient[] = [];
     try {
       const { data } = await apiClient.patch<MeetingWriteResponse>(
         `/meetings/${id}/`,
         payload,
       );
       writtenId = data.id;
+      emailSkipped = data.email_skipped ?? [];
     } catch (error) {
       throw toMeetingApiError(error, "Couldn't save this meeting. Check the fields and try again.");
     }
-    return this.getMeeting(writtenId);
+    const meeting = await this.getMeeting(writtenId);
+    return { ...meeting, email_skipped: emailSkipped };
   },
 
   /**

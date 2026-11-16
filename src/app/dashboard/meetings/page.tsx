@@ -6,7 +6,7 @@ import MeetingList from "@/features/meetings/components/MeetingList";
 import MeetingForm from "@/features/meetings/components/MeetingForm";
 import Modal from "@/shared/components/Modal";
 import GoogleConnectionChip from "@/features/googleIntegration/components/GoogleConnectionChip";
-import { MeetingService } from "@/features/meetings/services/MeetingService";
+import { MeetingService, emailSkippedMessage } from "@/features/meetings/services/MeetingService";
 import type {
   CreateMeetingPayload,
   Meeting,
@@ -87,6 +87,7 @@ export default function MeetingsPage() {
   async function handleSubmit(payload: CreateMeetingPayload) {
     if (modalState?.mode === "edit" && modalState.meeting) {
       const updated = await MeetingService.updateMeeting(modalState.meeting.id, payload);
+      const skippedWarning = emailSkippedMessage(updated.email_skipped);
       setToast(
         updated.conference_error
           ? {
@@ -94,7 +95,9 @@ export default function MeetingsPage() {
                 "Meeting saved, but Google Calendar couldn\u2019t be updated. Open the meeting to retry.",
               tone: "warning",
             }
-          : { message: "Meeting updated successfully", tone: "success" },
+          : skippedWarning
+            ? { message: `Meeting updated. ${skippedWarning}`, tone: "warning" }
+            : { message: "Meeting updated successfully", tone: "success" },
       );
       setModalState(null);
       await load(page);
@@ -110,7 +113,9 @@ export default function MeetingsPage() {
             message:
               created.conference_status === "created" && created.meet_link
                 ? "Meeting created. Google Meet link generated and invites sent."
-                : "Meeting created successfully",
+                : created.send_email_notifications
+                  ? "Meeting created. Email invitations sent."
+                  : "Meeting created successfully",
             tone: "success",
           },
     );

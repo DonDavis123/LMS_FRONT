@@ -17,6 +17,15 @@ export interface MeetingRelatedRecord {
   id: string;
   type: MeetingRelatedRecordType;
   name: string;
+  email?: string | null;
+}
+
+/** Someone who should be emailed about a meeting but has no usable address. */
+export interface EmailSkippedRecipient {
+  name: string;
+  type: "USER" | "LEAD" | "CONTACT";
+  role: "host" | "participant" | "related";
+  reason: "no_email" | "invalid_email";
 }
 
 export interface MeetingListRelatedItem {
@@ -60,6 +69,10 @@ export interface Meeting {
   conference_provider: ConferenceProvider | null;
   conference_status: ConferenceStatus;
   conference_error: string | null;
+  /** Invitations, updates and reminders are emailed (with or without Meet). */
+  send_email_notifications: boolean;
+  /** Only on the result of a save: who could not be emailed. */
+  email_skipped?: EmailSkippedRecipient[];
 }
 
 /** The conference-related fields shared by Meeting and the conference endpoint. */
@@ -92,6 +105,8 @@ export interface CreateMeetingPayload {
   participants?: MeetingParticipantPayload;
   /** Create only: also create a Google Meet link + Calendar invite. */
   add_google_meet?: boolean;
+  /** Email everyone (host, participants, Related To) invites, updates and a reminder. */
+  send_email_notifications?: boolean;
 }
 
 export type UpdateMeetingPayload = Partial<
@@ -104,6 +119,8 @@ export interface MeetingWriteResponse {
   meet_link?: string | null;
   conference_status?: ConferenceStatus;
   conference_error?: string | null;
+  send_email_notifications?: boolean;
+  email_skipped?: EmailSkippedRecipient[];
 }
 
 /** Result of creating a meeting. `warning` is set when it saved but Meet failed. */

@@ -9,7 +9,7 @@ import Modal from "@/shared/components/Modal";
 import InlineEditRow from "@/shared/components/InlineEditRow";
 import MeetingForm from "@/features/meetings/components/MeetingForm";
 import MeetingConference from "@/features/meetings/components/MeetingConference";
-import { MeetingService } from "@/features/meetings/services/MeetingService";
+import { MeetingService, emailSkippedMessage } from "@/features/meetings/services/MeetingService";
 import type {
   CreateMeetingPayload,
   Meeting,
@@ -33,6 +33,8 @@ export default function MeetingDetail({ meeting, onMeetingChange }: Props) {
   const [menu, setMenu] = useState(false);
   const [editing, setEditing] = useState(false);
   const [activeTab, setActiveTab] = useState<"overview" | "timeline">("overview");
+  // Set after a save when some people could not be emailed (no address).
+  const [emailNotice, setEmailNotice] = useState<string | null>(null);
 
   async function updateField(field: EditableField, raw: string) {
     if (field === "title" && !raw.trim()) {
@@ -45,11 +47,13 @@ export default function MeetingDetail({ meeting, onMeetingChange }: Props) {
       [field]: value,
     } as UpdateMeetingPayload);
 
+    setEmailNotice(emailSkippedMessage(updated.email_skipped));
     onMeetingChange(updated);
   }
 
   async function saveEdit(payload: CreateMeetingPayload) {
     const updated = await MeetingService.updateMeeting(meeting.id, payload);
+    setEmailNotice(emailSkippedMessage(updated.email_skipped));
     onMeetingChange(updated);
     setEditing(false);
   }
@@ -154,6 +158,23 @@ export default function MeetingDetail({ meeting, onMeetingChange }: Props) {
         <div key={activeTab} className="animate-fade-in">
           {activeTab === "overview" ? (
             <>
+              {emailNotice && (
+                <div
+                  role="status"
+                  className="mb-4 flex items-start justify-between gap-3 rounded-md border border-amber-300/60 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:border-amber-400/30 dark:bg-amber-400/10 dark:text-amber-200"
+                >
+                  <span>{emailNotice}</span>
+                  <button
+                    type="button"
+                    onClick={() => setEmailNotice(null)}
+                    aria-label="Dismiss"
+                    className="shrink-0 rounded p-0.5 hover:bg-black/5"
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+              )}
+
               <MeetingConference meeting={meeting} onMeetingChange={onMeetingChange} />
 
               <div className="mt-4 rounded-lg border border-line bg-surface p-6">
@@ -165,6 +186,11 @@ export default function MeetingDetail({ meeting, onMeetingChange }: Props) {
                   <Row label="From" value={formatDateTime(meeting.start_at)} editable={false} />
                   <Row label="To" value={formatDateTime(meeting.end_at)} editable={false} />
                   <Row label="All Day" value={meeting.is_all_day ? "Yes" : "No"} editable={false} />
+                  <Row
+                    label="Email Notifications"
+                    value={meeting.send_email_notifications ? "On" : "Off"}
+                    editable={false}
+                  />
                   <RecordsRow label="Related To" records={relatedRecords} linked />
                   <RecordsRow label="Participants" records={meeting.participants} />
                 </div>

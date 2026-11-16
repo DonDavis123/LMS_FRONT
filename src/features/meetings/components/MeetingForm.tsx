@@ -58,6 +58,8 @@ interface FormState {
   related: SelectedRecord[];
   description: string;
   add_google_meet: boolean;
+  /** Email invites, updates and a reminder to everyone on the meeting. */
+  send_email_notifications: boolean;
 }
 
 function splitDateTime(value?: string | null) {
@@ -95,6 +97,8 @@ function emptyForm(day?: string): FormState {
     related: [],
     description: "",
     add_google_meet: false,
+    // On by default: people on a meeting expect to hear about it.
+    send_email_notifications: true,
   };
 }
 
@@ -115,11 +119,12 @@ function fromMeeting(m: Meeting): FormState {
     related: (m.related_to ?? []).map((record) => ({
       id: record.id,
       name: record.name,
-      email: null,
+      email: record.email ?? null,
       type: record.type === "LEAD" ? "lead" : "contact",
     })),
     description: m.description ?? "",
     add_google_meet: false,
+    send_email_notifications: m.send_email_notifications ?? false,
   };
 }
 
@@ -155,9 +160,18 @@ export default function MeetingForm({ mode, initialMeeting, onSubmit, onCancel, 
   const googleRevoked = google.status?.status === "revoked";
   const sendMeet =
     meetAvailable && form.add_google_meet && !form.all_day && !needsConnect;
-  // Participants the server will silently skip for lack of an email address.
-  const participantsWithoutEmail = form.participants.filter(
-    (participant) => !participant.email || !participant.email.includes("@"),
+  const emailOn = form.send_email_notifications;
+  // Everyone who would be emailed: participants and Related To records,
+  // once each (the same lead can be both).
+  const emailRecipients = Array.from(
+    new Map(
+      [...form.participants, ...form.related].map((record) => [recordKey(record), record]),
+    ).values(),
+  );
+  // People the server cannot email for lack of an address; the form warns
+  // before saving and the server reports them again after.
+  const recipientsWithoutEmail = emailRecipients.filter(
+    (record) => !record.email || !record.email.includes("@"),
   );
   const meetLockedByExisting =
     mode === "edit" && initialMeeting?.conference_status === "created";
@@ -288,6 +302,7 @@ export default function MeetingForm({ mode, initialMeeting, onSubmit, onCancel, 
         description: form.description.trim() || null,
         related_to: relatedPayload.length > 0 ? relatedPayload : null,
         participants: participantPayload,
+        send_email_notifications: form.send_email_notifications,
         ...(sendMeet ? { add_google_meet: true } : {}),
       });
     } catch (caught) {
@@ -398,6 +413,35 @@ export default function MeetingForm({ mode, initialMeeting, onSubmit, onCancel, 
           />
         </ZohoRow>
 
+        <ZohoRow label="Email" align="top">
+          <div className="py-1.5">
+            <div className="flex items-center gap-2">
+              <Switch
+                checked={emailOn}
+                onChange={(next) => update("send_email_notifications", next)}
+                ariaLabel="Send email notifications"
+              />
+              <span className="text-sm text-fg">Send email notifications</span>
+            </div>
+            <p className="mt-1 text-xs text-ink-soft">
+              {emailOn
+                ? "The host, participants and Related To leads/contacts get an email invite with the title and description, updates when the meeting changes, and a reminder 15 minutes before it starts. Works with or without Google Meet."
+                : "Turn on to email invites, updates and reminders to everyone on this meeting."}
+            </p>
+            {emailOn && emailRecipients.length === 0 && (
+              <p className="mt-1 text-xs text-amber-700 dark:text-amber-300">
+                Nobody to email yet. Use “Add” next to Participants or Related To.
+              </p>
+            )}
+            {emailOn && recipientsWithoutEmail.length > 0 && (
+              <p className="mt-1 text-xs text-amber-700 dark:text-amber-300">
+                No email on file for {recipientsWithoutEmail.map((p) => p.name).join(", ")}
+                {" "}— they won&apos;t be emailed.
+              </p>
+            )}
+          </div>
+        </ZohoRow>
+
         {meetAvailable && (
           <ZohoRow label="Google Meet">
             <div className="py-1.5">
@@ -433,7 +477,14 @@ export default function MeetingForm({ mode, initialMeeting, onSubmit, onCancel, 
                   <div className="flex items-center gap-2">
                     <Switch
                       checked={sendMeet}
-                      onChange={(next) => update("add_google_meet", next)}
+                      onChange={(next) =>
+                        // A Meet link is only useful if people are told about it.
+                        setForm((current) => ({
+                          ...current,
+                          add_google_meet: next,
+                          send_email_notifications: next ? true : current.send_email_notifications,
+                        }))
+                      }
                       ariaLabel="Add Google Meet"
                       disabled={form.all_day}
                     />
@@ -443,8 +494,8 @@ export default function MeetingForm({ mode, initialMeeting, onSubmit, onCancel, 
                     {form.all_day
                       ? "Google Meet isn\u2019t available for all-day meetings."
                       : sendMeet
-                        ? "A Meet link is created when you save. Participants get a Google Calendar invite by email, plus a reminder email with the link 15 minutes before the meeting."
-                        : "Turn on to create a Meet link and email invites to participants."}
+                        ? "A Meet link is created when you save and added to the invite and the reminder email."
+                        : "Turn on to create a Meet link for this meeting."}
                   </p>
                   {!hostIsMe && form.owner_id && !form.all_day && (
                     <p className="mt-1 text-xs text-ink-soft">
@@ -452,16 +503,9 @@ export default function MeetingForm({ mode, initialMeeting, onSubmit, onCancel, 
                       Google account, otherwise the meeting can&apos;t be saved with Meet.
                     </p>
                   )}
-                  {sendMeet && form.participants.length === 0 && (
+                  {sendMeet && !emailOn && (
                     <p className="mt-1 text-xs text-amber-700 dark:text-amber-300">
-                      No participants added yet. The Meet link will be created, but nobody will be
-                      emailed. Use “Add” next to Participants to invite people.
-                    </p>
-                  )}
-                  {sendMeet && participantsWithoutEmail.length > 0 && (
-                    <p className="mt-1 text-xs text-amber-700 dark:text-amber-300">
-                      No email on file for {participantsWithoutEmail.map((p) => p.name).join(", ")}
-                      {" "}— they won&apos;t receive the invite.
+                      Email notifications are off, so nobody will be emailed the Meet link.
                     </p>
                   )}
                 </div>
