@@ -49,6 +49,19 @@ export interface MeetingListItem {
   conference_status: ConferenceStatus;
 }
 
+/** Minutes before the start that a reminder email can be sent. */
+export type MeetingReminderOffset = 1440 | 60 | 30 | 15;
+
+export const MEETING_REMINDER_OPTIONS: ReadonlyArray<{
+  value: MeetingReminderOffset;
+  label: string;
+}> = [
+  { value: 1440, label: "1 day before" },
+  { value: 60, label: "1 hour before" },
+  { value: 30, label: "30 minutes before" },
+  { value: 15, label: "15 minutes before" },
+];
+
 export interface Meeting {
   id: string;
   title: string;
@@ -71,6 +84,11 @@ export interface Meeting {
   conference_error: string | null;
   /** Invitations, updates and reminders are emailed (with or without Meet). */
   send_email_notifications: boolean;
+  /** Reminder emails, in minutes before the start. `[]` = none. */
+  reminder_offsets: MeetingReminderOffset[];
+  /** Custom reminder email; empty = the meeting title / description are used. */
+  reminder_subject: string | null;
+  reminder_message: string | null;
   /** Only on the result of a save: who could not be emailed. */
   email_skipped?: EmailSkippedRecipient[];
 }
@@ -107,6 +125,11 @@ export interface CreateMeetingPayload {
   add_google_meet?: boolean;
   /** Email everyone (host, participants, Related To) invites, updates and a reminder. */
   send_email_notifications?: boolean;
+  /** Any of 1440, 60, 30, 15 (minutes before the start). `[]` = no reminder. */
+  reminder_offsets?: MeetingReminderOffset[];
+  /** Custom reminder subject/body. Empty/null = meeting title / description. */
+  reminder_subject?: string | null;
+  reminder_message?: string | null;
 }
 
 export type UpdateMeetingPayload = Partial<

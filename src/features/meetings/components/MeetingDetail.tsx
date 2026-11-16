@@ -191,6 +191,11 @@ export default function MeetingDetail({ meeting, onMeetingChange }: Props) {
                     value={meeting.send_email_notifications ? "On" : "Off"}
                     editable={false}
                   />
+                  <Row
+                    label="Reminders"
+                    value={reminderSummary(meeting.reminder_offsets)}
+                    editable={false}
+                  />
                   <RecordsRow label="Related To" records={relatedRecords} linked />
                   <RecordsRow label="Participants" records={meeting.participants} />
                 </div>
@@ -376,4 +381,15 @@ function DescriptionBlock({
       </button>
     </div>
   );
+}
+
+function reminderSummary(offsets: number[]): string {
+  if (offsets.length === 0) return "None";
+  const labels: Record<number, string> = {
+    1440: "1 day before",
+    60: "1 hour before",
+    30: "30 minutes before",
+    15: "15 minutes before",
+  };
+  return offsets.map((value) => labels[value] ?? `${value} minutes before`).join(", ");
 }

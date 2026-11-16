@@ -11,8 +11,10 @@ import Spinner from "@/shared/components/Spinner";
 import Time12hPicker from "@/shared/components/Time12hPicker";
 import DateInput from "@/shared/components/DateInput";
 import {
+  MEETING_REMINDER_OPTIONS,
   type Meeting,
   type CreateMeetingPayload,
+  type MeetingReminderOffset,
   type RelatedToPayload,
 } from "@/features/meetings/types/meeting.types";
 import RecordSelectionDialog, { type SelectionCategory } from "@/features/meetings/components/RecordSelectionDialog";
@@ -60,6 +62,11 @@ interface FormState {
   add_google_meet: boolean;
   /** Email invites, updates and a reminder to everyone on the meeting. */
   send_email_notifications: boolean;
+  /** Reminder emails, minutes before the start. Empty = "None". */
+  reminder_offsets: MeetingReminderOffset[];
+  /** Optional custom reminder email; blank = meeting title / description. */
+  reminder_subject: string;
+  reminder_message: string;
 }
 
 function splitDateTime(value?: string | null) {
@@ -99,6 +106,9 @@ function emptyForm(day?: string): FormState {
     add_google_meet: false,
     // On by default: people on a meeting expect to hear about it.
     send_email_notifications: true,
+    reminder_offsets: [15],
+    reminder_subject: "",
+    reminder_message: "",
   };
 }
 
@@ -125,6 +135,9 @@ function fromMeeting(m: Meeting): FormState {
     description: m.description ?? "",
     add_google_meet: false,
     send_email_notifications: m.send_email_notifications ?? false,
+    reminder_offsets: m.reminder_offsets ?? [15],
+    reminder_subject: m.reminder_subject ?? "",
+    reminder_message: m.reminder_message ?? "",
   };
 }
 
@@ -144,6 +157,10 @@ export default function MeetingForm({ mode, initialMeeting, onSubmit, onCancel, 
   const [picker, setPicker] = useState<"participants" | "related" | null>(null);
   // Open straight away when there is already a description to show.
   const [showMore, setShowMore] = useState(() => Boolean(initialMeeting?.description?.trim()));
+  // Open the custom reminder email when one was already written.
+  const [showReminderText, setShowReminderText] = useState(() =>
+    Boolean(initialMeeting?.reminder_subject?.trim() || initialMeeting?.reminder_message?.trim()),
+  );
 
   // Google Meet is only offered when creating. The status request is skipped
   // while editing. The popup connect flow never touches `form`, so a
@@ -214,6 +231,17 @@ export default function MeetingForm({ mode, initialMeeting, onSubmit, onCancel, 
 
   function update<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((current) => ({ ...current, [key]: value }));
+  }
+
+  /** "None" clears every choice; picking a time replaces "None". */
+  function toggleReminder(value: MeetingReminderOffset) {
+    setForm((current) => {
+      const has = current.reminder_offsets.includes(value);
+      const next = has
+        ? current.reminder_offsets.filter((item) => item !== value)
+        : [...current.reminder_offsets, value].sort((a, b) => b - a);
+      return { ...current, reminder_offsets: next };
+    });
   }
 
   /** Adds the record to the list, or removes it if it is already there. */
@@ -303,6 +331,9 @@ export default function MeetingForm({ mode, initialMeeting, onSubmit, onCancel, 
         related_to: relatedPayload.length > 0 ? relatedPayload : null,
         participants: participantPayload,
         send_email_notifications: form.send_email_notifications,
+        reminder_offsets: form.reminder_offsets,
+        reminder_subject: form.reminder_subject.trim() || null,
+        reminder_message: form.reminder_message.trim() || null,
         ...(sendMeet ? { add_google_meet: true } : {}),
       });
     } catch (caught) {
@@ -425,7 +456,7 @@ export default function MeetingForm({ mode, initialMeeting, onSubmit, onCancel, 
             </div>
             <p className="mt-1 text-xs text-ink-soft">
               {emailOn
-                ? "The host, participants and Related To leads/contacts get an email invite with the title and description, updates when the meeting changes, and a reminder 15 minutes before it starts. Works with or without Google Meet."
+                ? "The host, participants and Related To leads/contacts get an email invite with the title and description, and updates when the meeting changes. Choose when to remind them under Reminders. Works with or without Google Meet."
                 : "Turn on to email invites, updates and reminders to everyone on this meeting."}
             </p>
             {emailOn && emailRecipients.length === 0 && (
@@ -438,6 +469,81 @@ export default function MeetingForm({ mode, initialMeeting, onSubmit, onCancel, 
                 No email on file for {recipientsWithoutEmail.map((p) => p.name).join(", ")}
                 {" "}— they won&apos;t be emailed.
               </p>
+            )}
+          </div>
+        </ZohoRow>
+
+        <ZohoRow label="Reminders" align="top">
+          <div className="py-1.5">
+            <div role="group" aria-label="Reminders" className="flex flex-wrap gap-x-5 gap-y-2">
+              {MEETING_REMINDER_OPTIONS.map((option) => (
+                <label key={option.value} className="flex items-center gap-2 text-sm text-fg">
+                  <input
+                    type="checkbox"
+                    checked={form.reminder_offsets.includes(option.value)}
+                    onChange={() => toggleReminder(option.value)}
+                    className="h-3.5 w-3.5 rounded border-line accent-indigo-500"
+                  />
+                  {option.label}
+                </label>
+              ))}
+              <label className="flex items-center gap-2 text-sm text-fg">
+                <input
+                  type="checkbox"
+                  checked={form.reminder_offsets.length === 0}
+                  onChange={() => update("reminder_offsets", [])}
+                  className="h-3.5 w-3.5 rounded border-line accent-indigo-500"
+                />
+                None
+              </label>
+            </div>
+            <p className="mt-1 text-xs text-ink-soft">
+              {form.reminder_offsets.length === 0
+                ? "No reminder emails will be sent for this meeting."
+                : "Everyone on the meeting is emailed at each time you pick. The subject is the meeting title and the body is its description, unless you customize it below."}
+            </p>
+
+            {form.reminder_offsets.length > 0 && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setShowReminderText((v) => !v)}
+                  aria-expanded={showReminderText}
+                  className="mt-1.5 inline-flex items-center gap-1 text-xs font-medium text-indigo-500 hover:text-indigo-400 dark:text-indigo-400"
+                >
+                  <ChevronRight
+                    size={12}
+                    className={`transition-transform duration-200 ${showReminderText ? "rotate-90" : ""}`}
+                  />
+                  Customize reminder email
+                </button>
+                {showReminderText && (
+                  <div className="mt-2 space-y-2">
+                    <input
+                      value={form.reminder_subject}
+                      maxLength={255}
+                      onChange={(e) => update("reminder_subject", e.target.value)}
+                      placeholder={form.title.trim() || "Subject (defaults to the meeting title)"}
+                      aria-label="Reminder email subject"
+                      className={fieldClass}
+                    />
+                    <textarea
+                      value={form.reminder_message}
+                      onChange={(e) => update("reminder_message", e.target.value)}
+                      rows={3}
+                      placeholder={
+                        form.description.trim() || "Message (defaults to the meeting description)"
+                      }
+                      aria-label="Reminder email message"
+                      className="block w-full resize-y rounded-lg border border-line bg-surface px-3 py-2 text-sm text-fg outline-none placeholder:text-ink-soft focus:border-slate focus:ring-2 focus:ring-slate-light"
+                    />
+                    <p className="text-xs text-ink-soft">
+                      Leave blank to use the meeting title and description. Replies go to the
+                      meeting creator.
+                    </p>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </ZohoRow>

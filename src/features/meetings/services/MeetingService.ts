@@ -15,6 +15,7 @@ import type {
   MeetingListItem,
   MeetingParticipant,
   MeetingRelatedRecord,
+  MeetingReminderOffset,
   MeetingWriteResponse,
   UpdateMeetingPayload,
 } from "@/features/meetings/types/meeting.types";
@@ -85,6 +86,10 @@ interface BackendMeetingDetail {
   conference_status?: ConferenceStatus;
   conference_error?: string | null;
   send_email_notifications?: boolean;
+  /** null on meetings created before reminders were selectable (15 minutes). */
+  reminder_offsets?: MeetingReminderOffset[] | null;
+  reminder_subject?: string | null;
+  reminder_message?: string | null;
 }
 
 function mapListItem(item: BackendMeetingListItem): MeetingListItem {
@@ -153,6 +158,9 @@ function mapDetail(data: BackendMeetingDetail): Meeting {
     conference_status: data.conference_status ?? "none",
     conference_error: data.conference_error ?? null,
     send_email_notifications: data.send_email_notifications ?? false,
+    reminder_offsets: data.reminder_offsets ?? [15],
+    reminder_subject: data.reminder_subject ?? null,
+    reminder_message: data.reminder_message ?? null,
   };
 }
 
