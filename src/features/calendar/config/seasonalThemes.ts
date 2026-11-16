@@ -16,31 +16,39 @@
  * the wrong day.
  */
 
+/** Illustration style drawn in the corners of the calendar. */
+export type ArtKind = "leaf" | "snow" | "holly" | "heart" | "blossom" | "sunflower" | "drop" | "sun" | "confetti";
+
 export interface SeasonalTheme {
   /** 0 = January … 11 = December. */
   month: number;
   name: string;
   tagline: string;
+  /** Main colour: month title, today marker, selected-day tint, grid-line tint. */
   accent: string;
-  /** Emoji used in the banner and as the month's decoration. */
+  /** Second colour: the year next to the title. */
+  accent2: string;
+  /** Emoji used for the month's decoration. */
   icon: string;
-  /** Extra emoji repeated across the banner. */
-  decor: readonly string[];
+  /** Big emoji shown beside the title. */
+  mascot: string;
+  /** Corner illustration style. */
+  art: ArtKind;
 }
 
 export const SEASONAL_THEMES: readonly SeasonalTheme[] = [
-  { month: 0, name: "New Year", tagline: "Fresh start, fresh pipeline.", accent: "#5b6bc4", icon: "🎆", decor: ["❄️", "✨", "🥂"] },
-  { month: 1, name: "Hearts", tagline: "Show your customers some love.", accent: "#d6456b", icon: "💖", decor: ["🌹", "💌", "💕"] },
-  { month: 2, name: "Spring Bloom", tagline: "New leads are blossoming.", accent: "#8a5fc9", icon: "🌸", decor: ["🌷", "🦋", "🌼"] },
-  { month: 3, name: "April Showers", tagline: "Showers today, deals tomorrow.", accent: "#3f9e5a", icon: "🌦️", decor: ["☔", "🌱", "🌈"] },
-  { month: 4, name: "May Flowers", tagline: "Sunshine on every follow-up.", accent: "#b9830f", icon: "🌻", decor: ["🐝", "🌼", "🌿"] },
-  { month: 5, name: "Summer Sun", tagline: "Hot leads, cool calls.", accent: "#e0583f", icon: "☀️", decor: ["🏖️", "🍉", "😎"] },
-  { month: 6, name: "Monsoon", tagline: "Let the closings pour in.", accent: "#2a8fa5", icon: "🌧️", decor: ["☔", "🍃", "🌩️"] },
-  { month: 7, name: "Freedom Month", tagline: "Celebrate the wins, big and small.", accent: "#2f8f5b", icon: "🇮🇳", decor: ["🪁", "🎉", "🏵️"] },
-  { month: 8, name: "Harvest", tagline: "Time to reap what you sowed.", accent: "#b5651d", icon: "🍁", decor: ["🌾", "🍂", "📚"] },
-  { month: 9, name: "Halloween", tagline: "No tricks — just treats and closed deals.", accent: "#d9640f", icon: "🎃", decor: ["👻", "🦇", "🕸️"] },
-  { month: 10, name: "Festive Glow", tagline: "Light up the quarter.", accent: "#8c3a5a", icon: "🪔", decor: ["🍂", "✨", "🎇"] },
-  { month: 11, name: "Christmas", tagline: "Wrap up the year with a bow.", accent: "#c1342f", icon: "🎄", decor: ["⛄", "🎁", "❄️"] },
+  { month: 0, name: "New Year", tagline: "Fresh start, fresh pipeline.", accent: "#5b6bc4", accent2: "#c9821a", icon: "🎆", mascot: "⛄", art: "snow" },
+  { month: 1, name: "Hearts", tagline: "Show your customers some love.", accent: "#d6456b", accent2: "#7a3d8f", icon: "💖", mascot: "💌", art: "heart" },
+  { month: 2, name: "Spring Bloom", tagline: "New leads are blossoming.", accent: "#8a5fc9", accent2: "#2f8f5b", icon: "🌸", mascot: "🦋", art: "blossom" },
+  { month: 3, name: "April Showers", tagline: "Showers today, deals tomorrow.", accent: "#2f8f9f", accent2: "#d6456b", icon: "🌦️", mascot: "☔", art: "drop" },
+  { month: 4, name: "May Flowers", tagline: "Sunshine on every follow-up.", accent: "#b9830f", accent2: "#2f8f5b", icon: "🌻", mascot: "🐝", art: "sunflower" },
+  { month: 5, name: "Summer Sun", tagline: "Hot leads, cool calls.", accent: "#e0583f", accent2: "#1f7fb5", icon: "☀️", mascot: "🏖️", art: "sun" },
+  { month: 6, name: "Monsoon", tagline: "Let the closings pour in.", accent: "#2a7f95", accent2: "#3f9e5a", icon: "🌧️", mascot: "🐸", art: "drop" },
+  { month: 7, name: "Freedom Month", tagline: "Celebrate the wins, big and small.", accent: "#e07a1f", accent2: "#2f8f5b", icon: "🇮🇳", mascot: "🪁", art: "confetti" },
+  { month: 8, name: "Harvest", tagline: "Time to reap what you sowed.", accent: "#b5651d", accent2: "#6b4a8f", icon: "🍁", mascot: "🌾", art: "leaf" },
+  { month: 9, name: "Halloween", tagline: "No tricks — just treats and closed deals.", accent: "#d9640f", accent2: "#5b3a8f", icon: "🎃", mascot: "🎃", art: "leaf" },
+  { month: 10, name: "Autumn Glow", tagline: "Cosy days, warm follow-ups.", accent: "#e0612b", accent2: "#5b3a6f", icon: "🍂", mascot: "🐿️", art: "leaf" },
+  { month: 11, name: "Christmas", tagline: "Wrap up the year with a bow.", accent: "#c1342f", accent2: "#2f7f4b", icon: "🎄", mascot: "🎅", art: "holly" },
 ] as const;
 
 export interface Festival {
@@ -82,4 +90,26 @@ function pad2(value: number): string {
 
 export function getFestival(date: Date): Festival | null {
   return FESTIVALS[`${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}`] ?? null;
+}
+
+/**
+ * CSS custom properties that carry the theme into Tailwind classes such as
+ * `bg-[var(--cal-paper)] dark:bg-[var(--cal-paper-dk)]`. Everything is derived
+ * from the two accent colours, so a theme only needs `accent` and `accent2`.
+ */
+export function themeCssVars(theme: SeasonalTheme): Record<string, string> {
+  return {
+    "--cal-accent": theme.accent,
+    "--cal-accent2": theme.accent2,
+    // Warm "paper" in light mode, a tinted charcoal in dark mode.
+    "--cal-paper": `color-mix(in srgb, ${theme.accent} 6%, #fffaec)`,
+    "--cal-paper-dk": `color-mix(in srgb, ${theme.accent} 10%, #14161c)`,
+    // Semi-transparent so the corner illustrations show through the grid edges.
+    "--cal-cell": `color-mix(in srgb, color-mix(in srgb, ${theme.accent} 3%, #fffdf5) 60%, transparent)`,
+    "--cal-cell-dk": `color-mix(in srgb, color-mix(in srgb, ${theme.accent} 6%, #1a1d26) 60%, transparent)`,
+    "--cal-line": `color-mix(in srgb, ${theme.accent} 28%, #b9b49e)`,
+    "--cal-line-dk": `color-mix(in srgb, ${theme.accent} 30%, #2b2f3a)`,
+    "--cal-title-dk": `color-mix(in srgb, ${theme.accent} 70%, white)`,
+    "--cal-select": `color-mix(in srgb, ${theme.accent} 14%, transparent)`,
+  };
 }

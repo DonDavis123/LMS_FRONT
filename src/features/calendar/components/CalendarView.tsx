@@ -37,8 +37,9 @@ import {
   weekTitle,
 } from "@/features/calendar/utils/calendarDates";
 import EventChip, { EVENT_TYPE_META, eventStateLabel, eventTimeLabel } from "@/features/calendar/components/EventChip";
-import SeasonalBanner from "@/features/calendar/components/SeasonalBanner";
-import { getFestival } from "@/features/calendar/config/seasonalThemes";
+import SeasonalArt from "@/features/calendar/components/SeasonalArt";
+import SeasonalHeader from "@/features/calendar/components/SeasonalHeader";
+import { getFestival, themeCssVars } from "@/features/calendar/config/seasonalThemes";
 import { useSeasonalTheme } from "@/features/calendar/hooks/useSeasonalTheme";
 import QuickAddDialog from "@/features/calendar/components/QuickAddDialog";
 import DayTimeGrid from "@/features/calendar/components/DayTimeGrid";
@@ -203,19 +204,37 @@ export default function CalendarView() {
     });
   }
 
+  const activeBtn = theme ? "bg-[var(--cal-accent)] text-white" : "bg-ink text-white";
+  const lineCls = theme ? "border-[var(--cal-line)] dark:border-[var(--cal-line-dk)]" : "border-line";
   const selectedEvents = byDay.get(toDateKey(selectedDay)) ?? [];
   const selectedFestival = theme ? getFestival(view === "day" ? anchor : selectedDay) : null;
   const title = view === "month" ? monthTitle(anchor) : view === "week" ? weekTitle(anchor) : longDayTitle(anchor);
 
   return (
-    <div className="mx-auto w-full max-w-[1400px] px-4 py-5 sm:px-6">
-      {theme && <SeasonalBanner theme={theme} />}
+    <div
+      style={theme ? themeCssVars(theme) : undefined}
+      className={
+        theme
+          ? "relative isolate mx-auto my-3 w-full max-w-[1400px] overflow-hidden rounded-3xl border border-[var(--cal-line)] bg-[var(--cal-paper)] px-4 py-5 sm:px-10 sm:py-8 dark:border-[var(--cal-line-dk)] dark:bg-[var(--cal-paper-dk)]"
+          : "mx-auto w-full max-w-[1400px] px-4 py-5 sm:px-6"
+      }
+    >
+      {theme && <SeasonalArt kind={theme.art} />}
+      {theme && (
+        <SeasonalHeader
+          theme={theme}
+          heading={view === "month" ? monthTitle(anchor).split(" ")[0] : title}
+          year={view === "month" ? anchor.getFullYear() : undefined}
+        />
+      )}
 
       {/* Toolbar */}
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-        <h1 className="mr-2 font-serif text-2xl text-fg" aria-live="polite">
-          {title}
-        </h1>
+        {!theme && (
+          <h1 className="mr-2 font-serif text-2xl text-fg" aria-live="polite">
+            {title}
+          </h1>
+        )}
 
         <div className="flex items-center gap-1">
           <button
@@ -250,7 +269,7 @@ export default function CalendarView() {
               type="button"
               aria-pressed={view === mode}
               onClick={() => changeView(mode)}
-              className={`px-3 py-1.5 font-medium capitalize ${view === mode ? "bg-ink text-white" : "text-fg hover:bg-paper"}`}
+              className={`px-3 py-1.5 font-medium capitalize ${view === mode ? activeBtn : "text-fg hover:bg-paper"}`}
             >
               {mode}
             </button>
@@ -268,7 +287,7 @@ export default function CalendarView() {
                 type="button"
                 aria-pressed={scope === value}
                 onClick={() => setScope(value)}
-                className={`px-3 py-1.5 font-medium ${scope === value ? "bg-ink text-white" : "text-fg hover:bg-paper"}`}
+                className={`px-3 py-1.5 font-medium ${scope === value ? activeBtn : "text-fg hover:bg-paper"}`}
               >
                 {label}
               </button>
@@ -299,7 +318,7 @@ export default function CalendarView() {
           <button
             type="button"
             onClick={() => setAddDay(toDateKey(selectedDay))}
-            className="inline-flex items-center gap-1.5 rounded-md bg-ink px-3 py-2 text-sm font-semibold text-white transition hover:bg-ink-2 active:scale-[0.98]"
+            className={`inline-flex items-center gap-1.5 rounded-md ${theme ? "bg-[var(--cal-accent)] hover:brightness-110" : "bg-ink hover:bg-ink-2"} px-3 py-2 text-sm font-semibold text-white transition active:scale-[0.98]`}
           >
             <Plus size={16} aria-hidden="true" /> Add
           </button>
@@ -419,16 +438,16 @@ export default function CalendarView() {
       <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
         {/* Grid */}
         <section aria-label={`${view === "month" ? "Month" : "Week"} calendar`} className="min-w-0">
-          <div className="hidden grid-cols-7 border-b border-line text-center text-xs font-semibold uppercase tracking-wide text-ink-soft sm:grid">
+          <div className={`hidden grid-cols-7 border-b ${lineCls} text-center text-xs font-semibold uppercase tracking-wide text-ink-soft sm:grid`}>
             {WEEKDAY_LABELS.map((label) => (
-              <div key={label} className="py-2">
+              <div key={label} className={`py-2 ${theme && label === "Sun" ? "text-[var(--cal-accent)]" : ""}`}>
                 {label}
               </div>
             ))}
           </div>
 
           <div
-            className={`grid grid-cols-1 border-l border-line sm:grid-cols-7 ${
+            className={`grid grid-cols-1 border-l ${lineCls} sm:grid-cols-7 ${
               view === "month" ? "sm:auto-rows-[minmax(104px,1fr)]" : "sm:auto-rows-[minmax(320px,1fr)]"
             }`}
           >
@@ -447,9 +466,21 @@ export default function CalendarView() {
                   key={key}
                   onClick={() => selectDay(day)}
                   onDoubleClick={() => openDay(day)}
-                  className={`group relative min-w-0 cursor-pointer flex-col gap-1 border-b border-r border-line p-1.5 ${
+                  className={`group relative min-w-0 cursor-pointer flex-col gap-1 border-b border-r ${lineCls} p-1.5 ${
                     view === "month" && !inMonth ? "hidden sm:flex" : "flex"
-                  } ${isSelected ? "bg-slate-light/40" : inMonth ? "bg-surface hover:bg-paper/60" : "bg-paper/50"}`}
+                  } ${
+                    theme
+                      ? isSelected
+                        ? "bg-[var(--cal-select)]"
+                        : inMonth
+                          ? "bg-[var(--cal-cell)] hover:brightness-95 dark:bg-[var(--cal-cell-dk)]"
+                          : "bg-transparent"
+                      : isSelected
+                        ? "bg-slate-light/40"
+                        : inMonth
+                          ? "bg-surface hover:bg-paper/60"
+                          : "bg-paper/50"
+                  }`}
                 >
                   <div className="flex items-center justify-between">
                     <button
@@ -520,7 +551,14 @@ export default function CalendarView() {
         </section>
 
         {/* Selected-day agenda */}
-        <aside aria-label="Selected day" className="rounded-lg border border-line bg-surface p-4 lg:sticky lg:top-4 lg:self-start">
+        <aside
+          aria-label="Selected day"
+          className={`border p-4 lg:sticky lg:top-4 lg:self-start ${
+            theme
+              ? "rounded-2xl border-[var(--cal-line)] bg-[var(--cal-cell)] dark:border-[var(--cal-line-dk)] dark:bg-[var(--cal-cell-dk)]"
+              : "rounded-lg border-line bg-surface"
+          }`}
+        >
           <div className="flex items-start justify-between gap-2">
             <div>
               <h2 className="font-serif text-lg leading-tight text-fg">{longDayTitle(selectedDay)}</h2>
