@@ -8,11 +8,18 @@ export interface MeetingParticipant {
   id: string;
   name: string;
   email?: string | null;
+  /** Secondary line shown in pickers (company, account…); never sent to the API. */
+  detail?: string | null;
   type: MeetingParticipantType;
 }
 
 export interface MeetingRelatedRecord {
   id: string;
+  type: MeetingRelatedRecordType;
+  name: string;
+}
+
+export interface MeetingListRelatedItem {
   type: MeetingRelatedRecordType;
   name: string;
 }
@@ -24,6 +31,8 @@ export interface MeetingListItem {
   end_at: string;
   related_to_type: MeetingRelatedRecordType | null;
   related_to_names: string[];
+  /** Every related lead/contact with its type (a meeting can have both). */
+  related_to: MeetingListRelatedItem[];
   contact_names: string[];
   host_id: string;
   host_name: string;
@@ -78,7 +87,8 @@ export interface CreateMeetingPayload {
   start_at: string;
   end_at: string;
   host_id: string;
-  related_to?: RelatedToPayload | null;
+  /** One group per record type, e.g. leads and contacts together. `null`/`[]` clears it. */
+  related_to?: RelatedToPayload[] | null;
   participants?: MeetingParticipantPayload;
   /** Create only: also create a Google Meet link + Calendar invite. */
   add_google_meet?: boolean;

@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { MoreVertical } from "lucide-react";
+import { Check, MoreVertical, Pencil, X } from "lucide-react";
+import Spinner from "@/shared/components/Spinner";
 import { useRouter } from "next/navigation";
 import Modal from "@/shared/components/Modal";
 import InlineEditRow from "@/shared/components/InlineEditRow";
@@ -18,6 +19,7 @@ import { confirmDelete } from "@/shared/utils/confirmDelete";
 import { formatDateTime } from "@/shared/utils/formatDate";
 import RecordTimeline from "@/shared/components/RecordTimeline";
 import { Tabs } from "@/shared/components/Tabs";
+import { RecordChip, type SelectedRecord } from "@/features/meetings/components/SelectedRecordsField";
 
 interface Props {
   meeting: Meeting;
@@ -71,30 +73,22 @@ export default function MeetingDetail({ meeting, onMeetingChange }: Props) {
     }
   }
 
-  const related =
-    meeting.related_to.length > 0
-      ? meeting.related_to
-          .map((record) => {
-            const label = record.type === "LEAD" ? "Lead" : "Contact";
-            return `${label}: ${record.name}`;
-          })
-          .join(", ")
-      : "—";
+  const relatedRecords: SelectedRecord[] = meeting.related_to.map((record) => ({
+    id: record.id,
+    name: record.name,
+    type: record.type === "LEAD" ? "lead" : "contact",
+  }));
 
-  const participants =
-    meeting.participants.length > 0
-      ? meeting.participants
-          .map((participant) => {
-            const label =
-              participant.type === "user"
-                ? "User"
-                : participant.type === "lead"
-                  ? "Lead"
-                  : "Contact";
-            return `${label}: ${participant.name}`;
-          })
-          .join(", ")
-      : "—";
+  // Short summary for the page header; the full list is in the Overview card.
+  const relatedSummary =
+    relatedRecords.length === 0
+      ? "No related leads or contacts"
+      : relatedRecords.length <= 3
+        ? relatedRecords.map((record) => record.name).join(", ")
+        : `${relatedRecords
+            .slice(0, 3)
+            .map((record) => record.name)
+            .join(", ")} +${relatedRecords.length - 3} more`;
 
   return (
     <>
@@ -111,7 +105,7 @@ export default function MeetingDetail({ meeting, onMeetingChange }: Props) {
             <h1 className="font-serif text-2xl text-fg">
               {meeting.title || "Untitled Meeting"}
             </h1>
-            <p className="mt-1 text-sm text-ink-soft">{related}</p>
+            <p className="mt-1 text-sm text-ink-soft">{relatedSummary}</p>
           </div>
 
           <div className="flex items-center gap-2">
@@ -171,14 +165,17 @@ export default function MeetingDetail({ meeting, onMeetingChange }: Props) {
                   <Row label="From" value={formatDateTime(meeting.start_at)} editable={false} />
                   <Row label="To" value={formatDateTime(meeting.end_at)} editable={false} />
                   <Row label="All Day" value={meeting.is_all_day ? "Yes" : "No"} editable={false} />
-                  <Row label="Related To" value={related} editable={false} />
-                  <Row label="Participants" value={participants} editable={false} />
+                  <RecordsRow label="Related To" records={relatedRecords} linked />
+                  <RecordsRow label="Participants" records={meeting.participants} />
                 </div>
               </div>
 
               <div className="mt-4 rounded-lg border border-line bg-surface p-6">
                 <h2 className="mb-4 text-xs font-semibold uppercase tracking-wide text-ink-soft">Description</h2>
-                <Row label="Description" value={meeting.description} type="textarea" fullWidth onSave={(value) => updateField("description", value)} />
+                <DescriptionBlock
+                  value={meeting.description}
+                  onSave={(value) => updateField("description", value)}
+                />
               </div>
             </>
           ) : (
@@ -225,5 +222,132 @@ function Row({
       editable={editable}
       onSave={onSave}
     />
+  );
+}
+
+/** Read-only row of chips (Related To / Participants), styled like the other overview rows. */
+function RecordsRow({
+  label,
+  records,
+  linked = false,
+}: {
+  label: string;
+  records: SelectedRecord[];
+  linked?: boolean;
+}) {
+  return (
+    <div className="min-w-0 rounded-xl border border-transparent px-3 py-2.5 sm:col-span-2">
+      <p className="text-xs text-ink-soft">
+        {label}
+        {records.length > 0 && <span className="ml-1.5 text-ink-soft/80">({records.length})</span>}
+      </p>
+      {records.length > 0 ? (
+        <ul aria-label={label} className="mt-1.5 flex max-h-40 flex-wrap gap-1.5 overflow-y-auto pr-1">
+          {records.map((record) => (
+            <li key={`${record.type}:${record.id}`} className="max-w-full">
+              <RecordChip record={record} showType linked={linked} />
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="min-h-7 pt-1 text-sm text-fg">—</p>
+      )}
+    </div>
+  );
+}
+
+/** The meeting's agenda / notes: readable when viewing, a proper text box when editing. */
+function DescriptionBlock({
+  value,
+  onSave,
+}: {
+  value: string | null;
+  onSave: (value: string) => Promise<void>;
+}) {
+  const current = value ?? "";
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(current);
+  const [saving, setSaving] = useState(false);
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    if (!editing) setDraft(current);
+  }, [current, editing]);
+
+  async function save() {
+    // Keep the reader's place: updating the meeting re-renders the page.
+    const { scrollX, scrollY } = window;
+    setSaving(true);
+    setFailed(false);
+    try {
+      await onSave(draft);
+      setEditing(false);
+      requestAnimationFrame(() => requestAnimationFrame(() => window.scrollTo(scrollX, scrollY)));
+    } catch {
+      setFailed(true);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function cancel() {
+    setDraft(current);
+    setFailed(false);
+    setEditing(false);
+  }
+
+  if (editing) {
+    return (
+      <div className="animate-inline-edit">
+        <textarea
+          autoFocus
+          value={draft}
+          onChange={(event) => setDraft(event.target.value)}
+          rows={6}
+          aria-label="Description"
+          placeholder="Add an agenda, talking points or notes for this meeting…"
+          className="block min-h-32 w-full resize-y rounded-lg border border-line bg-surface px-3 py-2.5 text-sm leading-relaxed text-fg outline-none transition placeholder:text-ink-soft focus:border-slate focus:ring-2 focus:ring-slate-light"
+        />
+        {failed && <p className="mt-2 text-xs text-danger">Couldn&apos;t save. Try again.</p>}
+        <div className="mt-3 flex justify-end gap-2">
+          <button
+            type="button"
+            onClick={cancel}
+            disabled={saving}
+            className="inline-flex items-center gap-1.5 rounded-md border border-line px-3 py-1.5 text-sm font-medium text-fg hover:bg-paper disabled:opacity-50"
+          >
+            <X size={14} /> Cancel
+          </button>
+          <button
+            type="button"
+            onClick={save}
+            disabled={saving}
+            className="inline-flex items-center gap-1.5 rounded-md bg-indigo-500 px-3 py-1.5 text-sm font-semibold text-white hover:bg-indigo-400 disabled:opacity-60"
+          >
+            {saving ? <Spinner size="sm" className="border-white/30 border-t-white" /> : <Check size={14} />}
+            Save
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex items-start justify-between gap-4">
+      {current.trim() ? (
+        <p className="min-w-0 flex-1 whitespace-pre-wrap break-words text-sm leading-relaxed text-fg">{current}</p>
+      ) : (
+        <p className="min-w-0 flex-1 text-sm text-ink-soft">
+          No description yet. Add an agenda or notes so everyone knows what this meeting is about.
+        </p>
+      )}
+      <button
+        type="button"
+        onClick={() => setEditing(true)}
+        className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-line px-3 py-1.5 text-sm font-medium text-fg hover:bg-paper"
+      >
+        <Pencil size={13} /> {current.trim() ? "Edit" : "Add"}
+      </button>
+    </div>
   );
 }

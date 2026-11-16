@@ -2,24 +2,21 @@
 
 import FormWarning from "@/shared/components/FormWarning";
 import { useNoChangeGuard } from "@/shared/hooks/useNoChangeGuard";
-import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react";
-import { Check, ChevronDown, Link2, Plus, Search, X } from "lucide-react";
+import { useEffect, useState, type FormEvent, type ReactNode } from "react";
+import { ChevronDown, ChevronRight, Link2 } from "lucide-react";
 import { userService } from "@/features/users/services/userService";
 import type { LeadOwnerOption } from "@/features/auth/types/auth.types";
 import { authService } from "@/features/auth/services/authService";
 import Spinner from "@/shared/components/Spinner";
-import RecordPicker from "@/shared/components/RecordPicker";
-import RelatedTypeSelect from "@/shared/components/RelatedTypeSelect";
-import { useRecordSearch } from "@/shared/hooks/useRecordSearch";
 import Time12hPicker from "@/shared/components/Time12hPicker";
 import DateInput from "@/shared/components/DateInput";
 import {
   type Meeting,
-  type MeetingParticipant,
-  type MeetingParticipantType,
   type CreateMeetingPayload,
+  type RelatedToPayload,
 } from "@/features/meetings/types/meeting.types";
-import Select from "@/shared/components/Select";
+import RecordSelectionDialog, { type SelectionCategory } from "@/features/meetings/components/RecordSelectionDialog";
+import SelectedRecordsField, { recordKey, type SelectedRecord } from "@/features/meetings/components/SelectedRecordsField";
 import Switch from "@/shared/components/Switch";
 import { useFormError } from "@/shared/hooks/useFormError";
 import { MeetingApiError } from "@/features/meetings/services/meetingErrors";
@@ -35,15 +32,16 @@ interface Props {
   initialDate?: string;
 }
 
-type RelatedType = "" | "lead" | "contact";
-type ParticipantCategory = MeetingParticipantType;
+const PARTICIPANT_CATEGORIES: SelectionCategory[] = [
+  { type: "user", label: "Users" },
+  { type: "lead", label: "Leads" },
+  { type: "contact", label: "Contacts" },
+];
 
-interface ParticipantCandidate {
-  id: string;
-  name: string;
-  email: string | null;
-  type: MeetingParticipantType;
-}
+const RELATED_CATEGORIES: SelectionCategory[] = [
+  { type: "lead", label: "Leads" },
+  { type: "contact", label: "Contacts" },
+];
 
 interface FormState {
   title: string;
@@ -55,10 +53,9 @@ interface FormState {
   from_time: string;
   to_date: string;
   to_time: string;
-  participants: MeetingParticipant[];
-  relatedType: RelatedType;
-  relatedId: string;
-  relatedLabel: string;
+  participants: SelectedRecord[];
+  /** Any number of leads and contacts the meeting is about. */
+  related: SelectedRecord[];
   description: string;
   add_google_meet: boolean;
 }
@@ -95,9 +92,7 @@ function emptyForm(day?: string): FormState {
     to_date: toDate,
     to_time: toTime,
     participants: [],
-    relatedType: "",
-    relatedId: "",
-    relatedLabel: "",
+    related: [],
     description: "",
     add_google_meet: false,
   };
@@ -106,14 +101,6 @@ function emptyForm(day?: string): FormState {
 function fromMeeting(m: Meeting): FormState {
   const [fd, ft] = splitDateTime(m.start_at);
   const [td, tt] = splitDateTime(m.end_at);
-  const firstRelated = m.related_to[0];
-  const relatedType: RelatedType =
-    firstRelated?.type === "LEAD"
-      ? "lead"
-      : firstRelated?.type === "CONTACT"
-        ? "contact"
-        : "";
-
   return {
     title: m.title ?? "",
     owner_id: m.host_id ?? "",
@@ -125,9 +112,12 @@ function fromMeeting(m: Meeting): FormState {
     to_date: td || fd,
     to_time: tt,
     participants: m.participants ?? [],
-    relatedType,
-    relatedId: firstRelated?.id ?? "",
-    relatedLabel: firstRelated?.name ?? "",
+    related: (m.related_to ?? []).map((record) => ({
+      id: record.id,
+      name: record.name,
+      email: null,
+      type: record.type === "LEAD" ? "lead" : "contact",
+    })),
     description: m.description ?? "",
     add_google_meet: false,
   };
@@ -142,14 +132,13 @@ export default function MeetingForm({ mode, initialMeeting, onSubmit, onCancel, 
   );
   const { warning, isUnchanged } = useNoChangeGuard(form, mode === "edit");
   const [owners, setOwners] = useState<LeadOwnerOption[]>([]);
-  const [participantUsers, setParticipantUsers] = useState<ParticipantCandidate[]>([]);
+  const [participantUsers, setParticipantUsers] = useState<SelectedRecord[]>([]);
+  const [usersLoading, setUsersLoading] = useState(true);
   const [error, setError, errorRef] = useFormError();
   const [saving, setSaving] = useState(false);
-  const [showParticipants, setShowParticipants] = useState(false);
-  const [participantSearch, setParticipantSearch] = useState("");
-  const [participantCategory, setParticipantCategory] = useState<ParticipantCategory>("user");
-  const [participantTab, setParticipantTab] = useState<"all" | "selected">("all");
-  const [showMore, setShowMore] = useState(false);
+  const [picker, setPicker] = useState<"participants" | "related" | null>(null);
+  // Open straight away when there is already a description to show.
+  const [showMore, setShowMore] = useState(() => Boolean(initialMeeting?.description?.trim()));
 
   // Google Meet is only offered when creating. The status request is skipped
   // while editing. The popup connect flow never touches `form`, so a
@@ -181,6 +170,7 @@ export default function MeetingForm({ mode, initialMeeting, onSubmit, onCancel, 
       .catch(() => [] as LeadOwnerOption[])
       .then((ownerRows) => {
         if (cancelled) return;
+        setUsersLoading(false);
         setOwners(ownerRows);
         setParticipantUsers(
           ownerRows.map((user) => ({
@@ -208,107 +198,31 @@ export default function MeetingForm({ mode, initialMeeting, onSubmit, onCancel, 
     };
   }, [mode]);
 
-  // Leads and contacts are searched on the server as the user types; only the
-  // (small) user list is filtered locally.
-  const remoteParticipants = participantCategory !== "user" && participantTab === "all";
-  const participantSearchResults = useRecordSearch({
-    kinds: [participantCategory === "lead" ? "lead" : "contact"],
-    query: participantSearch,
-    enabled: showParticipants && remoteParticipants,
-  });
-
-  const participantCandidates = useMemo(() => {
-    const query = participantSearch.trim().toLowerCase();
-
-    const matchesSearch = (participant: ParticipantCandidate | MeetingParticipant) =>
-      `${participant.name} ${participant.email ?? ""}`.toLowerCase().includes(query);
-
-    if (participantTab === "selected") {
-      // "Selected" is intentionally category-independent: it shows every
-      // selected user, lead, contact, and invited email.
-      return form.participants
-        .filter(matchesSearch)
-        .map((participant) => ({
-          id: participant.id,
-          name: participant.name,
-          email: participant.email ?? null,
-          type: participant.type ?? "user",
-        }));
-    }
-
-    if (participantCategory === "user") {
-      return participantUsers.filter(matchesSearch);
-    }
-
-    return participantSearchResults.items.map((item) => ({
-      id: item.id,
-      name: item.label,
-      email: item.email ?? item.sublabel ?? null,
-      type: item.kind as MeetingParticipantType,
-    }));
-  }, [
-    participantUsers,
-    participantSearchResults.items,
-    participantCategory,
-    participantSearch,
-    participantTab,
-    form.participants,
-  ]);
-
   function update<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((current) => ({ ...current, [key]: value }));
   }
 
-  function chooseRelatedType(type: RelatedType) {
-    setForm((current) => ({
-      ...current,
-      relatedType: type,
-      relatedId: "",
-      relatedLabel: "",
-    }));
-  }
-
-  function participantIdentity(participant: Pick<MeetingParticipant, "id" | "type">) {
-    return `${participant.type ?? "user"}:${participant.id}`;
-  }
-
-  function toggleParticipant(candidate: ParticipantCandidate) {
+  /** Adds the record to the list, or removes it if it is already there. */
+  function toggleIn(field: "participants" | "related", record: SelectedRecord) {
     setForm((current) => {
-      const candidateIdentity = participantIdentity(candidate);
-      const exists = current.participants.some(
-        (participant) => participantIdentity(participant) === candidateIdentity,
-      );
-
+      const key = recordKey(record);
+      const list = current[field];
       return {
         ...current,
-        participants: exists
-          ? current.participants.filter(
-              (participant) => participantIdentity(participant) !== candidateIdentity,
-            )
-          : [
-              ...current.participants,
-              {
-                id: candidate.id,
-                name: candidate.name,
-                email: candidate.email,
-                type: candidate.type,
-              },
-            ],
+        [field]: list.some((item) => recordKey(item) === key)
+          ? list.filter((item) => recordKey(item) !== key)
+          : [...list, record],
       };
     });
   }
 
-  function removeParticipant(participant: MeetingParticipant) {
-    const identity = participantIdentity(participant);
+  function removeFrom(field: "participants" | "related", record: SelectedRecord) {
+    const key = recordKey(record);
     setForm((current) => ({
       ...current,
-      participants: current.participants.filter(
-        (candidate) => participantIdentity(candidate) !== identity,
-      ),
+      [field]: current[field].filter((item) => recordKey(item) !== key),
     }));
   }
-
-
 
   async function submit(e: FormEvent) {
     e.preventDefault();
@@ -352,6 +266,18 @@ export default function MeetingForm({ mode, initialMeeting, onSubmit, onCancel, 
           .map((participant) => participant.id),
       };
 
+      const relatedPayload: RelatedToPayload[] = (
+        [
+          ["LEAD", "lead"],
+          ["CONTACT", "contact"],
+        ] as const
+      )
+        .map(([type, kind]) => ({
+          type,
+          ids: form.related.filter((record) => record.type === kind).map((record) => record.id),
+        }))
+        .filter((group) => group.ids.length > 0);
+
       await onSubmit({
         title: form.title.trim(),
         host_id: form.owner_id,
@@ -360,13 +286,7 @@ export default function MeetingForm({ mode, initialMeeting, onSubmit, onCancel, 
         end_at: to.toISOString(),
         is_all_day: form.all_day,
         description: form.description.trim() || null,
-        related_to:
-          form.relatedType && form.relatedId
-            ? {
-                type: form.relatedType === "lead" ? "LEAD" : "CONTACT",
-                ids: [form.relatedId],
-              }
-            : null,
+        related_to: relatedPayload.length > 0 ? relatedPayload : null,
         participants: participantPayload,
         ...(sendMeet ? { add_google_meet: true } : {}),
       });
@@ -468,33 +388,14 @@ export default function MeetingForm({ mode, initialMeeting, onSubmit, onCancel, 
           />
         </ZohoRow>
 
-        <ZohoRow label="Participants">
-          <div className="flex min-h-9 items-center gap-2">
-            <div className="flex min-w-0 flex-wrap gap-1.5">
-              {form.participants.length ? (
-                form.participants.map((p) => (
-                  <span
-                    key={participantIdentity(p)}
-                    className="inline-flex items-center gap-1 rounded-full bg-slate-light px-2 py-1 text-xs text-slate"
-                  >
-                    {p.name}
-                    <button type="button" onClick={() => removeParticipant(p)} aria-label={`Remove ${p.name}`}>
-                      <X size={11} />
-                    </button>
-                  </span>
-                ))
-              ) : (
-                <span className="text-sm text-ink-soft">None</span>
-              )}
-            </div>
-            <button
-              type="button"
-              onClick={() => setShowParticipants(true)}
-              className="ml-auto inline-flex shrink-0 items-center gap-1 text-sm text-indigo-400 hover:text-indigo-300"
-            >
-              <Plus size={14} /> Add
-            </button>
-          </div>
+        <ZohoRow label="Participants" align="top">
+          <SelectedRecordsField
+            ariaLabel="Selected participants"
+            records={form.participants}
+            showType
+            onAdd={() => setPicker("participants")}
+            onRemove={(record) => removeFrom("participants", record)}
+          />
         </ZohoRow>
 
         {meetAvailable && (
@@ -576,49 +477,45 @@ export default function MeetingForm({ mode, initialMeeting, onSubmit, onCancel, 
           </ZohoRow>
         )}
 
-        <ZohoRow label="Related To">
-          <RelatedTypeSelect
-            value={form.relatedType}
-            onChange={chooseRelatedType}
-            options={[["", "None"], ["lead", "Lead"], ["contact", "Contact"]] as const}
+        <ZohoRow label="Related To" align="top">
+          <SelectedRecordsField
+            ariaLabel="Related leads and contacts"
+            records={form.related}
+            showType
+            onAdd={() => setPicker("related")}
+            onRemove={(record) => removeFrom("related", record)}
           />
-
-          {form.relatedType && (
-            <div className="mt-1">
-              <RecordPicker
-                key={form.relatedType}
-                kind={form.relatedType}
-                variant="underline"
-                value={form.relatedId}
-                label={form.relatedLabel}
-                onChange={(id, label) => {
-                  update("relatedId", id);
-                  update("relatedLabel", label);
-                }}
-                placeholder={`Search ${form.relatedType}…`}
-              />
-            </div>
-          )}
         </ZohoRow>
-
 
         <button
           type="button"
           onClick={() => setShowMore((v) => !v)}
-          className="py-3 text-sm text-indigo-400 hover:text-indigo-300"
+          aria-expanded={showMore}
+          aria-controls="meeting-more-details"
+          className="my-2 inline-flex items-center gap-1 rounded-md py-1.5 text-sm font-medium text-indigo-500 hover:text-indigo-400 dark:text-indigo-400"
         >
+          <ChevronRight size={14} className={`transition-transform duration-200 ${showMore ? "rotate-90" : ""}`} />
           {showMore ? "Hide details" : "Add more details"}
         </button>
 
         {showMore && (
-          <div className="pb-4">
-            <ZohoRow label="Description">
-              <textarea
-                value={form.description}
-                onChange={(e) => update("description", e.target.value)}
-                className={`${fieldClass} min-h-24 resize-y`}
-                placeholder="Meeting notes…"
-              />
+          <div id="meeting-more-details" className="pb-4">
+            <ZohoRow label="Description" align="top" last>
+              <div className="py-1.5">
+                <textarea
+                  id="meeting-description"
+                  value={form.description}
+                  onChange={(e) => update("description", e.target.value)}
+                  rows={5}
+                  placeholder="Add an agenda, talking points or notes for this meeting…"
+                  className="block min-h-28 w-full resize-y rounded-lg border border-line bg-surface px-3 py-2.5 text-sm leading-relaxed text-fg outline-none transition placeholder:text-ink-soft focus:border-slate focus:ring-2 focus:ring-slate-light"
+                />
+                {form.description.length > 0 && (
+                  <p className="mt-1.5 text-right text-xs tabular-nums text-ink-soft">
+                    {form.description.length.toLocaleString()} characters
+                  </p>
+                )}
+              </div>
             </ZohoRow>
           </div>
         )}
@@ -641,135 +538,54 @@ export default function MeetingForm({ mode, initialMeeting, onSubmit, onCancel, 
         </button>
       </div>
 
-      {showParticipants && (
-        <OverlayPanel title="Add Participants" onClose={() => setShowParticipants(false)} wide>
-          <div className="flex items-center gap-2">
-            <div className="w-32 shrink-0">
-              <Select
-                size="sm"
-                value={participantCategory}
-                onChange={(next) => {
-                  setParticipantCategory(next as ParticipantCategory);
-                  setParticipantSearch("");
-                }}
-                ariaLabel="Participant type"
-                options={[
-                  { value: "user", label: "Users" },
-                  { value: "lead", label: "Leads" },
-                  { value: "contact", label: "Contacts" },
-                ]}
-              />
-            </div>
-            <div className="flex flex-1 items-center rounded-md border border-line px-2">
-              <Search size={14} className="text-ink-soft" />
-              <input
-                autoFocus
-                value={participantSearch}
-                onChange={(e) => setParticipantSearch(e.target.value)}
-                placeholder="Search"
-                className="w-full bg-transparent px-2 py-2 text-sm outline-none"
-              />
-            </div>
-            <button
-              type="button"
-              onClick={() => setParticipantTab("all")}
-              className={`text-sm ${participantTab === "all" ? "font-semibold text-fg" : "text-ink-soft"}`}
-            >
-              All
-            </button>
-            <button
-              type="button"
-              onClick={() => setParticipantTab("selected")}
-              className={`text-sm ${participantTab === "selected" ? "font-semibold text-indigo-400" : "text-ink-soft"}`}
-            >
-              Selected({form.participants.length})
-            </button>
-          </div>
-
-          <div
-            className="mt-3 max-h-48 overflow-y-auto border-y border-line"
-            onScroll={(event) => {
-              if (!remoteParticipants) return;
-              const el = event.currentTarget;
-              if (el.scrollHeight - el.scrollTop - el.clientHeight < 48) void participantSearchResults.loadMore();
-            }}
-          >
-            {participantCandidates.length === 0 ? (
-              <div className="flex items-center justify-center gap-2 px-2 py-8 text-center text-sm text-ink-soft">
-                {remoteParticipants && participantSearchResults.loading ? (
-                  <>
-                    <Spinner size="sm" /> Searching…
-                  </>
-                ) : remoteParticipants && participantSearchResults.error ? (
-                  <>
-                    {participantSearchResults.error}
-                    <button type="button" onClick={participantSearchResults.retry} className="font-semibold text-indigo-400 hover:text-indigo-300">
-                      Try again
-                    </button>
-                  </>
-                ) : participantTab === "selected" ? (
-                  "No selected participants found."
-                ) : (
-                  `No ${participantCategory === "user" ? "users" : `${participantCategory}s`} found.`
-                )}
-              </div>
-            ) : (
-              participantCandidates.map((participant) => {
-                const checked = form.participants.some(
-                  (selected) =>
-                    participantIdentity(selected) === participantIdentity(participant),
-                );
-
-                return (
-                  <button
-                    type="button"
-                    key={participantIdentity(participant)}
-                    onClick={() => toggleParticipant(participant)}
-                    className={`flex w-full items-center gap-3 px-2 py-3 text-left ${checked ? "bg-slate-light" : "hover:bg-paper"}`}
-                  >
-                    <span
-                      className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border ${checked ? "border-indigo-500 bg-indigo-500 text-white" : "border-line"}`}
-                    >
-                      {checked && <Check size={11} />}
-                    </span>
-                    <span className="min-w-0">
-                      <span className="block text-sm text-fg">{participant.name}</span>
-                      {participant.email && (
-                        <span className="block text-xs text-ink-soft">{participant.email}</span>
-                      )}
-                    </span>
-                  </button>
-                );
-              })
-            )}
-            {remoteParticipants && participantSearchResults.loadingMore && (
-              <div className="flex justify-center py-2">
-                <Spinner size="sm" />
-              </div>
-            )}
-          </div>
-
-
-          <div className="mt-5 flex justify-end">
-            <button
-              type="button"
-              onClick={() => setShowParticipants(false)}
-              className="rounded-md bg-indigo-500 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-400"
-            >
-              Done
-            </button>
-          </div>
-        </OverlayPanel>
+      {picker === "participants" && (
+        <RecordSelectionDialog
+          title="Add participants"
+          subtitle="Pick any mix of users, leads and contacts to invite."
+          categories={PARTICIPANT_CATEGORIES}
+          selected={form.participants}
+          users={participantUsers}
+          usersLoading={usersLoading}
+          onToggle={(record) => toggleIn("participants", record)}
+          onClear={() => update("participants", [])}
+          onClose={() => setPicker(null)}
+        />
       )}
 
+      {picker === "related" && (
+        <RecordSelectionDialog
+          title="Related to"
+          subtitle="Link this meeting to as many leads and contacts as you need."
+          categories={RELATED_CATEGORIES}
+          selected={form.related}
+          onToggle={(record) => toggleIn("related", record)}
+          onClear={() => update("related", [])}
+          onClose={() => setPicker(null)}
+        />
+      )}
     </form>
   );
 }
 
-function ZohoRow({ label, children }: { label: string; children: ReactNode }) {
+function ZohoRow({
+  label,
+  children,
+  align = "center",
+  last = false,
+}: {
+  label: string;
+  children: ReactNode;
+  /** `top` pins the label to the first line for tall content (chips, textareas). */
+  align?: "center" | "top";
+  last?: boolean;
+}) {
   return (
-    <div className="grid grid-cols-[125px_1fr] items-center gap-4 border-b border-line/80 py-1.5">
-      <label className="text-sm text-ink-soft">{label}</label>
+    <div
+      className={`grid grid-cols-[125px_1fr] gap-4 py-1.5 ${align === "top" ? "items-start" : "items-center"} ${
+        last ? "" : "border-b border-line/80"
+      }`}
+    >
+      <label className={`text-sm text-ink-soft ${align === "top" ? "pt-2.5" : ""}`}>{label}</label>
       <div className="min-w-0">{children}</div>
     </div>
   );
@@ -861,35 +677,6 @@ function HostPicker({
           </div>
         </div>
       )}
-    </div>
-  );
-}
-
-function OverlayPanel({
-  title,
-  children,
-  onClose,
-  wide = false,
-}: {
-  title: string;
-  children: ReactNode;
-  onClose: () => void;
-  wide?: boolean;
-}) {
-  return (
-    <div className="fixed inset-0 z-[80] flex items-start justify-center bg-black/50 px-4 pt-[12vh]" onClick={onClose}>
-      <div
-        onClick={(event) => event.stopPropagation()}
-        className={`w-full ${wide ? "max-w-3xl" : "max-w-md"} rounded-lg border border-line bg-surface p-5 shadow-2xl`}
-      >
-        <div className="mb-4 flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-fg">{title}</h3>
-          <button type="button" onClick={onClose} className="rounded p-1 text-ink-soft hover:bg-paper hover:text-fg">
-            <X size={16} />
-          </button>
-        </div>
-        {children}
-      </div>
     </div>
   );
 }

@@ -27,6 +27,7 @@ interface BackendMeetingListItem {
   end_at: string;
   related_to_type: "LEAD" | "CONTACT" | null;
   related_to_names: string[];
+  related_to?: Array<{ type: "LEAD" | "CONTACT"; name: string }>;
   contact_names: string[];
   host_id: string;
   host_name: string;
@@ -69,8 +70,16 @@ interface BackendMeetingDetail {
 }
 
 function mapListItem(item: BackendMeetingListItem): MeetingListItem {
+  // Older responses only carry names + one type; rebuild the typed list from them.
+  const related_to =
+    item.related_to ??
+    (item.related_to_type
+      ? item.related_to_names.map((name) => ({ type: item.related_to_type!, name }))
+      : []);
+
   return {
     ...item,
+    related_to,
     meet_link: item.meet_link ?? null,
     conference_status: item.conference_status ?? "none",
   };

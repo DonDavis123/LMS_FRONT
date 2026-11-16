@@ -10,6 +10,7 @@ import type { SortState } from "@/shared/types/sort";
 import SortableHeader from "@/shared/components/SortableHeader";
 import type { MeetingListItem } from "@/features/meetings/types/meeting.types";
 import { MeetingService } from "@/features/meetings/services/MeetingService";
+import { RecordChip } from "@/features/meetings/components/SelectedRecordsField";
 import { confirmDelete } from "@/shared/utils/confirmDelete";
 import { useSelectionKeyboard } from "@/shared/hooks/useSelectionKeyboard";
 
@@ -148,15 +149,6 @@ export default function MeetingList({
     } finally {
       setDeletingId(null);
     }
-  }
-
-  function relatedLabel(meeting: MeetingListItem): string {
-    if (!meeting.related_to_type || meeting.related_to_names.length === 0) {
-      return "—";
-    }
-
-    const label = meeting.related_to_type === "LEAD" ? "Lead" : "Contact";
-    return `${label}: ${meeting.related_to_names.join(", ")}`;
   }
 
   const totalPages = Math.max(1, pagination.total_pages);
@@ -372,7 +364,7 @@ export default function MeetingList({
                     </td>
 
                     <td className="px-4 py-3 text-ink-soft">
-                      {relatedLabel(meeting)}
+                      <RelatedCell related={meeting.related_to} />
                     </td>
 
                     <td className="px-4 py-3 text-ink-soft">
@@ -414,6 +406,37 @@ export default function MeetingList({
             </div>
           </div>
         </>
+      )}
+    </div>
+  );
+}
+
+const RELATED_VISIBLE = 2;
+
+/** Leads and contacts a meeting is linked to: the first few as chips, the rest as "+N". */
+function RelatedCell({ related }: { related: MeetingListItem["related_to"] }) {
+  if (related.length === 0) return <>—</>;
+
+  const hidden = related.slice(RELATED_VISIBLE);
+  return (
+    <div className="flex max-w-xs flex-wrap items-center gap-1">
+      {related.slice(0, RELATED_VISIBLE).map((item, index) => (
+        <RecordChip
+          key={`${item.type}:${item.name}:${index}`}
+          record={{
+            id: `${item.type}:${index}`,
+            name: item.name,
+            type: item.type === "LEAD" ? "lead" : "contact",
+          }}
+        />
+      ))}
+      {hidden.length > 0 && (
+        <span
+          className="rounded-full bg-paper px-2 py-0.5 text-xs font-medium text-ink-soft"
+          title={hidden.map((item) => item.name).join(", ")}
+        >
+          +{hidden.length} more
+        </span>
       )}
     </div>
   );
