@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { ArrowRightCircle, Lock } from "lucide-react";
 import RecordTimeline from "@/shared/components/RecordTimeline";
+import LeadSummaryCard from "@/features/leads/components/LeadSummaryCard";
 import type { Lead } from "@/features/leads/types/lead.types";
 
 interface ConvertedLeadHistoryProps {
@@ -109,6 +110,8 @@ export default function ConvertedLeadHistory({ lead }: ConvertedLeadHistoryProps
           )}
         </div>
       </div>
+
+      <LeadSummaryCard key={lead.id} leadId={lead.id} />
 
       <RecordTimeline module="leads" recordId={lead.id} />
     </div>

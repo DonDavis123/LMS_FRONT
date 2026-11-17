@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { ChevronDown, MoreVertical } from "lucide-react";
 import { LeadService } from "@/features/leads/services/LeadService";
 import LeadStatusPipeline from "@/features/leads/components/LeadStatusPipeline";
+import LeadSummaryCard from "@/features/leads/components/LeadSummaryCard";
 import RecordTimeline from "@/shared/components/RecordTimeline";
 import InlineEditRow from "@/shared/components/InlineEditRow";
 import { Tabs } from "@/shared/components/Tabs";
@@ -152,6 +153,9 @@ async function handleStatusClick(status: LeadStatus) {
           </div>
         </div>
       </div>
+
+      {/* On-demand summary of the lead's history; shown above every tab. */}
+      <LeadSummaryCard key={lead.id} leadId={lead.id} />
 
       {/* Overview / Calls / Timeline tabs */}
       <Tabs
