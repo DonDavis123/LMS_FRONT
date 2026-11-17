@@ -208,6 +208,32 @@ export default function NotificationBell() {
     }
   }
 
+  /** Marks every unread row read (no bulk endpoint exists, so one PATCH each); failed ones roll back. */
+  async function handleMarkAllRead() {
+    const ids = notificationsRef.current.filter((n) => !n.is_read).map((n) => n.id);
+    if (ids.length === 0) return;
+
+    const now = new Date().toISOString();
+    ids.forEach((id) => readIdsRef.current.add(id));
+    commit(notificationsRef.current.map((n) => (ids.includes(n.id) ? { ...n, is_read: true, read_at: now } : n)));
+
+    const results = await Promise.allSettled(ids.map((id) => NotificationService.markAsRead(id)));
+    const failed: string[] = [];
+    results.forEach((result, i) => {
+      if (result.status === "fulfilled") return;
+      if (statusOf(result.reason) === 404) {
+        dropLocally(ids[i]);
+        return;
+      }
+      failed.push(ids[i]);
+    });
+    if (failed.length > 0) {
+      failed.forEach((id) => readIdsRef.current.delete(id));
+      commit(notificationsRef.current.map((n) => (failed.includes(n.id) ? { ...n, is_read: false, read_at: null } : n)));
+      setToast("Couldn't mark some notifications as read.");
+    }
+  }
+
   const unreadCount = unreadCountOf(notifications);
 
   return (
@@ -236,6 +262,7 @@ export default function NotificationBell() {
           isLoading={isLoading}
           onSelect={handleSelect}
           onDismiss={handleDismiss}
+          onMarkAllRead={handleMarkAllRead}
         />
       )}
 
