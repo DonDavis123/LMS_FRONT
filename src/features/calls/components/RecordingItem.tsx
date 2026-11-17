@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { AlertCircle, Download, Loader2, Mic, Pause, Play, Trash2 } from "lucide-react";
+import RecordingTranscript from "@/features/calls/components/RecordingTranscript";
 import { CallRecordingService } from "@/features/calls/services/CallRecordingService";
 import { useRecordingAudio } from "@/features/calls/hooks/useRecordingAudio";
 import type { CallRecording } from "@/features/calls/types/callRecording.types";
@@ -200,6 +201,8 @@ export default function RecordingItem({ recording, canDelete = true, onDelete, o
           {error}
         </p>
       )}
+
+      <RecordingTranscript callId={recording.call_id} recordingId={recording.id} />
 
       <audio
         ref={audioRef}
