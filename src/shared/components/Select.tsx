@@ -282,7 +282,7 @@ export default function Select({
                       {option.tag}
                     </span>
                   )}
-                  {isSelected && <Check size={14} className="shrink-0 text-slate" />}
+                  {isSelected && <Check size={14} className="shrink-0 text-fg" />}
                 </div>
                 </Fragment>
               );

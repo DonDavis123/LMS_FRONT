@@ -1,4 +1,5 @@
 import { addDays, startOfDay, toDateKey } from "@/features/dashboard/utils/dashboardMetrics";
+import { withReturnTo } from "@/shared/utils/returnTo";
 import type { CalendarEvent, CalendarEventType, CalendarView } from "@/features/calendar/types/calendar.types";
 
 export { addDays, startOfDay, toDateKey };
@@ -116,16 +117,25 @@ export function groupEventsByDay(events: CalendarEvent[]): Map<string, CalendarE
   return byDay;
 }
 
-/** Where clicking an event goes. */
+/** The calendar page; detail pages opened from it use this as their back target. */
+export const CALENDAR_PATH = "/dashboard/calendar";
+
+/** Where clicking an event goes. The link carries `returnTo` so "Back" lands on the calendar. */
 export function eventHref(type: CalendarEventType, id: string): string {
+  let path: string;
   switch (type) {
     case "TASK":
-      return `/dashboard/tasks/${id}`;
+      path = `/dashboard/tasks/${id}`;
+      break;
     case "MEETING":
-      return `/dashboard/meetings/${id}`;
+      path = `/dashboard/meetings/${id}`;
+      break;
     case "CALL":
-      return `/dashboard/calls/${id}`;
+      path = `/dashboard/calls/${id}`;
+      break;
     case "REMINDER":
-      return "/dashboard/reminders";
+      path = "/dashboard/reminders";
+      break;
   }
+  return withReturnTo(path, CALENDAR_PATH);
 }

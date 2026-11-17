@@ -20,16 +20,20 @@ import { formatDateTime } from "@/shared/utils/formatDate";
 import RecordTimeline from "@/shared/components/RecordTimeline";
 import { Tabs } from "@/shared/components/Tabs";
 import { RecordChip, type SelectedRecord } from "@/features/meetings/components/SelectedRecordsField";
+import { backLabelFor } from "@/shared/utils/returnTo";
 
 interface Props {
   meeting: Meeting;
   onMeetingChange: (meeting: Meeting) => void;
+  /** Where "Back" goes when the meeting was opened from another page (e.g. the calendar). */
+  returnTo?: string | null;
 }
 
 type EditableField = "title" | "location" | "description";
 
-export default function MeetingDetail({ meeting, onMeetingChange }: Props) {
+export default function MeetingDetail({ meeting, onMeetingChange, returnTo = null }: Props) {
   const router = useRouter();
+  const backHref = returnTo ?? "/dashboard/meetings";
   const [menu, setMenu] = useState(false);
   const [editing, setEditing] = useState(false);
   const [activeTab, setActiveTab] = useState<"overview" | "timeline">("overview");
@@ -71,7 +75,7 @@ export default function MeetingDetail({ meeting, onMeetingChange }: Props) {
 
     try {
       await MeetingService.deleteMeeting(meeting.id);
-      router.push("/dashboard/meetings");
+      router.push(backHref);
     } catch {
       window.alert("Couldn't delete this meeting. Try again.");
     }
@@ -98,10 +102,10 @@ export default function MeetingDetail({ meeting, onMeetingChange }: Props) {
     <>
       <div className="mx-auto max-w-5xl">
         <Link
-          href="/dashboard/meetings"
+          href={backHref}
           className="text-sm text-slate hover:text-fg"
         >
-          ← Back to Meetings
+          {backLabelFor(returnTo, "← Back to Meetings")}
         </Link>
 
         <div className="mt-3 flex items-center justify-between gap-4">

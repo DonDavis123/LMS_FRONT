@@ -37,6 +37,7 @@ type DetailTab = "overview" | "recordings" | "history";
 
 function backLabel(returnTo: string | null | undefined): string {
   if (!returnTo) return "← Back to Calls";
+  if (returnTo.startsWith("/dashboard/calendar")) return "← Back to Calendar";
   if (returnTo.startsWith("/dashboard/leads/")) return "← Back to Lead";
   if (returnTo.startsWith("/dashboard/contacts/")) return "← Back to Contact";
   return "← Back";

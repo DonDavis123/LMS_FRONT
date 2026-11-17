@@ -21,3 +21,13 @@ export function withReturnTo(href: string, returnTo: string | null | undefined):
   const sep = href.includes("?") ? "&" : "?";
   return `${href}${sep}${RETURN_TO_PARAM}=${encodeURIComponent(returnTo)}`;
 }
+
+/** "← Back to X" text for a returnTo target; `fallback` is used when there is none. */
+export function backLabelFor(returnTo: string | null | undefined, fallback: string): string {
+  if (!returnTo) return fallback;
+  if (returnTo.startsWith("/dashboard/calendar")) return "← Back to Calendar";
+  if (returnTo.startsWith("/dashboard/leads/")) return "← Back to Lead";
+  if (returnTo.startsWith("/dashboard/contacts/")) return "← Back to Contact";
+  if (returnTo.startsWith("/dashboard/accounts/")) return "← Back to Account";
+  return "← Back";
+}

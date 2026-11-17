@@ -54,6 +54,25 @@ function isSameMonth(a: Date, b: Date): boolean {
 }
 
 const VIEW_MODES: ViewMode[] = ["month", "week", "day"];
+
+/** Remembers the view and day so "Back to Calendar" from a record reopens the same place. */
+const CALENDAR_STATE_KEY = "crm.calendar.state";
+
+function readSavedState(): { view: ViewMode; anchor: Date; selectedDay: Date } | null {
+  try {
+    const raw = window.sessionStorage.getItem(CALENDAR_STATE_KEY);
+    if (!raw) return null;
+    const saved = JSON.parse(raw) as { view?: string; anchor?: number; selectedDay?: number };
+    if (!saved.view || !VIEW_MODES.includes(saved.view as ViewMode)) return null;
+    if (typeof saved.anchor !== "number" || typeof saved.selectedDay !== "number") return null;
+    const anchor = new Date(saved.anchor);
+    const selectedDay = new Date(saved.selectedDay);
+    if (Number.isNaN(anchor.getTime()) || Number.isNaN(selectedDay.getTime())) return null;
+    return { view: saved.view as ViewMode, anchor: startOfDay(anchor), selectedDay: startOfDay(selectedDay) };
+  } catch {
+    return null;
+  }
+}
 const VIEW_UNIT: Record<ViewMode, string> = { month: "month", week: "week", day: "day" };
 
 export default function CalendarView() {
@@ -75,6 +94,30 @@ export default function CalendarView() {
   const [freshKeys, setFreshKeys] = useState<Set<string>>(() => new Set());
   // Only the newest request may update the calendar (fast month switching).
   const latestRequest = useRef(0);
+
+  // Restore the last view/day once on mount (client-only, so SSR markup is unaffected).
+  const stateRestored = useRef(false);
+  useEffect(() => {
+    const saved = readSavedState();
+    if (saved) {
+      setView(saved.view);
+      setAnchor(saved.anchor);
+      setSelectedDay(saved.selectedDay);
+    }
+    stateRestored.current = true;
+  }, []);
+
+  useEffect(() => {
+    if (!stateRestored.current) return;
+    try {
+      window.sessionStorage.setItem(
+        CALENDAR_STATE_KEY,
+        JSON.stringify({ view, anchor: anchor.getTime(), selectedDay: selectedDay.getTime() }),
+      );
+    } catch {
+      /* storage unavailable — the calendar just opens on today next time */
+    }
+  }, [view, anchor, selectedDay]);
 
   const canViewTeam = useMemo(() => {
     const role = normalizeEnumValue(authService.getSessionUser()?.role);

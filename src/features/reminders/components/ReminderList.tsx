@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { AlarmClock, Trash2 } from "lucide-react";
 import Switch from "@/shared/components/Switch";
 import type { Reminder } from "@/features/reminders/types/reminder.types";
@@ -15,6 +16,9 @@ interface ReminderListProps {
   onEditClick: (reminder: Reminder) => void;
   onToggle: (reminder: Reminder, enabled: boolean) => void;
   onDelete: (reminder: Reminder) => void;
+  /** When set (e.g. opened from the calendar), shows a back link to that page. */
+  backHref?: string | null;
+  backLabel?: string;
 }
 
 const createButtonClass =
@@ -29,11 +33,18 @@ export default function ReminderList({
   onEditClick,
   onToggle,
   onDelete,
+  backHref = null,
+  backLabel = "← Back",
 }: ReminderListProps) {
   return (
     <div className="lp-card lp-list-page mx-auto w-full max-w-3xl">
       <div className="lp-list-head flex items-center justify-between gap-3 border-b border-line bg-surface px-3 py-2.5 sm:px-4">
         <div className="min-w-0">
+          {backHref && (
+            <Link href={backHref} className="mb-0.5 block text-xs text-slate hover:text-fg">
+              {backLabel}
+            </Link>
+          )}
           <h1 className="font-serif text-lg leading-tight text-fg">Reminders</h1>
           <p className="text-xs text-ink-soft">
             {isLoading ? "Loading…" : `${reminders.length} ${reminders.length === 1 ? "reminder" : "reminders"}`}

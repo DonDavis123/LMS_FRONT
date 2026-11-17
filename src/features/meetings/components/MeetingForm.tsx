@@ -395,7 +395,7 @@ export default function MeetingForm({ mode, initialMeeting, onSubmit, onCancel, 
                 add_google_meet: e.target.checked ? false : current.add_google_meet,
               }))
             }
-            className="h-3.5 w-3.5 rounded border-line accent-indigo-500 disabled:opacity-50"
+            className="h-3.5 w-3.5 rounded border-line accent-ink disabled:opacity-50"
           />
           {meetLockedByExisting && (
             <p id="all-day-meet-note" className="mt-1 text-xs text-ink-soft">
@@ -482,7 +482,7 @@ export default function MeetingForm({ mode, initialMeeting, onSubmit, onCancel, 
                     type="checkbox"
                     checked={form.reminder_offsets.includes(option.value)}
                     onChange={() => toggleReminder(option.value)}
-                    className="h-3.5 w-3.5 rounded border-line accent-indigo-500"
+                    className="h-3.5 w-3.5 rounded border-line accent-ink"
                   />
                   {option.label}
                 </label>
@@ -492,7 +492,7 @@ export default function MeetingForm({ mode, initialMeeting, onSubmit, onCancel, 
                   type="checkbox"
                   checked={form.reminder_offsets.length === 0}
                   onChange={() => update("reminder_offsets", [])}
-                  className="h-3.5 w-3.5 rounded border-line accent-indigo-500"
+                  className="h-3.5 w-3.5 rounded border-line accent-ink"
                 />
                 None
               </label>

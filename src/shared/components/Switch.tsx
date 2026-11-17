@@ -34,14 +34,14 @@ export default function Switch({
       aria-busy={loading || undefined}
       disabled={disabled || loading}
       onClick={() => onChange(!checked)}
-      className={`inline-flex h-9 shrink-0 items-center gap-2 rounded-full px-1 outline-none focus-visible:ring-2 focus-visible:ring-slate disabled:cursor-not-allowed disabled:opacity-60 ${
+      className={`inline-flex h-9 shrink-0 items-center gap-2 rounded-full px-1 outline-none focus-visible:ring-2 focus-visible:ring-ink dark:focus-visible:ring-white/60 disabled:cursor-not-allowed disabled:opacity-60 ${
         loading ? "cursor-wait" : ""
       }`}
     >
       <span
         aria-hidden="true"
         className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors duration-200 motion-reduce:transition-none ${
-          checked ? "bg-success" : "bg-ink-soft/40"
+          checked ? "bg-ink dark:ring-1 dark:ring-white/20" : "bg-ink-soft/40"
         }`}
       >
         <span

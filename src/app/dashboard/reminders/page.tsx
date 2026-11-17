@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import ReminderList from "@/features/reminders/components/ReminderList";
 import ReminderDialog from "@/features/reminders/components/ReminderDialog";
 import { ReminderService } from "@/features/reminders/services/ReminderService";
@@ -8,6 +9,7 @@ import type { Reminder } from "@/features/reminders/types/reminder.types";
 import { isReminderInPast, sortReminders } from "@/features/reminders/utils/reminder.utils";
 import { extractApiError } from "@/shared/utils/apiError";
 import { confirmDelete } from "@/shared/utils/confirmDelete";
+import { backLabelFor, getSafeReturnTo, RETURN_TO_PARAM } from "@/shared/utils/returnTo";
 
 type DialogState = { reminder: Reminder | null; notice?: string } | null;
 type ToastState = { message: string; tone: "success" | "error" } | null;
@@ -19,7 +21,9 @@ function statusOf(error: unknown): number | undefined {
   return (error as { response?: { status?: number } } | null)?.response?.status;
 }
 
-export default function RemindersPage() {
+function RemindersPageInner() {
+  const searchParams = useSearchParams();
+  const returnTo = getSafeReturnTo(searchParams.get(RETURN_TO_PARAM));
   const [reminders, setReminders] = useState<Reminder[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -170,6 +174,8 @@ export default function RemindersPage() {
         onEditClick={handleEditClick}
         onToggle={handleToggle}
         onDelete={handleDelete}
+        backHref={returnTo}
+        backLabel={backLabelFor(returnTo, "← Back")}
       />
 
       <ReminderDialog
@@ -193,5 +199,13 @@ export default function RemindersPage() {
         </div>
       )}
     </>
+  );
+}
+
+export default function RemindersPage() {
+  return (
+    <Suspense fallback={null}>
+      <RemindersPageInner />
+    </Suspense>
   );
 }
