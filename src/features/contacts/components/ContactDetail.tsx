@@ -21,6 +21,7 @@ import { confirmDelete } from "@/shared/utils/confirmDelete";
 import { CALLS_ENABLED } from "@/features/calls/config";
 import LogCallFromRecord from "@/features/calls/components/LogCallFromRecord";
 import RecordCalls from "@/features/calls/components/RecordCalls";
+import RecordDeals from "@/features/deals/components/RecordDeals";
 
 interface ContactDetailProps { contact: Contact; onContactChange?: (contact: Contact) => void; }
 type DetailTab = "overview" | "calls" | "timeline";
@@ -130,6 +131,14 @@ export default function ContactDetail({ contact, onContactChange }: ContactDetai
               <Row label="Title" value={contact.title} onSave={(raw) => updateField("title", raw)} />
             </div>
           </div>
+
+          <RecordDeals
+            kind="contact"
+            recordId={contact.id}
+            recordName={contact.name || contact.email || "this contact"}
+            returnTo={`/dashboard/contacts/${contact.id}`}
+            account={contact.account_id ? { id: contact.account_id, label: contact.account_name || "Account" } : undefined}
+          />
 
           <button type="button" onClick={() => setShowDetails((v) => !v)} className="mt-4 flex items-center gap-1 text-sm font-medium text-slate hover:text-fg">
             {showDetails ? "Hide Details" : "Show Details"}

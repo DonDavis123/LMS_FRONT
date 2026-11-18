@@ -1,6 +1,6 @@
 import { apiClient } from "@/infrastructure/api/client";
 
-export type TimelineModule = "leads" | "contacts" | "accounts" | "tasks" | "meetings";
+export type TimelineModule = "leads" | "contacts" | "accounts" | "tasks" | "meetings" | "deals";
 
 export interface TimelineEvent {
   id: string;

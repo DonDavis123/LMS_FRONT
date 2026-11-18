@@ -206,4 +206,22 @@ export interface ConvertLeadPayload {
   account_id?: string;
   contact_action: ConversionAction;
   contact_id?: string;
+  /** Omitted entirely unless the user opted in to "Create a deal". */
+  deal?: ConvertLeadDeal;
+}
+
+/** Optional deal created together with the conversion (POST /leads/{id}/convert/). */
+export interface ConvertLeadDeal {
+  name: string;
+  amount: string | number;
+  expected_close_date?: string;
+  stage?: "New" | "Quotation Sent" | "Negotiation";
+  probability?: number;
+  description?: string;
+}
+
+/** What the convert endpoint answers with; `deal_id` is present only when a deal was created. */
+export interface ConvertLeadResult {
+  message: string;
+  deal_id: string | null;
 }

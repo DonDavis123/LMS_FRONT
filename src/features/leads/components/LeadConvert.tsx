@@ -4,10 +4,12 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { withReturnTo } from "@/shared/utils/returnTo";
-import { Building2, CheckCircle2, Contact2, ExternalLink, Info, Minus, Plus, Search, UserRound } from "lucide-react";
+import { Building2, CheckCircle2, Contact2, ExternalLink, Handshake, Info, Minus, Plus, Search, UserRound } from "lucide-react";
 import { LeadService } from "@/features/leads/services/LeadService";
 import Spinner from "@/shared/components/Spinner";
 import { useFormError } from "@/shared/hooks/useFormError";
+import { normalizeAmountInput } from "@/features/deals/utils/formatCurrency";
+import LeadConvertDeal, { initialDealDraft, type DealDraft } from "@/features/leads/components/LeadConvertDeal";
 import type {
   ConversionCheckResponse,
   ConvertLeadPayload,
@@ -98,6 +100,8 @@ export default function LeadConvert({ lead }: LeadConvertProps) {
   const [error, setError, errorRef] = useFormError();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const submittingRef = useRef(false);
+  const [dealDraft, setDealDraft] = useState<DealDraft>(() => initialDealDraft(lead.company_name?.trim() || lead.name || ""));
+  const [createdDealId, setCreatedDealId] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -164,6 +168,27 @@ export default function LeadConvert({ lead }: LeadConvertProps) {
       return;
     }
 
+    let dealPart: Pick<ConvertLeadPayload, "deal"> = {};
+    if (dealDraft.enabled) {
+      const dealAmount = normalizeAmountInput(dealDraft.amount);
+      if (!dealDraft.name.trim()) {
+        setError("Enter a name for the deal, or turn the deal off.");
+        return;
+      }
+      if (!dealAmount) {
+        setError("Enter a valid deal amount in rupees, or turn the deal off.");
+        return;
+      }
+      dealPart = {
+        deal: {
+          name: dealDraft.name.trim(),
+          amount: dealAmount,
+          stage: dealDraft.stage,
+          ...(dealDraft.closeDate ? { expected_close_date: dealDraft.closeDate } : {}),
+        },
+      };
+    }
+
     const accountPart: Pick<ConvertLeadPayload, "account_action" | "account_id"> = !hasCompany
       ? { account_action: "skip" }
       : accountChoice === NEW
@@ -173,14 +198,20 @@ export default function LeadConvert({ lead }: LeadConvertProps) {
       contactChoice === NEW
         ? { contact_action: "create_new" }
         : { contact_action: "use_existing", contact_id: contactChoice as string };
-    const payload: ConvertLeadPayload = { ...accountPart, ...contactPart };
+    const payload: ConvertLeadPayload = { ...accountPart, ...contactPart, ...dealPart };
 
     submittingRef.current = true;
     setError(null);
     setIsSubmitting(true);
     try {
-      await LeadService.convertLead(lead.id, payload);
+      const result = await LeadService.convertLead(lead.id, payload);
       clearSavedChoices(lead.id);
+      if (dealPart.deal && result.deal_id) {
+        // Stay here so the user can jump straight to the new deal.
+        setCreatedDealId(result.deal_id);
+        setIsSubmitting(false);
+        return;
+      }
       router.push(`${leadHref}?converted=1`);
     } catch (err) {
       setError(extractErrorMessage(err, "Couldn't convert this lead. Try again."));
@@ -203,6 +234,29 @@ export default function LeadConvert({ lead }: LeadConvertProps) {
       : selectedContact
         ? { icon: <CheckCircle2 size={14} />, text: `Existing: ${selectedContact.name}` }
         : { icon: <Minus size={14} />, text: "Not selected yet" };
+
+  if (createdDealId) {
+    return (
+      <div className="mx-auto max-w-xl">
+        <div role="status" className="mt-3 rounded-lg border border-success/30 bg-success-soft px-6 py-8 text-center animate-scale-in">
+          <CheckCircle2 size={28} className="mx-auto text-success animate-pop-in" aria-hidden="true" />
+          <h1 className="mt-3 font-serif text-2xl text-fg">Lead converted</h1>
+          <p className="mt-1 text-sm text-ink-soft">The deal “{dealDraft.name.trim()}” was created too.</p>
+          <div className="mt-5 flex flex-wrap justify-center gap-3">
+            <Link
+              href={`/dashboard/deals/${createdDealId}`}
+              className="inline-flex items-center gap-2 rounded-md bg-ink px-5 py-2 text-sm font-semibold text-white hover:bg-ink-2"
+            >
+              <Handshake size={15} aria-hidden="true" /> View deal
+            </Link>
+            <Link href={`${leadHref}?converted=1`} className="rounded-md border border-line bg-surface px-5 py-2 text-sm font-medium text-fg hover:bg-paper">
+              Back to Lead
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-4xl">
@@ -322,6 +376,8 @@ export default function LeadConvert({ lead }: LeadConvertProps) {
               )}
             </Step>
 
+            <LeadConvertDeal draft={dealDraft} onChange={setDealDraft} />
+
             <section aria-label="Conversion summary" className="rounded-lg border border-line bg-paper px-4 py-4">
               <h2 className="text-sm font-semibold text-fg">Conversion Summary</h2>
               <dl className="mt-3 grid gap-3 sm:grid-cols-2">
@@ -333,6 +389,12 @@ export default function LeadConvert({ lead }: LeadConvertProps) {
                   <dt className="text-xs font-semibold uppercase tracking-wide text-ink-soft">Contact</dt>
                   <dd className="mt-1 flex items-center gap-2 text-sm text-fg">{contactSummary.icon}{contactSummary.text}</dd>
                 </div>
+                {dealDraft.enabled && (
+                  <div>
+                    <dt className="text-xs font-semibold uppercase tracking-wide text-ink-soft">Deal</dt>
+                    <dd className="mt-1 flex items-center gap-2 text-sm text-fg"><Plus size={14} />New: {dealDraft.name.trim() || "Untitled deal"}</dd>
+                  </div>
+                )}
               </dl>
             </section>
           </div>

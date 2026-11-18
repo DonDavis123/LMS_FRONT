@@ -4,6 +4,7 @@ import { apiClient } from "@/infrastructure/api/client";
 import type {
   ConversionCheckResponse,
   ConvertLeadPayload,
+  ConvertLeadResult,
   CreateLeadPayload,
   Lead,
   UpdateLeadPayload,
@@ -77,12 +78,15 @@ export const LeadService = {
    * POST /leads/{id}/convert/. Returns the backend's own confirmation
    * message when it sends one.
    */
-  async convertLead(id: string, payload: ConvertLeadPayload): Promise<string> {
-    const { data } = await apiClient.post<{ message?: string; detail?: string } | undefined>(
+  async convertLead(id: string, payload: ConvertLeadPayload): Promise<ConvertLeadResult> {
+    const { data } = await apiClient.post<{ message?: string; detail?: string; deal_id?: string | null } | undefined>(
       `/leads/${id}/convert/`,
       payload
     );
-    return data?.message ?? data?.detail ?? "Lead converted successfully";
+    return {
+      message: data?.message ?? data?.detail ?? "Lead converted successfully",
+      deal_id: data?.deal_id ?? null,
+    };
   },
 
   /**

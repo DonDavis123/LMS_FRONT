@@ -9,6 +9,7 @@ import {
   FileEdit,
   FileUp,
   Filter,
+  Handshake,
   Loader2,
   Mail,
   Mic,
@@ -16,8 +17,10 @@ import {
   PlusCircle,
   RefreshCcw,
   Trash2,
+  Trophy,
   Undo2,
   UserSquare2,
+  XCircle,
 } from "lucide-react";
 import { TimelineService, type TimelineEvent, type TimelineModule } from "@/features/timeline/services/TimelineService";
 
@@ -96,8 +99,26 @@ function highlightMessage(
     .map((part) => ({ text: part, bold: values.includes(part) }));
 }
 
+/** Readable labels for deal events when the backend sends only the raw event type. */
+const DEAL_EVENT_LABELS: Record<string, string> = {
+  DEAL_CREATED: "Deal created",
+  DEAL_UPDATED: "Deal updated",
+  DEAL_STAGE_CHANGED: "Deal stage changed",
+  DEAL_WON: "Deal won",
+  DEAL_LOST: "Deal lost",
+  DEAL_DELETED: "Deal deleted",
+};
+
 function iconFor(eventType: string | null | undefined) {
   const type = (eventType ?? "").toUpperCase();
+  if (type.startsWith("DEAL_")) {
+    if (type === "DEAL_WON") return { Icon: Trophy, tone: "text-success" };
+    if (type === "DEAL_LOST") return { Icon: XCircle, tone: "text-danger" };
+    if (type.includes("DELETED")) return { Icon: Trash2, tone: "text-danger" };
+    if (type.includes("STAGE_CHANGED")) return { Icon: ArrowRightCircle, tone: "text-slate" };
+    if (type.includes("CREATED")) return { Icon: Handshake, tone: "text-success" };
+    return { Icon: FileEdit, tone: "text-slate" };
+  }
   if (type.startsWith("CALL_RECORDING_")) {
     return { Icon: Mic, tone: type.includes("DELETED") ? "text-danger" : "text-success" };
   }
@@ -147,6 +168,15 @@ function getCallId(event: TimelineEvent): string | null {
   if (!type.startsWith("CALL_") || type.includes("DELETED")) return null;
   const metadata = event.raw?.metadata as Record<string, unknown> | undefined;
   const id = metadata?.call_id;
+  return typeof id === "string" && id.trim() ? id : null;
+}
+
+/** The deal a DEAL_* entry is about (not offered for deleted deals). */
+function getDealId(event: TimelineEvent): string | null {
+  const type = (event.event_type ?? event.type ?? "").toUpperCase();
+  if (!type.startsWith("DEAL_") || type.includes("DELETED")) return null;
+  const metadata = event.raw?.metadata as Record<string, unknown> | undefined;
+  const id = metadata?.deal_id ?? event.raw?.entity_id;
   return typeof id === "string" && id.trim() ? id : null;
 }
 
@@ -317,10 +347,12 @@ export default function RecordTimeline({ module, recordId, showLeadOrigin = fals
                     const isLast = index === dayEvents.length - 1;
                     const sourceLeadId = getSourceLeadId(event);
                     const callId = module === "tasks" || module === "meetings" ? null : getCallId(event);
+                    const dealId = module === "deals" ? null : getDealId(event);
                     const leadOrigin = showLeadOrigin && module !== "leads" && isLeadOriginEvent(event);
                     const metadata = event.raw?.metadata as Record<string, unknown> | undefined;
                     const leadName = typeof metadata?.source_lead_name === "string" ? metadata.source_lead_name : "";
-                    const segments = highlightMessage(event.title, changes, leadOrigin && leadName ? [leadName] : []);
+                    const title = DEAL_EVENT_LABELS[event.title.toUpperCase()] ?? event.title;
+                    const segments = highlightMessage(title, changes, leadOrigin && leadName ? [leadName] : []);
                     const actor = event.actor_name || event.user_name || event.user;
 
                     return (
@@ -350,6 +382,14 @@ export default function RecordTimeline({ module, recordId, showLeadOrigin = fals
                                 className="ml-4 whitespace-nowrap text-sm text-fg underline underline-offset-4 transition hover:text-indigo-600"
                               >
                                 View Call
+                              </Link>
+                            )}
+                            {dealId && (
+                              <Link
+                                href={`/dashboard/deals/${dealId}?returnTo=${encodeURIComponent(`/dashboard/${module}/${recordId}?tab=timeline`)}`}
+                                className="ml-4 whitespace-nowrap text-sm text-fg underline underline-offset-4 transition hover:text-indigo-600"
+                              >
+                                View Deal
                               </Link>
                             )}
                             {leadOrigin && sourceLeadId && (

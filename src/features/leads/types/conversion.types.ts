@@ -30,4 +30,16 @@ export interface ConvertLeadPayload {
   contact_action: ConversionAction;
   contact_id?: string;
   contact_name?: string;
+  deal?: ConvertLeadDeal;
 }
+
+/** Optional deal created together with the conversion (POST /leads/{id}/convert/). */
+export interface ConvertLeadDeal {
+  name: string;
+  amount: string | number;
+  expected_close_date?: string;
+  stage?: "New" | "Quotation Sent" | "Negotiation";
+  probability?: number;
+  description?: string;
+}
+

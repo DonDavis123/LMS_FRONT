@@ -19,6 +19,7 @@ import { ContactService } from "@/features/contacts/services/ContactService";
 import CreateTaskFromRecord from "@/shared/components/CreateTaskFromRecord";
 import SendMailButton from "@/features/mailing/components/SendMailButton";
 import AccountDocuments from "@/features/accounts/components/AccountDocuments";
+import RecordDeals from "@/features/deals/components/RecordDeals";
 
 import { confirmDelete } from "@/shared/utils/confirmDelete";
 
@@ -183,6 +184,13 @@ export default function AccountDetail({ account, onAccountChange }: AccountDetai
               <Row label="Industry" value={account.industry} type="select" options={toSelectOptions(picklists.industry, account.industry)} onSave={(raw) => updateField("industry", raw)} />
             </div>
           </div>
+
+          <RecordDeals
+            kind="account"
+            recordId={account.id}
+            recordName={account.account_name || "this account"}
+            returnTo={`/dashboard/accounts/${account.id}`}
+          />
 
           <AccountDocuments accountId={account.id} initialDocuments={account.documents} />
 
