@@ -22,6 +22,8 @@ import {
   type LeadStatus,
 } from "@/features/leads/types/lead.types";
 import Select from "@/shared/components/Select";
+import ValidatedInput from "@/shared/components/ValidatedInput";
+import { firstContactFieldError } from "@/shared/utils/contactFieldRules";
 import { useFormError } from "@/shared/hooks/useFormError";
 
 interface LeadFormProps {
@@ -134,6 +136,7 @@ export default function LeadForm({
   const { options: picklists, colors: picklistColors } = useLeadPicklists();
   const [error, setError, errorRef] = useFormError();
   const [notice, setNotice] = useState<string | null>(null);
+  const [attempted, setAttempted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSavingNext, setIsSavingNext] = useState(false);
   // Create starts with a quick form; edit always shows every field.
@@ -168,6 +171,16 @@ export default function LeadForm({
   function buildPayload(): CreateLeadPayload | null {
     if (!form.name.trim()) {
       setError("Name is required.");
+      return null;
+    }
+    setAttempted(true);
+    const fieldError = firstContactFieldError([
+      ["phone", form.phone, true],
+      ["email", form.email],
+      ["phone", form.mobile_number],
+    ]);
+    if (fieldError) {
+      setError(fieldError);
       return null;
     }
     setError(null);
@@ -224,6 +237,7 @@ export default function LeadForm({
         // Stay on the page, ready for the next lead — mirrors Zoho's
         // "Save and New." Edit mode navigates away, so no reset needed there.
         setForm(emptyForm());
+        setAttempted(false);
         defaultOwnerToCurrentUser();
         setNotice("Lead created successfully. Ready for the next one.");
         window.setTimeout(() => setNotice(null), 3000);
@@ -306,21 +320,23 @@ export default function LeadForm({
           />
         </Field>
 
-        <Field label="Phone">
-          <input
+        <Field label="Phone" required>
+          <ValidatedInput
+            kind="phone"
             value={form.phone}
-            onChange={(e) => update("phone", e.target.value)}
-            className={inputClass}
+            onChange={(value) => update("phone", value)}
+            required
             placeholder="+914412345678"
+            showError={attempted}
           />
         </Field>
         <Field label="Email">
-          <input
-            type="email"
+          <ValidatedInput
+            kind="email"
             value={form.email}
-            onChange={(e) => update("email", e.target.value)}
-            className={inputClass}
+            onChange={(value) => update("email", value)}
             placeholder="john.davis@abctech.com"
+            showError={attempted}
           />
         </Field>
 
@@ -393,12 +409,13 @@ export default function LeadForm({
             </Field>
 
             <Field label="Mobile">
-              <input
-                value={form.mobile_number}
-                onChange={(e) => update("mobile_number", e.target.value)}
-                className={inputClass}
-                placeholder="+919876543210"
-              />
+              <ValidatedInput
+            kind="phone"
+            value={form.mobile_number}
+            onChange={(value) => update("mobile_number", value)}
+            placeholder="+919876543210"
+            showError={attempted}
+          />
             </Field>
             <Field label="Lead Status">
               <ModernStatusSelect

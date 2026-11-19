@@ -12,6 +12,9 @@ import OwnerPicker from "@/shared/components/OwnerPicker";
 import RecordPicker from "@/shared/components/RecordPicker";
 import Spinner from "@/shared/components/Spinner";
 import { inputClass, Section, Field } from "@/shared/components/FormLayout";
+import { extractApiError } from "@/shared/utils/apiError";
+import ValidatedInput from "@/shared/components/ValidatedInput";
+import { firstContactFieldError } from "@/shared/utils/contactFieldRules";
 import { useContactPicklists } from "@/features/picklists/hooks/useLeadPicklists";
 import { toSelectOptions } from "@/features/picklists/utils/optionHelpers";
 import type { Contact, CreateContactPayload } from "@/features/contacts/types/contact.types";
@@ -132,6 +135,7 @@ export default function ContactForm({ mode, initialContact, onSubmit, onCancel }
   // The company's own Lead Source options.
   const { options: picklists } = useContactPicklists();
   const [error, setError, errorRef] = useFormError();
+  const [attempted, setAttempted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   // Create starts with the six essentials; edit opens with everything visible.
   const [showMore, setShowMore] = useState(mode === "edit");
@@ -161,6 +165,22 @@ export default function ContactForm({ mode, initialContact, onSubmit, onCancel }
     if (isUnchanged()) return;
     if (!form.name.trim()) {
       setError("Name is required.");
+      return;
+    }
+
+    setAttempted(true);
+    const fieldError = firstContactFieldError([
+      ["email", form.email],
+      ["phone", form.phone, true],
+      ["email", form.secondary_email],
+      ["phone", form.mobile],
+      ["phone", form.home_phone],
+      ["phone", form.other_phone],
+      ["phone", form.assistant_phone],
+    ]);
+    if (fieldError) {
+      setError(fieldError);
+      setShowMore(true);
       return;
     }
 
@@ -194,8 +214,8 @@ export default function ContactForm({ mode, initialContact, onSubmit, onCancel }
         other_address: form.other_address.trim() || null,
         description: form.description.trim() || null,
       });
-    } catch {
-      setError("Couldn't save this contact. Check the fields and try again.");
+    } catch (submitError) {
+      setError(extractApiError(submitError, "Couldn't save this contact. Check the fields and try again."));
       setIsSubmitting(false);
     }
   }
@@ -258,19 +278,21 @@ export default function ContactForm({ mode, initialContact, onSubmit, onCancel }
           />
         </Field>
         <Field label="Email">
-          <input
-            type="email"
+          <ValidatedInput
+            kind="email"
             value={form.email}
-            onChange={(e) => update("email", e.target.value)}
-            className={inputClass}
+            onChange={(value) => update("email", value)}
             placeholder="don.davis@abctech.com"
+            showError={attempted}
           />
         </Field>
-        <Field label="Phone">
-          <input
+        <Field label="Phone" required>
+          <ValidatedInput
+            kind="phone"
             value={form.phone}
-            onChange={(e) => update("phone", e.target.value)}
-            className={inputClass}
+            onChange={(value) => update("phone", value)}
+            required
+            showError={attempted}
           />
         </Field>
         <Field label="Lead Source">
@@ -321,32 +343,35 @@ export default function ContactForm({ mode, initialContact, onSubmit, onCancel }
           />
         </Field>
         <Field label="Secondary Email">
-          <input
-            type="email"
+          <ValidatedInput
+            kind="email"
             value={form.secondary_email}
-            onChange={(e) => update("secondary_email", e.target.value)}
-            className={inputClass}
+            onChange={(value) => update("secondary_email", value)}
+            showError={attempted}
           />
         </Field>
         <Field label="Mobile">
-          <input
+          <ValidatedInput
+            kind="phone"
             value={form.mobile}
-            onChange={(e) => update("mobile", e.target.value)}
-            className={inputClass}
+            onChange={(value) => update("mobile", value)}
+            showError={attempted}
           />
         </Field>
         <Field label="Home Phone">
-          <input
+          <ValidatedInput
+            kind="phone"
             value={form.home_phone}
-            onChange={(e) => update("home_phone", e.target.value)}
-            className={inputClass}
+            onChange={(value) => update("home_phone", value)}
+            showError={attempted}
           />
         </Field>
         <Field label="Other Phone">
-          <input
+          <ValidatedInput
+            kind="phone"
             value={form.other_phone}
-            onChange={(e) => update("other_phone", e.target.value)}
-            className={inputClass}
+            onChange={(value) => update("other_phone", value)}
+            showError={attempted}
           />
         </Field>
         <Field label="Department">
@@ -378,10 +403,11 @@ export default function ContactForm({ mode, initialContact, onSubmit, onCancel }
           />
         </Field>
         <Field label="Assistant Phone">
-          <input
+          <ValidatedInput
+            kind="phone"
             value={form.assistant_phone}
-            onChange={(e) => update("assistant_phone", e.target.value)}
-            className={inputClass}
+            onChange={(value) => update("assistant_phone", value)}
+            showError={attempted}
           />
         </Field>
         <Field label="Reporting To">

@@ -9,6 +9,8 @@ import { authService } from "@/features/auth/services/authService";
 import OwnerPicker from "@/shared/components/OwnerPicker";
 import Spinner from "@/shared/components/Spinner";
 import { inputClass, Section, Field } from "@/shared/components/FormLayout";
+import ValidatedInput from "@/shared/components/ValidatedInput";
+import { firstContactFieldError } from "@/shared/utils/contactFieldRules";
 import { useAccountPicklists } from "@/features/picklists/hooks/useLeadPicklists";
 import { toSelectOptions } from "@/features/picklists/utils/optionHelpers";
 import {
@@ -115,6 +117,7 @@ export default function AccountForm({ mode, initialAccount, onSubmit, onCancel }
   // The company's own Industry / Rating / Ownership options.
   const { options: picklists } = useAccountPicklists();
   const [error, setError, errorRef] = useFormError();
+  const [attempted, setAttempted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   // Documents are only collected here when creating; an existing account
   // manages its documents from the detail page.
@@ -150,6 +153,13 @@ export default function AccountForm({ mode, initialAccount, onSubmit, onCancel }
     const { documents, error: documentError } = buildDocumentPayload(documentDrafts);
     if (mode === "create" && documentError) {
       setError(documentError);
+      return;
+    }
+
+    setAttempted(true);
+    const fieldError = firstContactFieldError([["phone", form.phone, true]]);
+    if (fieldError) {
+      setError(fieldError);
       return;
     }
 
@@ -278,11 +288,13 @@ export default function AccountForm({ mode, initialAccount, onSubmit, onCancel }
             placeholder="https://abctech.com"
           />
         </Field>
-        <Field label="Phone">
-          <input
+        <Field label="Phone" required>
+          <ValidatedInput
+            kind="phone"
             value={form.phone}
-            onChange={(e) => update("phone", e.target.value)}
-            className={inputClass}
+            onChange={(value) => update("phone", value)}
+            required
+            showError={attempted}
           />
         </Field>
 
