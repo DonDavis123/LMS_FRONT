@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AlertCircle, ChevronDown } from "lucide-react";
+import { AlertCircle } from "lucide-react";
+import CountryCodePicker from "@/shared/components/CountryCodePicker";
 import { inputClass, inputErrorClass } from "@/shared/components/FormLayout";
 import {
-  COUNTRIES,
   DEFAULT_COUNTRY_ISO,
   findCountry,
   joinPhone,
@@ -129,28 +129,7 @@ export default function ValidatedInput({
     return (
       <>
         <div className="flex gap-2">
-          <div className="relative w-[5.75rem] shrink-0">
-            <div
-              className={`${inputClass} flex items-center justify-between gap-1 px-2.5 ${inputStateClass}`}
-              aria-hidden="true"
-            >
-              <span className="truncate">+{country.dial}</span>
-              <ChevronDown size={14} className="shrink-0 text-ink-soft" />
-            </div>
-            <select
-              value={country.iso}
-              onChange={(e) => changeCountry(e.target.value)}
-              aria-label="Country code"
-              title={`${country.name} (+${country.dial})`}
-              className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
-            >
-              {COUNTRIES.map((c) => (
-                <option key={c.iso} value={c.iso}>
-                  {c.name} (+{c.dial})
-                </option>
-              ))}
-            </select>
-          </div>
+          <CountryCodePicker country={country} onChange={changeCountry} stateClass={inputStateClass} />
           <input
             type="text"
             inputMode="tel"
