@@ -239,7 +239,7 @@ export default function AccountList({
                   <th className="px-4 py-3">Phone</th>
                   <SortableHeader label="Industry" field="industry" sort={sort} onSortChange={onSortChange} />
                   <SortableHeader label="Account Owner" field="account_owner" sort={sort} onSortChange={onSortChange} />
-                  <th className="px-4 py-3">Calls</th>
+                  <th className="lp-sticky-end px-4 py-3">Calls</th>
                 </tr>
               </thead>
               <tbody>
@@ -299,7 +299,7 @@ export default function AccountList({
                     <td className="px-4 py-3 text-ink-soft">{account.phone || "—"}</td>
                     <td className="px-4 py-3 text-ink-soft">{account.industry || "—"}</td>
                     <td className="px-4 py-3 text-ink-soft">{account.account_owner_name ?? "Unassigned"}</td>
-                    <td className="px-4 py-3">
+                    <td className="lp-sticky-end px-4 py-3">
                       <RowCallButton
                         kind="account"
                         recordId={account.id}

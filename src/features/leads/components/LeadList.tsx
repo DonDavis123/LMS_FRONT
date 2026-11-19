@@ -276,7 +276,7 @@ export default function LeadList({
                   <SortableHeader label="Lead Status" field="lead_status" sort={sort} onSortChange={onSortChange} />
                   <SortableHeader label="Lead Owner" field="owner" sort={sort} onSortChange={onSortChange} />
                   <SortableHeader label="Created" field="created_at" sort={sort} onSortChange={onSortChange} />
-                  <th className="px-4 py-3">Calls</th>
+                  <th className="lp-sticky-end px-4 py-3">Calls</th>
                 </tr>
               </thead>
               <tbody>
@@ -363,7 +363,7 @@ export default function LeadList({
                     </td>
                     <td className="px-4 py-3 text-ink-soft">{lead.owner?.name ?? "Unassigned"}</td>
                     <td className="whitespace-nowrap px-4 py-3 text-ink-soft">{formatDateTime(lead.created_at) || "—"}</td>
-                    <td className="px-4 py-3">
+                    <td className="lp-sticky-end px-4 py-3">
                       <RowCallButton
                         kind="lead"
                         recordId={lead.id}

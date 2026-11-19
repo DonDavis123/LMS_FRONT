@@ -242,7 +242,7 @@ export default function ContactList({
                   <SortableHeader label="Email" field="email" sort={sort} onSortChange={onSortChange} />
                   <th className="px-4 py-3">Phone</th>
                   <SortableHeader label="Contact Owner" field="contact_owner" sort={sort} onSortChange={onSortChange} />
-                  <th className="px-4 py-3">Calls</th>
+                  <th className="lp-sticky-end px-4 py-3">Calls</th>
                 </tr>
               </thead>
               <tbody>
@@ -310,7 +310,7 @@ export default function ContactList({
                     <td className="px-4 py-3 text-ink-soft">{contact.email || "—"}</td>
                     <td className="px-4 py-3 text-ink-soft">{contact.phone || "—"}</td>
                     <td className="px-4 py-3 text-ink-soft">{contact.contact_owner_name ?? "Unassigned"}</td>
-                    <td className="px-4 py-3">
+                    <td className="lp-sticky-end px-4 py-3">
                       <RowCallButton
                         kind="contact"
                         recordId={contact.id}

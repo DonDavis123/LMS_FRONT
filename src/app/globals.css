@@ -583,6 +583,45 @@ button, a, input, select, textarea {
   }
 }
 
+/* Tighter columns: list tables used 1rem of padding on each side of every
+   cell, which wasted width (and pushed the last column off-screen). Cells
+   now use 0.75rem, and the first column (record-actions / selection) is
+   packed against the card's left edge. */
+.lp-table-scroll th,
+.lp-table-scroll td {
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+}
+.lp-table-scroll th:first-child,
+.lp-table-scroll td:first-child {
+  padding-left: 0.5rem;
+  padding-right: 0.25rem;
+}
+.lp-table-scroll th.w-10 {
+  width: 2rem;
+}
+
+/* Pinned last column (the "Call Log" button on Leads / Contacts / Accounts):
+   stays visible at the right edge while the rest of the table scrolls
+   sideways. */
+.lp-table-scroll th.lp-sticky-end,
+.lp-table-scroll td.lp-sticky-end {
+  position: sticky;
+  right: 0;
+  background-color: var(--color-surface);
+  box-shadow: inset 1px 0 0 var(--color-line);
+}
+.lp-table-scroll thead th.lp-sticky-end {
+  z-index: 3; /* above the sticky header row (z-index: 2) */
+  box-shadow: inset 1px 0 0 var(--color-line), inset 0 -1px 0 var(--color-line);
+}
+.lp-table-scroll tbody td.lp-sticky-end {
+  z-index: 1;
+}
+.lp-table-scroll tbody tr:hover td.lp-sticky-end {
+  background-color: var(--color-paper);
+}
+
 /* Column headings stay visible while the rows scroll. */
 .lp-table-scroll thead th {
   position: sticky;
