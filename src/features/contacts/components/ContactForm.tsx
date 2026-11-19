@@ -284,6 +284,7 @@ export default function ContactForm({ mode, initialContact, onSubmit, onCancel }
             onChange={(value) => update("email", value)}
             placeholder="don.davis@abctech.com"
             showError={attempted}
+            duplicateCheck={{ excludeType: "contact", excludeId: initialContact?.id, originalValue: initialContact?.email ?? "" }}
           />
         </Field>
         <Field label="Phone" required>
@@ -293,6 +294,7 @@ export default function ContactForm({ mode, initialContact, onSubmit, onCancel }
             onChange={(value) => update("phone", value)}
             required
             showError={attempted}
+            duplicateCheck={{ excludeType: "contact", excludeId: initialContact?.id, originalValue: initialContact?.phone ?? "" }}
           />
         </Field>
         <Field label="Lead Source">
@@ -348,6 +350,7 @@ export default function ContactForm({ mode, initialContact, onSubmit, onCancel }
             value={form.secondary_email}
             onChange={(value) => update("secondary_email", value)}
             showError={attempted}
+            duplicateCheck={{ excludeType: "contact", excludeId: initialContact?.id, originalValue: initialContact?.secondary_email ?? "" }}
           />
         </Field>
         <Field label="Mobile">
@@ -356,6 +359,7 @@ export default function ContactForm({ mode, initialContact, onSubmit, onCancel }
             value={form.mobile}
             onChange={(value) => update("mobile", value)}
             showError={attempted}
+            duplicateCheck={{ excludeType: "contact", excludeId: initialContact?.id, originalValue: initialContact?.mobile ?? "" }}
           />
         </Field>
         <Field label="Home Phone">
@@ -364,6 +368,7 @@ export default function ContactForm({ mode, initialContact, onSubmit, onCancel }
             value={form.home_phone}
             onChange={(value) => update("home_phone", value)}
             showError={attempted}
+            duplicateCheck={{ excludeType: "contact", excludeId: initialContact?.id, originalValue: initialContact?.home_phone ?? "" }}
           />
         </Field>
         <Field label="Other Phone">
@@ -372,6 +377,7 @@ export default function ContactForm({ mode, initialContact, onSubmit, onCancel }
             value={form.other_phone}
             onChange={(value) => update("other_phone", value)}
             showError={attempted}
+            duplicateCheck={{ excludeType: "contact", excludeId: initialContact?.id, originalValue: initialContact?.other_phone ?? "" }}
           />
         </Field>
         <Field label="Department">

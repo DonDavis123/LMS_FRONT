@@ -295,6 +295,7 @@ export default function AccountForm({ mode, initialAccount, onSubmit, onCancel }
             onChange={(value) => update("phone", value)}
             required
             showError={attempted}
+            duplicateCheck={{ excludeType: "account", excludeId: initialAccount?.id, originalValue: initialAccount?.phone ?? "" }}
           />
         </Field>
 

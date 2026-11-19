@@ -328,6 +328,7 @@ export default function LeadForm({
             required
             placeholder="+914412345678"
             showError={attempted}
+            duplicateCheck={{ excludeType: "lead", excludeId: initialLead?.id, originalValue: initialLead?.phone ?? "" }}
           />
         </Field>
         <Field label="Email">
@@ -337,6 +338,7 @@ export default function LeadForm({
             onChange={(value) => update("email", value)}
             placeholder="john.davis@abctech.com"
             showError={attempted}
+            duplicateCheck={{ excludeType: "lead", excludeId: initialLead?.id, originalValue: initialLead?.email ?? "" }}
           />
         </Field>
 
@@ -415,6 +417,7 @@ export default function LeadForm({
             onChange={(value) => update("mobile_number", value)}
             placeholder="+919876543210"
             showError={attempted}
+            duplicateCheck={{ excludeType: "lead", excludeId: initialLead?.id, originalValue: initialLead?.mobile_number ?? "" }}
           />
             </Field>
             <Field label="Lead Status">
