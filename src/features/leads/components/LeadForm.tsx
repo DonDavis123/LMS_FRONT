@@ -23,7 +23,9 @@ import {
 } from "@/features/leads/types/lead.types";
 import Select from "@/shared/components/Select";
 import ValidatedInput from "@/shared/components/ValidatedInput";
-import { firstContactFieldError } from "@/shared/utils/contactFieldRules";
+import { allContactFieldErrors } from "@/shared/utils/contactFieldRules";
+import { extractApiErrors } from "@/shared/utils/apiError";
+import FormErrorMessage from "@/shared/components/FormErrorMessage";
 import { useFormError } from "@/shared/hooks/useFormError";
 
 interface LeadFormProps {
@@ -59,11 +61,17 @@ interface FormState {
   description: string;
 }
 
-/** A rejected dropdown option comes back as a 400 `{ detail }` — show it as-is. */
-function saveErrorMessage(error: unknown): string {
+/**
+ * A rejected value comes back as a 400 `{ detail, errors? }` — show every
+ * message (e.g. duplicate email *and* duplicate phone) as-is.
+ */
+function saveErrorMessages(error: unknown): string[] {
+  const fallback = "Couldn't save this lead. Check the fields and try again.";
   const response = (error as { response?: { status?: number; data?: { detail?: unknown } } } | null)?.response;
-  if (response?.status === 400 && typeof response.data?.detail === "string") return response.data.detail;
-  return "Couldn't save this lead. Check the fields and try again.";
+  if (response?.status === 400 && typeof response.data?.detail === "string") {
+    return extractApiErrors(error, fallback);
+  }
+  return [fallback];
 }
 
 function emptyForm(): FormState {
@@ -169,18 +177,18 @@ export default function LeadForm({
   }
 
   function buildPayload(): CreateLeadPayload | null {
-    if (!form.name.trim()) {
-      setError("Name is required.");
-      return null;
-    }
     setAttempted(true);
-    const fieldError = firstContactFieldError([
-      ["phone", form.phone, true],
-      ["email", form.email],
-      ["phone", form.mobile_number],
-    ]);
-    if (fieldError) {
-      setError(fieldError);
+    // Collect every problem so the banner lists them all, not just the first.
+    const problems = [
+      ...(form.name.trim() ? [] : ["Name is required."]),
+      ...allContactFieldErrors([
+        ["phone", form.phone, true],
+        ["email", form.email],
+        ["phone", form.mobile_number],
+      ]),
+    ];
+    if (problems.length > 0) {
+      setError(problems);
       return null;
     }
     setError(null);
@@ -219,7 +227,7 @@ export default function LeadForm({
     try {
       await onSubmit(payload);
     } catch (err) {
-      setError(saveErrorMessage(err));
+      setError(saveErrorMessages(err));
       setIsSubmitting(false);
     }
   }
@@ -243,7 +251,7 @@ export default function LeadForm({
         window.setTimeout(() => setNotice(null), 3000);
       }
     } catch (err) {
-      setError(saveErrorMessage(err));
+      setError(saveErrorMessages(err));
     } finally {
       setIsSavingNext(false);
     }
@@ -293,9 +301,7 @@ export default function LeadForm({
 
       {warning && <FormWarning message={warning} className="mt-4" />}
       {error && (
-        <p ref={errorRef as React.RefObject<HTMLParagraphElement>} className="mt-4 animate-shake rounded-md border border-danger/30 bg-danger-soft px-3 py-2 text-sm text-danger">
-          {error}
-        </p>
+        <FormErrorMessage message={error} errorRef={errorRef} />
       )}
 
       {/* Quick form — the only fields shown when creating a lead. */}

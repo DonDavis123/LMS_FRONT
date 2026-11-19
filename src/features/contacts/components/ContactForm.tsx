@@ -12,9 +12,10 @@ import OwnerPicker from "@/shared/components/OwnerPicker";
 import RecordPicker from "@/shared/components/RecordPicker";
 import Spinner from "@/shared/components/Spinner";
 import { inputClass, Section, Field } from "@/shared/components/FormLayout";
-import { extractApiError } from "@/shared/utils/apiError";
+import { extractApiErrors } from "@/shared/utils/apiError";
 import ValidatedInput from "@/shared/components/ValidatedInput";
-import { firstContactFieldError } from "@/shared/utils/contactFieldRules";
+import { allContactFieldErrors } from "@/shared/utils/contactFieldRules";
+import FormErrorMessage from "@/shared/components/FormErrorMessage";
 import { useContactPicklists } from "@/features/picklists/hooks/useLeadPicklists";
 import { toSelectOptions } from "@/features/picklists/utils/optionHelpers";
 import type { Contact, CreateContactPayload } from "@/features/contacts/types/contact.types";
@@ -163,13 +164,11 @@ export default function ContactForm({ mode, initialContact, onSubmit, onCancel }
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     if (isUnchanged()) return;
-    if (!form.name.trim()) {
-      setError("Name is required.");
-      return;
-    }
-
     setAttempted(true);
-    const fieldError = firstContactFieldError([
+    // Collect every problem so the banner lists them all, not just the first.
+    const problems = [
+      ...(form.name.trim() ? [] : ["Name is required."]),
+      ...allContactFieldErrors([
       ["email", form.email],
       ["phone", form.phone, true],
       ["email", form.secondary_email],
@@ -177,9 +176,10 @@ export default function ContactForm({ mode, initialContact, onSubmit, onCancel }
       ["phone", form.home_phone],
       ["phone", form.other_phone],
       ["phone", form.assistant_phone],
-    ]);
-    if (fieldError) {
-      setError(fieldError);
+      ]),
+    ];
+    if (problems.length > 0) {
+      setError(problems);
       setShowMore(true);
       return;
     }
@@ -215,7 +215,7 @@ export default function ContactForm({ mode, initialContact, onSubmit, onCancel }
         description: form.description.trim() || null,
       });
     } catch (submitError) {
-      setError(extractApiError(submitError, "Couldn't save this contact. Check the fields and try again."));
+      setError(extractApiErrors(submitError, "Couldn't save this contact. Check the fields and try again."));
       setIsSubmitting(false);
     }
   }
@@ -252,9 +252,7 @@ export default function ContactForm({ mode, initialContact, onSubmit, onCancel }
 
       {warning && <FormWarning message={warning} className="mt-4" />}
       {error && (
-        <p ref={errorRef as React.RefObject<HTMLParagraphElement>} className="mt-4 animate-shake rounded-md border border-danger/30 bg-danger-soft px-3 py-2 text-sm text-danger">
-          {error}
-        </p>
+        <FormErrorMessage message={error} errorRef={errorRef} />
       )}
 
       <Section title="Contact Information" last>

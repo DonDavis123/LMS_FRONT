@@ -16,3 +16,21 @@ export function extractApiError(error: unknown, fallback: string): string {
   }
   return fallback;
 }
+
+/**
+ * Every message in an API error body. Uses `errors` (a list of messages, sent
+ * when several problems were found at once, e.g. a duplicate email and a
+ * duplicate phone) and otherwise falls back to the single message from
+ * `extractApiError`.
+ */
+export function extractApiErrors(error: unknown, fallback: string): string[] {
+  const data = (error as { response?: { data?: unknown } } | null)?.response?.data;
+  if (data && typeof data === "object") {
+    const list = (data as Record<string, unknown>).errors;
+    if (Array.isArray(list)) {
+      const messages = list.filter((item): item is string => typeof item === "string" && item.length > 0);
+      if (messages.length > 0) return messages;
+    }
+  }
+  return [extractApiError(error, fallback)];
+}

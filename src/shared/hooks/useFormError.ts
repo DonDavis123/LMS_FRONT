@@ -12,10 +12,12 @@ import { useCallback, useEffect, useRef, useState } from "react";
  * inside a scrolling modal/curtain, because `scrollIntoView` scrolls every
  * scrollable ancestor.
  *
+ * `setError` also takes a list of messages to show several errors at once.
+ *
  * Usage:
  *   const [error, setError, errorRef] = useFormError();
  *   ...
- *   {error && <p ref={errorRef} ...>{error}</p>}
+ *   {error && <FormErrorMessage message={error} errorRef={errorRef} />}
  */
 export function useFormError() {
   const [error, setErrorState] = useState<string | null>(null);
@@ -23,9 +25,12 @@ export function useFormError() {
   const [tick, setTick] = useState(0);
   const errorRef = useRef<HTMLElement | null>(null);
 
-  const setError = useCallback((message: string | null) => {
-    setErrorState(message);
-    if (message) setTick((t) => t + 1);
+  // A list of messages is stored as one newline-separated string, which
+  // `FormErrorMessage` renders as a list. A single message stays a plain string.
+  const setError = useCallback((message: string | string[] | null) => {
+    const value = Array.isArray(message) ? message.join("\n") || null : message;
+    setErrorState(value);
+    if (value) setTick((t) => t + 1);
   }, []);
 
   useEffect(() => {

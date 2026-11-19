@@ -65,3 +65,15 @@ export function firstContactFieldError(
   }
   return null;
 }
+
+/** Every error among the checks (de-duplicated, in order); empty when all pass. */
+export function allContactFieldErrors(
+  checks: ReadonlyArray<readonly [ContactFieldKind, string, boolean?]>
+): string[] {
+  const errors: string[] = [];
+  for (const [kind, value, required] of checks) {
+    const message = validateContactField(kind, value, required ?? false);
+    if (message && !errors.includes(message)) errors.push(message);
+  }
+  return errors;
+}

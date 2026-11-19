@@ -10,7 +10,8 @@ import OwnerPicker from "@/shared/components/OwnerPicker";
 import Spinner from "@/shared/components/Spinner";
 import { inputClass, Section, Field } from "@/shared/components/FormLayout";
 import ValidatedInput from "@/shared/components/ValidatedInput";
-import { firstContactFieldError } from "@/shared/utils/contactFieldRules";
+import { allContactFieldErrors } from "@/shared/utils/contactFieldRules";
+import FormErrorMessage from "@/shared/components/FormErrorMessage";
 import { useAccountPicklists } from "@/features/picklists/hooks/useLeadPicklists";
 import { toSelectOptions } from "@/features/picklists/utils/optionHelpers";
 import {
@@ -19,7 +20,7 @@ import {
 } from "@/features/accounts/types/account.types";
 import Select from "@/shared/components/Select";
 import { useFormError } from "@/shared/hooks/useFormError";
-import { extractApiError } from "@/shared/utils/apiError";
+import { extractApiErrors } from "@/shared/utils/apiError";
 import AccountDocumentsInput, {
   buildDocumentPayload,
   type DocumentDraft,
@@ -145,21 +146,16 @@ export default function AccountForm({ mode, initialAccount, onSubmit, onCancel }
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     if (isUnchanged()) return;
-    if (!form.account_name.trim()) {
-      setError("Account Name is required.");
-      return;
-    }
-
-    const { documents, error: documentError } = buildDocumentPayload(documentDrafts);
-    if (mode === "create" && documentError) {
-      setError(documentError);
-      return;
-    }
-
     setAttempted(true);
-    const fieldError = firstContactFieldError([["phone", form.phone, true]]);
-    if (fieldError) {
-      setError(fieldError);
+    const { documents, error: documentError } = buildDocumentPayload(documentDrafts);
+    // Collect every problem so the banner lists them all, not just the first.
+    const problems = [
+      ...(form.account_name.trim() ? [] : ["Account Name is required."]),
+      ...(mode === "create" && documentError ? [documentError] : []),
+      ...allContactFieldErrors([["phone", form.phone, true]]),
+    ];
+    if (problems.length > 0) {
+      setError(problems);
       return;
     }
 
@@ -190,7 +186,7 @@ export default function AccountForm({ mode, initialAccount, onSubmit, onCancel }
         ...(mode === "create" && documents.length > 0 ? { documents } : {}),
       });
     } catch (submitError) {
-      setError(extractApiError(submitError, "Couldn't save this account. Check the fields and try again."));
+      setError(extractApiErrors(submitError, "Couldn't save this account. Check the fields and try again."));
       setIsSubmitting(false);
     }
   }
@@ -222,9 +218,7 @@ export default function AccountForm({ mode, initialAccount, onSubmit, onCancel }
 
       {warning && <FormWarning message={warning} className="mt-4" />}
       {error && (
-        <p ref={errorRef as React.RefObject<HTMLParagraphElement>} className="mt-4 animate-shake rounded-md border border-danger/30 bg-danger-soft px-3 py-2 text-sm text-danger">
-          {error}
-        </p>
+        <FormErrorMessage message={error} errorRef={errorRef} />
       )}
 
       <Section title="Account Information">
