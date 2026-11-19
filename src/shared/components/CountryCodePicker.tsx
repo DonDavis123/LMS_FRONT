@@ -114,7 +114,9 @@ export default function CountryCodePicker({ country, onChange, stateClass = "" }
   }
 
   return (
-    <>
+    // The wrapper fixes the width: `inputClass` carries `w-full`, which would
+    // otherwise stretch the button across the whole phone row.
+    <div className="w-[6.5rem] shrink-0">
       <button
         ref={triggerRef}
         type="button"
@@ -123,7 +125,7 @@ export default function CountryCodePicker({ country, onChange, stateClass = "" }
         aria-expanded={open}
         aria-label={`Country code: ${country.name} (+${country.dial})`}
         title={`${country.name} (+${country.dial})`}
-        className={`${inputClass} flex w-[6.5rem] shrink-0 items-center justify-between gap-1.5 px-2.5 text-left ${stateClass}`}
+        className={`${inputClass} flex items-center justify-between gap-1.5 px-2.5 text-left ${stateClass}`}
       >
         <span className="flex min-w-0 items-center gap-2">
           <CountryFlag iso={country.iso} />
@@ -182,6 +184,6 @@ export default function CountryCodePicker({ country, onChange, stateClass = "" }
           </div>,
           document.body
         )}
-    </>
+    </div>
   );
 }
