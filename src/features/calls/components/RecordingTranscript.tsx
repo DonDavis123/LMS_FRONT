@@ -13,6 +13,8 @@ import {
   Search,
   Sparkles,
 } from "lucide-react";
+import CreateFollowUpMenu from "@/shared/components/CreateFollowUpMenu";
+import type { RelatedToValue } from "@/shared/components/RelatedToPicker";
 import TranscriptStatusBadge from "@/features/calls/components/TranscriptStatusBadge";
 import { useRecordingTranscript } from "@/features/calls/hooks/useRecordingTranscript";
 import { isTranscriptActive, type RecordingTranscript as Transcript } from "@/features/calls/types/callTranscript.types";
@@ -22,6 +24,10 @@ import { formatDateTime } from "@/shared/utils/formatDate";
 interface RecordingTranscriptProps {
   callId: string;
   recordingId: string;
+  /** The lead / contact the call belongs to. Pre-selected on tasks and meetings created from the summary. */
+  related?: RelatedToValue;
+  /** Email of that record (lets the meeting form say who would be emailed). */
+  relatedEmail?: string | null;
 }
 
 type View = "summary" | "transcript";
@@ -34,8 +40,11 @@ const SEARCH_FROM_SEGMENTS = 8;
  * backend produced from the audio (summary, key points, action items and the
  * speaker-labelled transcript) lives here; the status badge stays visible when
  * it is collapsed. Backed by `/calls/{id}/recordings/{id}/transcript/`.
+ *
+ * Each key point and action item has a "+" that creates a task, reminder or
+ * meeting for the call's lead / contact, pre-filled from that line.
  */
-export default function RecordingTranscript({ callId, recordingId }: RecordingTranscriptProps) {
+export default function RecordingTranscript({ callId, recordingId, related, relatedEmail = null }: RecordingTranscriptProps) {
   const { transcript, error, requesting, actionError, reload, request } = useRecordingTranscript(callId, recordingId);
   const [open, setOpen] = useState(false);
 
@@ -71,6 +80,8 @@ export default function RecordingTranscript({ callId, recordingId }: RecordingTr
             actionError={actionError}
             onReload={() => void reload()}
             onRequest={(regenerate) => void request(regenerate)}
+            related={related}
+            relatedEmail={relatedEmail}
           />
         )}
       </div>
@@ -85,9 +96,11 @@ interface BodyProps {
   actionError: string | null;
   onReload: () => void;
   onRequest: (regenerate?: boolean) => void;
+  related?: RelatedToValue;
+  relatedEmail: string | null;
 }
 
-function Body({ transcript, error, requesting, actionError, onReload, onRequest }: BodyProps) {
+function Body({ transcript, error, requesting, actionError, onReload, onRequest, related, relatedEmail }: BodyProps) {
   if (error && !transcript) {
     return (
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-line bg-surface px-4 py-3">
@@ -211,7 +224,16 @@ function Body({ transcript, error, requesting, actionError, onReload, onRequest 
     );
   }
 
-  return <Completed transcript={transcript} requesting={requesting} actionAlert={actionAlert} onRequest={onRequest} />;
+  return (
+    <Completed
+      transcript={transcript}
+      requesting={requesting}
+      actionAlert={actionAlert}
+      onRequest={onRequest}
+      related={related}
+      relatedEmail={relatedEmail}
+    />
+  );
 }
 
 function Completed({
@@ -219,11 +241,15 @@ function Completed({
   requesting,
   actionAlert,
   onRequest,
+  related,
+  relatedEmail,
 }: {
   transcript: Transcript;
   requesting: boolean;
   actionAlert: ReactNode;
   onRequest: (regenerate?: boolean) => void;
+  related?: RelatedToValue;
+  relatedEmail: string | null;
 }) {
   const [view, setView] = useState<View>("summary");
   const [query, setQuery] = useState("");
@@ -332,7 +358,7 @@ function Completed({
 
       <div className="mt-3">
         {view === "summary" ? (
-          <SummaryView transcript={transcript} />
+          <SummaryView transcript={transcript} related={related} relatedEmail={relatedEmail} />
         ) : !hasSegments ? (
           <p className="rounded-lg border border-dashed border-line px-4 py-6 text-center text-sm text-ink-soft">
             No speech was recognised in this recording.
@@ -392,7 +418,15 @@ function Completed({
   );
 }
 
-function SummaryView({ transcript }: { transcript: Transcript }) {
+function SummaryView({
+  transcript,
+  related,
+  relatedEmail,
+}: {
+  transcript: Transcript;
+  related?: RelatedToValue;
+  relatedEmail: string | null;
+}) {
   return (
     <div className="space-y-4">
       {transcript.summary && (
@@ -404,9 +438,10 @@ function SummaryView({ transcript }: { transcript: Transcript }) {
           <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-soft">Key points</h3>
           <ul className="space-y-1.5">
             {transcript.key_points.map((point, index) => (
-              <li key={index} className="flex gap-2 text-sm text-fg">
+              <li key={index} className="flex items-start gap-2 text-sm text-fg">
                 <span aria-hidden="true" className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-slate" />
-                <span className="min-w-0 break-words">{point}</span>
+                <span className="min-w-0 flex-1 break-words">{point}</span>
+                <CreateFollowUpMenu text={point} source="call summary" related={related} relatedEmail={relatedEmail} />
               </li>
             ))}
           </ul>
@@ -421,9 +456,10 @@ function SummaryView({ transcript }: { transcript: Transcript }) {
           </h3>
           <ul className="space-y-2">
             {transcript.action_items.map((item, index) => (
-              <li key={index} className="flex gap-2 text-sm text-fg">
+              <li key={index} className="flex items-start gap-2 text-sm text-fg">
                 <CheckCircle2 size={16} className="mt-0.5 shrink-0 text-success" aria-hidden="true" />
-                <span className="min-w-0 break-words">{item}</span>
+                <span className="min-w-0 flex-1 break-words">{item}</span>
+                <CreateFollowUpMenu text={item} source="call summary" related={related} relatedEmail={relatedEmail} />
               </li>
             ))}
           </ul>

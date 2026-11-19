@@ -6,6 +6,7 @@ import RecordingItem from "@/features/calls/components/RecordingItem";
 import RecordingUploadDialog from "@/features/calls/components/RecordingUploadDialog";
 import { CallRecordingService } from "@/features/calls/services/CallRecordingService";
 import { MAX_RECORDINGS_PER_CALL, type CallRecording } from "@/features/calls/types/callRecording.types";
+import type { RelatedToValue } from "@/shared/components/RelatedToPicker";
 import { extractApiError } from "@/shared/utils/apiError";
 import { confirmDelete } from "@/shared/utils/confirmDelete";
 
@@ -15,6 +16,8 @@ interface CallRecordingsProps {
   completed: boolean;
   /** Called after a recording was added or deleted, with a message for the toast. */
   onChanged?: (message: string) => void;
+  /** The call's lead / contact, used when a task, reminder or meeting is created from a summary. */
+  related?: RelatedToValue;
 }
 
 /**
@@ -22,7 +25,7 @@ interface CallRecordingsProps {
  * add (upload or record in the browser), download and delete.
  * Backed by `/calls/{id}/recordings/`.
  */
-export default function CallRecordings({ callId, completed, onChanged }: CallRecordingsProps) {
+export default function CallRecordings({ callId, completed, onChanged, related }: CallRecordingsProps) {
   const [recordings, setRecordings] = useState<CallRecording[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -128,7 +131,13 @@ export default function CallRecordings({ callId, completed, onChanged }: CallRec
       ) : (
         <ul className="space-y-3">
           {recordings.map((recording) => (
-            <RecordingItem key={recording.id} recording={recording} onDelete={handleDelete} onError={setActionError} />
+            <RecordingItem
+              key={recording.id}
+              recording={recording}
+              onDelete={handleDelete}
+              onError={setActionError}
+              related={related}
+            />
           ))}
         </ul>
       )}

@@ -32,6 +32,12 @@ interface Props {
   onCancel: () => void;
   /** Pre-selects the day (YYYY-MM-DD), e.g. when adding from the calendar. */
   initialDate?: string;
+  /** Create mode: pre-fills the title, e.g. from an AI summary action item. */
+  initialTitle?: string;
+  /** Create mode: pre-fills the description. */
+  initialDescription?: string;
+  /** Create mode: leads / contacts the meeting is already about. */
+  initialRelated?: SelectedRecord[];
 }
 
 const PARTICIPANT_CATEGORIES: SelectionCategory[] = [
@@ -144,10 +150,26 @@ function fromMeeting(m: Meeting): FormState {
 const fieldClass =
   "w-full border-0 border-b border-line bg-transparent px-0 py-2 text-sm text-fg outline-none focus:border-slate focus:ring-0";
 
-export default function MeetingForm({ mode, initialMeeting, onSubmit, onCancel, initialDate }: Props) {
-  const [form, setForm] = useState<FormState>(() =>
-    initialMeeting ? fromMeeting(initialMeeting) : emptyForm(initialDate),
-  );
+export default function MeetingForm({
+  mode,
+  initialMeeting,
+  onSubmit,
+  onCancel,
+  initialDate,
+  initialTitle,
+  initialDescription,
+  initialRelated,
+}: Props) {
+  const [form, setForm] = useState<FormState>(() => {
+    if (initialMeeting) return fromMeeting(initialMeeting);
+    const blank = emptyForm(initialDate);
+    return {
+      ...blank,
+      title: initialTitle ?? blank.title,
+      description: initialDescription ?? blank.description,
+      related: initialRelated ?? blank.related,
+    };
+  });
   const { warning, isUnchanged } = useNoChangeGuard(form, mode === "edit");
   const [owners, setOwners] = useState<LeadOwnerOption[]>([]);
   const [participantUsers, setParticipantUsers] = useState<SelectedRecord[]>([]);
@@ -156,7 +178,9 @@ export default function MeetingForm({ mode, initialMeeting, onSubmit, onCancel, 
   const [saving, setSaving] = useState(false);
   const [picker, setPicker] = useState<"participants" | "related" | null>(null);
   // Open straight away when there is already a description to show.
-  const [showMore, setShowMore] = useState(() => Boolean(initialMeeting?.description?.trim()));
+  const [showMore, setShowMore] = useState(() =>
+    Boolean((initialMeeting?.description ?? initialDescription)?.trim()),
+  );
   // Open the custom reminder email when one was already written.
   const [showReminderText, setShowReminderText] = useState(() =>
     Boolean(initialMeeting?.reminder_subject?.trim() || initialMeeting?.reminder_message?.trim()),

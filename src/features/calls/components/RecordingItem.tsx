@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { AlertCircle, Download, Loader2, Mic, Pause, Play, Trash2 } from "lucide-react";
 import RecordingTranscript from "@/features/calls/components/RecordingTranscript";
+import type { RelatedToValue } from "@/shared/components/RelatedToPicker";
 import { CallRecordingService } from "@/features/calls/services/CallRecordingService";
 import { useRecordingAudio } from "@/features/calls/hooks/useRecordingAudio";
 import type { CallRecording } from "@/features/calls/types/callRecording.types";
@@ -17,6 +18,8 @@ interface RecordingItemProps {
   canDelete?: boolean;
   onDelete: (recording: CallRecording) => void;
   onError: (message: string) => void;
+  /** The call's lead / contact, passed on to the summary's "create task / reminder / meeting" buttons. */
+  related?: RelatedToValue;
 }
 
 const SPEEDS = [1, 1.25, 1.5, 2, 0.75] as const;
@@ -27,7 +30,7 @@ const PLAY_EVENT = "crm:call-recording-play";
  * One recording: file details plus an inline player. The audio is only fetched
  * the first time Play is pressed (see `useRecordingAudio`).
  */
-export default function RecordingItem({ recording, canDelete = true, onDelete, onError }: RecordingItemProps) {
+export default function RecordingItem({ recording, canDelete = true, onDelete, onError, related }: RecordingItemProps) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const { status, url, error, load } = useRecordingAudio(recording.call_id, recording.id);
   const [playing, setPlaying] = useState(false);
@@ -202,7 +205,7 @@ export default function RecordingItem({ recording, canDelete = true, onDelete, o
         </p>
       )}
 
-      <RecordingTranscript callId={recording.call_id} recordingId={recording.id} />
+      <RecordingTranscript callId={recording.call_id} recordingId={recording.id} related={related} />
 
       <audio
         ref={audioRef}

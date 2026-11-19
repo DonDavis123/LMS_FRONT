@@ -37,6 +37,10 @@ interface TaskFormProps {
   initialRelated?: RelatedToValue;
   /** Pre-fills the due date (YYYY-MM-DD), e.g. when adding from the calendar. */
   initialDueDate?: string;
+  /** Create mode: pre-fills the subject, e.g. from an AI summary action item. */
+  initialSubject?: string;
+  /** Create mode: pre-fills the description. */
+  initialDescription?: string;
 }
 
 interface FormState {
@@ -100,11 +104,26 @@ function formFromTask(task: Task): FormState {
   };
 }
 
-export default function TaskForm({ mode, initialTask, onSubmit, onCancel, initialRelated, initialDueDate }: TaskFormProps) {
+export default function TaskForm({
+  mode,
+  initialTask,
+  onSubmit,
+  onCancel,
+  initialRelated,
+  initialDueDate,
+  initialSubject,
+  initialDescription,
+}: TaskFormProps) {
   const [form, setForm] = useState<FormState>(() =>
     initialTask
       ? formFromTask(initialTask)
-      : { ...emptyForm(), due_date: initialDueDate ?? "", related: initialRelated ?? emptyRelatedTo() }
+      : {
+          ...emptyForm(),
+          due_date: initialDueDate ?? "",
+          subject: initialSubject ?? "",
+          description: initialDescription ?? "",
+          related: initialRelated ?? emptyRelatedTo(),
+        }
   );
   const { warning, isUnchanged } = useNoChangeGuard(form, mode === "edit");
   const [owners, setOwners] = useState<LeadOwnerOption[]>([]);

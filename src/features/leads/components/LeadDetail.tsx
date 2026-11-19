@@ -154,8 +154,8 @@ async function handleStatusClick(status: LeadStatus) {
         </div>
       </div>
 
-      {/* On-demand summary of the lead's history; shown above every tab. */}
-      <LeadSummaryCard key={lead.id} leadId={lead.id} />
+      {/* Saved summary of the lead's history (refreshed on demand); shown above every tab. */}
+      <LeadSummaryCard key={lead.id} leadId={lead.id} leadName={lead.name} leadEmail={lead.email} />
 
       {/* Overview / Calls / Timeline tabs */}
       <Tabs

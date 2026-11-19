@@ -111,7 +111,8 @@ export default function ConvertedLeadHistory({ lead }: ConvertedLeadHistoryProps
         </div>
       </div>
 
-      <LeadSummaryCard key={lead.id} leadId={lead.id} />
+      {/* A converted lead is read-only history, so no follow-up buttons here. */}
+      <LeadSummaryCard key={lead.id} leadId={lead.id} allowFollowUps={false} />
 
       <RecordTimeline module="leads" recordId={lead.id} />
     </div>

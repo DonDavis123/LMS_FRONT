@@ -1,28 +1,55 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { AlertCircle, ChevronDown, RefreshCw, Sparkles } from "lucide-react";
 import Spinner from "@/shared/components/Spinner";
+import CreateFollowUpMenu from "@/shared/components/CreateFollowUpMenu";
+import type { RelatedToValue } from "@/shared/components/RelatedToPicker";
 import { useLeadSummary } from "@/features/leads/hooks/useLeadSummary";
 import { formatDateTime } from "@/shared/utils/formatDate";
 
 interface LeadSummaryCardProps {
   leadId: string;
+  /** Shown on tasks / reminders / meetings created from the summary. */
+  leadName?: string | null;
+  /** Lets the meeting form say who would be emailed. */
+  leadEmail?: string | null;
+  /** Hide the "create task / reminder / meeting" buttons (e.g. for a converted, read-only lead). */
+  allowFollowUps?: boolean;
 }
 
 /**
- * "Lead summary" panel at the top of a lead page. Nothing is generated when
- * the page opens: the user clicks "Generate summary" and the backend writes a
- * short briefing from the lead's details, timeline and calls. Render it with
- * `key={lead.id}` so a different lead never shows a previous lead's summary.
+ * "Lead summary" panel at the top of a lead page. The backend stores the
+ * latest summary, so opening the page shows it straight away without a model
+ * request. "Generate" writes the first one; "Refresh" writes a new one that
+ * permanently replaces the saved summary. Render it with `key={lead.id}` so a
+ * different lead never shows a previous lead's summary.
+ *
+ * Every key point and next step has a "+" that creates a task, reminder or
+ * meeting for this lead, pre-filled from that line.
  *
  * Layout is deliberately compact: a single slim header row, and once a
  * summary exists the key points and next steps sit side by side on wider
  * screens instead of stacking.
  */
-export default function LeadSummaryCard({ leadId }: LeadSummaryCardProps) {
-  const { summary, loading, error, generate } = useLeadSummary(leadId);
+export default function LeadSummaryCard({
+  leadId,
+  leadName = null,
+  leadEmail = null,
+  allowFollowUps = true,
+}: LeadSummaryCardProps) {
+  const { summary, loading, loadingStored, error, generate } = useLeadSummary(leadId);
   const [open, setOpen] = useState(true);
+  const related = useMemo<RelatedToValue>(
+    () => ({
+      personType: "lead",
+      personId: leadId,
+      personLabel: leadName || leadEmail || "Lead",
+      accountId: "",
+      accountLabel: "",
+    }),
+    [leadId, leadName, leadEmail],
+  );
 
   const bodyId = `lead-summary-${leadId}`;
   const expanded = Boolean(summary) && open;
@@ -48,7 +75,9 @@ export default function LeadSummaryCard({ leadId }: LeadSummaryCardProps) {
               ? `Updated ${formatDateTime(summary.generated_at)}`
               : loading
                 ? "Reading the lead's history…"
-                : "A quick briefing: where this lead stands and what to do next."}
+                : loadingStored
+                  ? "Loading the saved summary…"
+                  : "A quick briefing: where this lead stands and what to do next."}
           </p>
         </div>
 
@@ -75,7 +104,7 @@ export default function LeadSummaryCard({ leadId }: LeadSummaryCardProps) {
               type="button"
               onClick={() => void generate()}
               disabled={loading}
-              title="Regenerate summary"
+              title="Write a new summary. It replaces the saved one."
               className="flex h-8 items-center gap-1.5 rounded-lg border border-line px-2.5 text-xs font-semibold text-fg transition hover:bg-paper disabled:opacity-60"
             >
               {loading ? <Spinner size="sm" /> : <RefreshCw size={13} aria-hidden="true" />}
@@ -85,7 +114,7 @@ export default function LeadSummaryCard({ leadId }: LeadSummaryCardProps) {
             <button
               type="button"
               onClick={() => void generate()}
-              disabled={loading}
+              disabled={loading || loadingStored}
               className="flex h-8 items-center gap-1.5 rounded-lg bg-ink px-3 text-xs font-semibold text-white transition hover:bg-ink-2 active:scale-[0.98] disabled:opacity-60 dark:ring-1 dark:ring-white/15"
             >
               {loading ? <Spinner size="sm" /> : <Sparkles size={13} aria-hidden="true" />}
@@ -95,7 +124,7 @@ export default function LeadSummaryCard({ leadId }: LeadSummaryCardProps) {
         </div>
       </div>
 
-      {loading && !summary && (
+      {(loading || loadingStored) && !summary && (
         <div className="space-y-2 border-t border-line px-3.5 py-3" aria-hidden="true">
           <div className="h-3.5 w-4/5 animate-shimmer rounded-md" />
           <div className="h-3.5 w-3/5 animate-shimmer rounded-md" />
@@ -143,12 +172,20 @@ export default function LeadSummaryCard({ leadId }: LeadSummaryCardProps) {
                       </h3>
                       <ul className="mt-1.5 space-y-1.5">
                         {summary.key_points.map((point, index) => (
-                          <li key={index} className="flex gap-2 text-[13px] leading-snug text-fg">
+                          <li key={index} className="flex items-start gap-2 text-[13px] leading-snug text-fg">
                             <span
                               aria-hidden="true"
                               className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-slate/70"
                             />
-                            <span className="min-w-0">{point}</span>
+                            <span className="min-w-0 flex-1">{point}</span>
+                            {allowFollowUps && (
+                              <CreateFollowUpMenu
+                                text={point}
+                                source="lead summary"
+                                related={related}
+                                relatedEmail={leadEmail}
+                              />
+                            )}
                           </li>
                         ))}
                       </ul>
@@ -162,14 +199,22 @@ export default function LeadSummaryCard({ leadId }: LeadSummaryCardProps) {
                       </h3>
                       <ol className="mt-1.5 space-y-1.5">
                         {summary.next_steps.map((step, index) => (
-                          <li key={index} className="flex gap-2 text-[13px] leading-snug text-fg">
+                          <li key={index} className="flex items-start gap-2 text-[13px] leading-snug text-fg">
                             <span
                               aria-hidden="true"
                               className="mt-px grid h-4 w-4 shrink-0 place-items-center rounded-full bg-ink text-[10px] font-semibold text-white dark:ring-1 dark:ring-white/20"
                             >
                               {index + 1}
                             </span>
-                            <span className="min-w-0">{step}</span>
+                            <span className="min-w-0 flex-1">{step}</span>
+                            {allowFollowUps && (
+                              <CreateFollowUpMenu
+                                text={step}
+                                source="lead summary"
+                                related={related}
+                                relatedEmail={leadEmail}
+                              />
+                            )}
                           </li>
                         ))}
                       </ol>

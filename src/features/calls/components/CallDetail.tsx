@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowRight, Mic, MoreVertical } from "lucide-react";
@@ -20,6 +20,7 @@ import {
   type UpdateCallPayload,
 } from "@/features/calls/types/call.types";
 import { formatCallDateTime, recordHref, recordLabel } from "@/features/calls/utils/callFormat";
+import type { RelatedToValue } from "@/shared/components/RelatedToPicker";
 import { confirmDelete } from "@/shared/utils/confirmDelete";
 import { formatDateTime } from "@/shared/utils/formatDate";
 import { withReturnTo } from "@/shared/utils/returnTo";
@@ -54,6 +55,17 @@ export default function CallDetail({ call, onCallChange, returnTo = null, onNoti
   const record = call.related_record;
   const recordName = record.name || `Unnamed ${recordLabel(record.type).toLowerCase()}`;
   const recordLink = recordHref(record.type, record.id);
+  // The lead / contact a task, reminder or meeting created from a recording summary is about.
+  const followUpRelated = useMemo<RelatedToValue>(
+    () => ({
+      personType: record.type === "LEAD" ? "lead" : "contact",
+      personId: record.id,
+      personLabel: record.name || recordLabel(record.type),
+      accountId: "",
+      accountLabel: "",
+    }),
+    [record.type, record.id, record.name],
+  );
   const backHref = returnTo ?? "/dashboard/calls";
   // Where "back" should land again after opening another call from this page.
   const selfReturn = returnTo;
@@ -188,6 +200,7 @@ export default function CallDetail({ call, onCallChange, returnTo = null, onNoti
             <CallRecordings
               callId={call.id}
               completed={call.status === "Completed"}
+              related={followUpRelated}
               onChanged={(message) => {
                 setRecordingsVersion((value) => value + 1);
                 onNotice?.(message);
