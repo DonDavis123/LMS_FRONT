@@ -18,6 +18,8 @@ import ModernStatusSelect from "@/shared/components/ModernStatusSelect";
 import SortableHeader from "@/shared/components/SortableHeader";
 import type { SortState } from "@/shared/types/sort";
 import SearchBox from "@/shared/components/SearchBox";
+import DateRangeFilter from "@/shared/components/DateRangeFilter";
+import { hasDateRange, withDateRange, type DateRange } from "@/shared/utils/dateRangeFilter";
 import FilterBar, { type FilterCondition, type FilterFieldConfig } from "@/shared/components/FilterBar";
 import { isAdmin, type LeadOwnerOption } from "@/features/auth/types/auth.types";
 import { authStorage } from "@/infrastructure/auth/tokenStorage";
@@ -40,6 +42,8 @@ interface LeadListProps {
   onSearchChange: (search: string) => void;
   filters: FilterCondition[];
   onFiltersChange: (filters: FilterCondition[]) => void;
+  dateRange: DateRange;
+  onDateRangeChange: (range: DateRange) => void;
   sort: SortState | null;
   onSortChange: (sort: SortState | null) => void;
   pageSize: number;
@@ -64,6 +68,8 @@ export default function LeadList({
   onSearchChange,
   filters,
   onFiltersChange,
+  dateRange,
+  onDateRangeChange,
   sort,
   onSortChange,
   pageSize,
@@ -91,7 +97,11 @@ export default function LeadList({
   }, []);
 
   // The export holds what the list shows: same search, filters and sort, all pages.
-  const exportQuery = useMemo(() => ({ search, filters, sort }), [search, filters, sort]);
+  // The date range is applied as a created_at filter alongside the FilterBar filters,
+  // so exports and "select all matching" mail use exactly what the list shows.
+  const allFilters = useMemo(() => withDateRange(filters, dateRange), [filters, dateRange]);
+  const isFiltered = filters.length > 0 || search.length > 0 || hasDateRange(dateRange);
+  const exportQuery = useMemo(() => ({ search, filters: allFilters, sort }), [search, allFilters, sort]);
 
   useEffect(() => {
     userService.getLeadOwners().then(setOwners).catch(() => setOwners([]));
@@ -110,7 +120,6 @@ export default function LeadList({
       { field: "industry", label: "Industry", type: "choice", choices: toChoices(picklists.industry) },
       { field: "owner", label: "Lead Owner", type: "uuid", choices: owners.map((o) => ({ value: o.id, label: o.name })) },
       { field: "annual_revenue", label: "Annual Revenue", type: "number" },
-      { field: "created_at", label: "Created", type: "date" },
     ],
     [owners, picklists]
   );
@@ -122,7 +131,7 @@ export default function LeadList({
     selectedIds,
     pageIds: leads.map((row) => row.id),
     search,
-    filters,
+    filters: allFilters,
     total: pagination.total,
   });
 
@@ -233,6 +242,7 @@ export default function LeadList({
           </Link>
         </div>
       </div>
+      <DateRangeFilter value={dateRange} onChange={onDateRangeChange} />
 
       {error && (
         <p className="border-b border-line bg-danger-soft px-4 py-3 text-sm text-danger">{error}</p>
@@ -251,7 +261,7 @@ export default function LeadList({
       {isLoading ? (
         <LeadListSkeleton />
       ) : pageItems.length === 0 ? (
-        <EmptyState hasFilters={filters.length > 0 || search.length > 0} />
+        <EmptyState hasFilters={isFiltered} />
       ) : (
         <>
           <div className="lp-table-scroll">
@@ -408,7 +418,7 @@ function EmptyState({ hasFilters }: { hasFilters: boolean }) {
       </p>
       <p className="max-w-sm text-sm text-ink-soft">
         {hasFilters
-          ? "Try a different search term, or remove a filter."
+          ? "Try a different search term, remove a filter, or widen the date range."
           : "Start building your pipeline by creating your first lead."}
       </p>
       {!hasFilters && (

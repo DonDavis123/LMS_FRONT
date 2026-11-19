@@ -9,6 +9,7 @@ import type { Lead } from "@/features/leads/types/lead.types";
 import type { FilterCondition } from "@/shared/components/FilterBar";
 import type { PaginationMeta } from "@/shared/types/pagination";
 import type { SortState } from "@/shared/types/sort";
+import { todayRange, withDateRange, type DateRange } from "@/shared/utils/dateRangeFilter";
 
 const DEFAULT_PAGE_SIZE = 10;
 const EMPTY_PAGINATION: PaginationMeta = {
@@ -25,6 +26,8 @@ function LeadsPageInner() {
   const [search, setSearch] = useState("");
   const [filters, setFilters] = useState<FilterCondition[]>([]);
   const [sort, setSort] = useState<SortState | null>(null);
+  // Defaults to today, so the list opens on today's records only.
+  const [dateRange, setDateRange] = useState<DateRange>(todayRange);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
   const [pagination, setPagination] = useState<PaginationMeta>(EMPTY_PAGINATION);
@@ -44,7 +47,7 @@ function LeadsPageInner() {
     setIsLoading(true);
     setError(null);
 
-    LeadService.getLeadsPage({ page, page_size: pageSize, search, filters, sort })
+    LeadService.getLeadsPage({ page, page_size: pageSize, search, filters: withDateRange(filters, dateRange), sort })
       .then((data) => {
         if (cancelled) return;
         setLeads(data.results);
@@ -63,7 +66,7 @@ function LeadsPageInner() {
     return () => {
       cancelled = true;
     };
-  }, [page, pageSize, search, filters, sort, refreshKey]);
+  }, [page, pageSize, search, filters, dateRange, sort, refreshKey]);
 
   function showToast(message: string) {
     setToast(message);
@@ -106,6 +109,11 @@ function LeadsPageInner() {
         filters={filters}
         onFiltersChange={(next) => {
           setFilters(next);
+          setPage(1);
+        }}
+        dateRange={dateRange}
+        onDateRangeChange={(next) => {
+          setDateRange(next);
           setPage(1);
         }}
         sort={sort}

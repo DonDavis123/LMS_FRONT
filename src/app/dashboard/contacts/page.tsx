@@ -9,6 +9,7 @@ import type { Contact } from "@/features/contacts/types/contact.types";
 import type { FilterCondition } from "@/shared/components/FilterBar";
 import type { PaginationMeta } from "@/shared/types/pagination";
 import type { SortState } from "@/shared/types/sort";
+import { todayRange, withDateRange, type DateRange } from "@/shared/utils/dateRangeFilter";
 
 const DEFAULT_PAGE_SIZE = 10;
 const EMPTY_PAGINATION: PaginationMeta = {
@@ -25,6 +26,8 @@ function ContactsPageInner() {
   const [search, setSearch] = useState("");
   const [filters, setFilters] = useState<FilterCondition[]>([]);
   const [sort, setSort] = useState<SortState | null>(null);
+  // Defaults to today, so the list opens on today's records only.
+  const [dateRange, setDateRange] = useState<DateRange>(todayRange);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
   const [pagination, setPagination] = useState<PaginationMeta>(EMPTY_PAGINATION);
@@ -44,7 +47,7 @@ function ContactsPageInner() {
     setIsLoading(true);
     setError(null);
 
-    ContactService.getContactsPage({ page, page_size: pageSize, search, filters, sort })
+    ContactService.getContactsPage({ page, page_size: pageSize, search, filters: withDateRange(filters, dateRange), sort })
       .then((data) => {
         if (cancelled) return;
         setContacts(data.results);
@@ -63,7 +66,7 @@ function ContactsPageInner() {
     return () => {
       cancelled = true;
     };
-  }, [page, pageSize, search, filters, sort, refreshKey]);
+  }, [page, pageSize, search, filters, dateRange, sort, refreshKey]);
 
   useEffect(() => {
     const createdId = searchParams.get("created");
@@ -106,6 +109,11 @@ function ContactsPageInner() {
         filters={filters}
         onFiltersChange={(next) => {
           setFilters(next);
+          setPage(1);
+        }}
+        dateRange={dateRange}
+        onDateRangeChange={(next) => {
+          setDateRange(next);
           setPage(1);
         }}
         sort={sort}

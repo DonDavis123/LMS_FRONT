@@ -12,6 +12,8 @@ import SelectionIndicator from "@/shared/components/SelectionIndicator";
 import SortableHeader from "@/shared/components/SortableHeader";
 import type { SortState } from "@/shared/types/sort";
 import SearchBox from "@/shared/components/SearchBox";
+import DateRangeFilter from "@/shared/components/DateRangeFilter";
+import { hasDateRange, withDateRange, type DateRange } from "@/shared/utils/dateRangeFilter";
 import FilterBar, { type FilterCondition, type FilterFieldConfig } from "@/shared/components/FilterBar";
 import type { LeadOwnerOption } from "@/features/auth/types/auth.types";
 import ExportMenu from "@/features/exports/components/ExportMenu";
@@ -32,6 +34,8 @@ interface ContactListProps {
   onSearchChange: (search: string) => void;
   filters: FilterCondition[];
   onFiltersChange: (filters: FilterCondition[]) => void;
+  dateRange: DateRange;
+  onDateRangeChange: (range: DateRange) => void;
   sort: SortState | null;
   onSortChange: (sort: SortState | null) => void;
   pageSize: number;
@@ -51,6 +55,8 @@ export default function ContactList({
   onSearchChange,
   filters,
   onFiltersChange,
+  dateRange,
+  onDateRangeChange,
   sort,
   onSortChange,
   pageSize,
@@ -67,7 +73,11 @@ export default function ContactList({
   const [removingId, setRemovingId] = useState<string | null>(null);
 
   // The export holds what the list shows: same search, filters and sort, all pages.
-  const exportQuery = useMemo(() => ({ search, filters, sort }), [search, filters, sort]);
+  // The date range is applied as a created_at filter alongside the FilterBar filters,
+  // so exports and "select all matching" mail use exactly what the list shows.
+  const allFilters = useMemo(() => withDateRange(filters, dateRange), [filters, dateRange]);
+  const isFiltered = filters.length > 0 || search.length > 0 || hasDateRange(dateRange);
+  const exportQuery = useMemo(() => ({ search, filters: allFilters, sort }), [search, allFilters, sort]);
 
   useEffect(() => {
     userService.getLeadOwners().then(setOwners).catch(() => setOwners([]));
@@ -89,7 +99,6 @@ export default function ContactList({
       },
       { field: "email_opt_out", label: "Email Opt Out", type: "boolean" },
       { field: "date_of_birth", label: "Date of Birth", type: "date" },
-      { field: "created_at", label: "Created", type: "datetime" },
     ],
     [owners]
   );
@@ -101,7 +110,7 @@ export default function ContactList({
     selectedIds,
     pageIds: contacts.map((row) => row.id),
     search,
-    filters,
+    filters: allFilters,
     total: pagination.total,
   });
 
@@ -181,6 +190,7 @@ export default function ContactList({
           </Link>
         </div>
       </div>
+      <DateRangeFilter value={dateRange} onChange={onDateRangeChange} />
       {error && (
         <p className="border-b border-line bg-danger-soft px-4 py-3 text-sm text-danger">{error}</p>
       )}
@@ -204,14 +214,14 @@ export default function ContactList({
       ) : pageItems.length === 0 ? (
         <div className="flex flex-col items-center gap-3 px-4 py-16 text-center animate-scale-in">
           <p className="font-serif text-lg text-fg">
-            {(filters.length > 0 || search.length > 0) ? "No contacts match your search or filters" : "No contacts yet"}
+            {isFiltered ? "No contacts match your search or filters" : "No contacts yet"}
           </p>
           <p className="max-w-sm text-sm text-ink-soft">
-            {(filters.length > 0 || search.length > 0)
-              ? "Try a different search term, or remove a filter."
+            {isFiltered
+              ? "Try a different search term, remove a filter, or widen the date range."
               : "Contacts you convert from leads, or add directly, show up here."}
           </p>
-          {!((filters.length > 0 || search.length > 0)) && (
+          {!isFiltered && (
             <Link
               href="/dashboard/contacts/new"
               className="mt-1 rounded-md bg-ink px-4 py-2 text-sm font-semibold text-white transition hover:bg-ink-2 active:scale-[0.98]"
