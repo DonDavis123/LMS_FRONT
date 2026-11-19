@@ -9,7 +9,7 @@ import type { Account } from "@/features/accounts/types/account.types";
 import type { FilterCondition } from "@/shared/components/FilterBar";
 import type { PaginationMeta } from "@/shared/types/pagination";
 import type { SortState } from "@/shared/types/sort";
-import { todayRange, withDateRange, type DateRange } from "@/shared/utils/dateRangeFilter";
+import { EMPTY_DATE_RANGE, withDateRange, type DateRange } from "@/shared/utils/dateRangeFilter";
 
 const DEFAULT_PAGE_SIZE = 10;
 const EMPTY_PAGINATION: PaginationMeta = {
@@ -26,8 +26,8 @@ function AccountsPageInner() {
   const [search, setSearch] = useState("");
   const [filters, setFilters] = useState<FilterCondition[]>([]);
   const [sort, setSort] = useState<SortState | null>(null);
-  // Defaults to today, so the list opens on today's records only.
-  const [dateRange, setDateRange] = useState<DateRange>(todayRange);
+  // Off by default: the list shows every record until a date or quick range is chosen.
+  const [dateRange, setDateRange] = useState<DateRange>(EMPTY_DATE_RANGE);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
   const [pagination, setPagination] = useState<PaginationMeta>(EMPTY_PAGINATION);

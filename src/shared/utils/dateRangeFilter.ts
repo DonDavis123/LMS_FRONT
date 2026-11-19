@@ -28,7 +28,10 @@ export function todayIso(): string {
   return toIso(new Date());
 }
 
-/** The default for the list screens: today only. */
+/** The default for the list screens: no dates, i.e. the filter is off. */
+export const EMPTY_DATE_RANGE: DateRange = { from: "", to: "" };
+
+/** Today only (the "Today" quick range). */
 export function todayRange(): DateRange {
   const today = todayIso();
   return { from: today, to: today };
