@@ -17,6 +17,8 @@ const PHONE_INVALID_MESSAGE = "Enter a valid phone number (7 to 15 digits, optio
 const PHONE_CHARS_MESSAGE = "Phone number can only contain digits, spaces, + ( ) - and .";
 const EMAIL_INVALID_MESSAGE = "Enter a valid email address.";
 
+const INDIA_INVALID_MESSAGE = "Indian numbers (+91) must have exactly 10 digits.";
+
 const PHONE_ALLOWED = /^\+?[\d\s().-]+$/;
 const EMAIL_RE =
   /^[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?(?:\.[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)+$/;
@@ -29,6 +31,8 @@ export function validatePhone(value: string, required = false): string | null {
   if (!PHONE_ALLOWED.test(text) || text.slice(1).includes("+")) return PHONE_CHARS_MESSAGE;
   const digits = (text.match(/\d/g) ?? []).length;
   if (digits < PHONE_MIN_DIGITS || digits > PHONE_MAX_DIGITS) return PHONE_INVALID_MESSAGE;
+  // India (+91): the number after the country code is always 10 digits.
+  if (text.replace(/[\s().-]/g, "").startsWith("+91") && digits !== 12) return INDIA_INVALID_MESSAGE;
   return null;
 }
 
