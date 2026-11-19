@@ -7,6 +7,7 @@ import { getSafeReturnTo, withReturnTo } from "@/shared/utils/returnTo";
 import { ChevronDown, MoreVertical } from "lucide-react";
 import { AccountService } from "@/features/accounts/services/AccountService";
 import type { Account } from "@/features/accounts/types/account.types";
+import AccountSummaryCard from "@/features/accounts/components/AccountSummaryCard";
 import RecordTimeline from "@/shared/components/RecordTimeline";
 import InlineEditRow from "@/shared/components/InlineEditRow";
 import { Tabs } from "@/shared/components/Tabs";
@@ -161,6 +162,9 @@ export default function AccountDetail({ account, onAccountChange }: AccountDetai
           </div>
         </div>
       </div>
+
+      {/* Saved summary of the account's history (refreshed on demand); shown above every tab. */}
+      <AccountSummaryCard key={account.id} accountId={account.id} accountName={account.account_name} />
 
       <Tabs
         tabs={[

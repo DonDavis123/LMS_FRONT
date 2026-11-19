@@ -7,6 +7,7 @@ import { getSafeReturnTo, withReturnTo } from "@/shared/utils/returnTo";
 import { ChevronDown, MoreVertical } from "lucide-react";
 import { ContactService } from "@/features/contacts/services/ContactService";
 import type { Contact } from "@/features/contacts/types/contact.types";
+import ContactSummaryCard from "@/features/contacts/components/ContactSummaryCard";
 import RecordTimeline from "@/shared/components/RecordTimeline";
 import InlineEditRow from "@/shared/components/InlineEditRow";
 import { Tabs } from "@/shared/components/Tabs";
@@ -96,6 +97,16 @@ export default function ContactDetail({ contact, onContactChange }: ContactDetai
           </div>
         </div>
       </div>
+
+      {/* Saved summary of the contact's history (refreshed on demand); shown above every tab. */}
+      <ContactSummaryCard
+        key={contact.id}
+        contactId={contact.id}
+        contactName={contact.name}
+        contactEmail={contact.email}
+        accountId={contact.account_id}
+        accountName={contact.account_name}
+      />
 
       <Tabs
         tabs={[
