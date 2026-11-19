@@ -609,11 +609,11 @@ button, a, input, select, textarea {
   position: sticky;
   right: 0;
   background-color: var(--color-surface);
-  box-shadow: inset 1px 0 0 var(--color-line);
+  /* No left divider: the pinned column blends in like every other column. */
 }
 .lp-table-scroll thead th.lp-sticky-end {
   z-index: 3; /* above the sticky header row (z-index: 2) */
-  box-shadow: inset 1px 0 0 var(--color-line), inset 0 -1px 0 var(--color-line);
+  box-shadow: inset 0 -1px 0 var(--color-line); /* header bottom rule only */
 }
 .lp-table-scroll tbody td.lp-sticky-end {
   z-index: 1;
