@@ -1,5 +1,6 @@
 "use client";
 
+import { formCardClass } from "@/shared/components/FormLayout";
 import { Suspense } from "react";
 
 import { useEffect, useState } from "react";
@@ -62,7 +63,7 @@ async function handleSubmit(payload: CreateContactPayload) {
 
   if (isEditing) {
     return (
-      <div className="mx-auto max-w-4xl rounded-lg border border-line bg-surface p-3 sm:p-5">
+      <div className={formCardClass}>
         <ContactForm
           mode="edit"
           initialContact={contact}

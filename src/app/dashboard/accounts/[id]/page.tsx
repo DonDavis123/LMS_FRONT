@@ -1,5 +1,6 @@
 "use client";
 
+import { formCardClass } from "@/shared/components/FormLayout";
 import { Suspense } from "react";
 
 import { useEffect, useState } from "react";
@@ -63,7 +64,7 @@ function AccountDetailPageInner() {
 
   if (isEditing) {
     return (
-      <div className="mx-auto max-w-4xl rounded-lg border border-line bg-surface p-3 sm:p-5">
+      <div className={formCardClass}>
         <AccountForm
           mode="edit"
           initialAccount={account}

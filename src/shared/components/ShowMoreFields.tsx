@@ -50,7 +50,7 @@ export default function ShowMoreFields({
         onClick={onToggle}
         aria-expanded={expanded}
         aria-controls={id}
-        className="mt-4 flex w-full items-center justify-center gap-2 rounded-md border border-dashed border-line px-4 py-2.5 text-sm font-semibold text-slate transition hover:border-slate hover:bg-paper active:scale-[0.99]"
+        className="mt-5 flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-line bg-paper/50 px-4 py-2.5 text-sm font-semibold text-slate transition hover:border-slate hover:bg-paper active:scale-[0.99]"
       >
         {expanded ? lessLabel : moreLabel}
         <ChevronDown

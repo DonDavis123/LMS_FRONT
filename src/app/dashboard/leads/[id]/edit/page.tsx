@@ -1,5 +1,6 @@
 "use client";
 
+import { formCardClass } from "@/shared/components/FormLayout";
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import LeadForm from "@/features/leads/components/LeadForm";
@@ -70,7 +71,7 @@ export default function EditLeadPage() {
   }
 
   return (
-    <div className="mx-auto max-w-4xl rounded-lg border border-line bg-surface p-3 sm:p-5">
+    <div className={formCardClass}>
       <LeadForm
         mode="edit"
         initialLead={lead}

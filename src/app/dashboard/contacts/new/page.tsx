@@ -1,5 +1,6 @@
 "use client";
 
+import { formCardClass } from "@/shared/components/FormLayout";
 import { useRouter } from "next/navigation";
 import ContactForm from "@/features/contacts/components/ContactForm";
 import { ContactService } from "@/features/contacts/services/ContactService";
@@ -14,7 +15,7 @@ export default function NewContactPage() {
   }
 
   return (
-    <div className="mx-auto max-w-4xl rounded-lg border border-line bg-surface p-3 sm:p-5">
+    <div className={formCardClass}>
       <ContactForm mode="create" onSubmit={handleSubmit} onCancel={() => router.back()} />
     </div>
   );

@@ -244,7 +244,7 @@ export default function PublicLeadForm({ token }: { token: string }) {
                   setStep("loading");
                   void load();
                 }}
-                className="mt-4 rounded-md bg-ink px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-ink-2 active:scale-[0.98]"
+                className="mt-4 rounded-lg bg-ink shadow-sm px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-ink-2 active:scale-[0.98]"
               >
                 Try again
               </button>
@@ -328,7 +328,7 @@ export default function PublicLeadForm({ token }: { token: string }) {
 
               <button
                 type="submit"
-                className="mt-6 w-full rounded-md bg-ink px-4 py-3 text-sm font-semibold text-white transition hover:bg-ink-2 active:scale-[0.98]"
+                className="mt-6 w-full rounded-lg bg-ink shadow-sm px-4 py-3 text-sm font-semibold text-white transition hover:bg-ink-2 active:scale-[0.98]"
               >
                 Continue
               </button>
@@ -372,7 +372,7 @@ export default function PublicLeadForm({ token }: { token: string }) {
                   onClick={() => void handleSubmit()}
                   disabled={submitting}
                   aria-busy={submitting}
-                  className="flex items-center justify-center gap-2 rounded-md bg-ink px-5 py-3 text-sm font-semibold text-white transition hover:bg-ink-2 active:scale-[0.98] disabled:opacity-60 sm:py-2.5"
+                  className="flex items-center justify-center gap-2 rounded-lg bg-ink shadow-sm px-5 py-3 text-sm font-semibold text-white transition hover:bg-ink-2 active:scale-[0.98] disabled:opacity-60 sm:py-2.5"
                 >
                   {submitting && <Spinner size="sm" className="border-white/30 border-t-white" />}
                   {submitting ? "Submitting…" : "Submit"}

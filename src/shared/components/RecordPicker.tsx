@@ -44,7 +44,7 @@ interface RecordPickerProps {
 const KIND_PLURAL: Record<RecordKind, string> = { lead: "leads", contact: "contacts", account: "accounts" };
 
 const TRIGGER_CLASS = {
-  box: "flex w-full items-center justify-between gap-2 rounded-md border border-line bg-surface px-3 py-2.5 text-left text-sm outline-none transition focus:border-slate focus:ring-2 focus:ring-slate-light disabled:opacity-60",
+  box: "flex w-full items-center justify-between gap-2 rounded-lg border border-line bg-surface px-3.5 py-2.5 text-left text-sm shadow-sm outline-none transition hover:border-slate/50 focus:border-slate focus:ring-4 focus:ring-slate/15 disabled:opacity-60",
   underline:
     "flex w-full items-center justify-between gap-2 border-0 border-b border-line bg-transparent py-2 text-left text-sm outline-none transition focus:border-slate disabled:opacity-60",
 } as const;

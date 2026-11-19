@@ -11,7 +11,14 @@ import { authService } from "@/features/auth/services/authService";
 import OwnerPicker from "@/shared/components/OwnerPicker";
 import RecordPicker from "@/shared/components/RecordPicker";
 import Spinner from "@/shared/components/Spinner";
-import { inputClass, Section, Field } from "@/shared/components/FormLayout";
+import {
+  Field,
+  FormHeader,
+  inputClass,
+  primaryButtonClass,
+  secondaryButtonClass,
+  Section,
+} from "@/shared/components/FormLayout";
 import { extractApiErrors } from "@/shared/utils/apiError";
 import ValidatedInput from "@/shared/components/ValidatedInput";
 import { allContactFieldErrors } from "@/shared/utils/contactFieldRules";
@@ -227,28 +234,18 @@ export default function ContactForm({ mode, initialContact, onSubmit, onCancel }
       // otherwise block submit silently — open the extra fields so it shows.
       onInvalidCapture={() => setShowMore(true)}
     >
-      <div className="sticky top-0 z-10 -mx-3 -mt-3 flex items-center justify-between gap-2 rounded-t-[7px] border-b border-line bg-surface px-3 py-2.5 sm:-mx-5 sm:-mt-5 sm:px-5 sm:py-3">
-        <h1 className="font-serif text-xl text-fg sm:text-2xl">
-          {mode === "create" ? "Create Contact" : "Edit Contact"}
-        </h1>
-        <div className="flex gap-2 sm:gap-3">
-          <button
-            type="button"
-            onClick={onCancel}
-            className="rounded-md border border-line px-3 py-2 text-sm font-medium text-fg hover:bg-paper sm:px-4"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="flex items-center gap-2 rounded-md bg-ink px-4 py-2 text-sm font-semibold text-white transition hover:bg-ink-2 active:scale-[0.98] disabled:opacity-60"
-          >
-            {isSubmitting && <Spinner size="sm" className="border-white/30 border-t-white" />}
-            {isSubmitting ? "Saving…" : "Save"}
-          </button>
-        </div>
-      </div>
+      <FormHeader
+        title={mode === "create" ? "Create Contact" : "Edit Contact"}
+        subtitle={mode === "create" ? "Add a person you do business with." : "Update this contact's details."}
+      >
+        <button type="button" onClick={onCancel} className={secondaryButtonClass}>
+          Cancel
+        </button>
+        <button type="submit" disabled={isSubmitting} className={primaryButtonClass}>
+          {isSubmitting && <Spinner size="sm" className="border-white/30 border-t-white" />}
+          {isSubmitting ? "Saving…" : "Save"}
+        </button>
+      </FormHeader>
 
       {warning && <FormWarning message={warning} className="mt-4" />}
       {error && (

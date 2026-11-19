@@ -47,14 +47,14 @@ export default function OwnerPicker({
       <button
         type="button"
         onClick={() => setIsOpen((v) => !v)}
-        className="flex w-full items-center justify-between rounded-md border border-line bg-surface px-3 py-2.5 text-left text-sm outline-none transition focus:border-slate focus:ring-2 focus:ring-slate-light"
+        className="flex w-full items-center justify-between rounded-lg border border-line bg-surface px-3.5 py-2.5 text-left text-sm shadow-sm outline-none transition hover:border-slate/50 focus:border-slate focus:ring-4 focus:ring-slate/15"
       >
         <span className={value ? "text-fg" : "text-ink-soft"}>{label || placeholder}</span>
         <ChevronDown size={14} className="shrink-0 text-ink-soft" />
       </button>
 
       {isOpen && (
-        <div className="absolute left-0 right-0 top-full z-20 mt-1 rounded-md border border-line bg-surface shadow-lg">
+        <div className="absolute left-0 right-0 top-full z-20 mt-1.5 rounded-lg border border-line bg-surface shadow-[0_16px_48px_rgba(15,23,42,0.18)]">
           <div className="border-b border-line p-2">
             <input
               autoFocus

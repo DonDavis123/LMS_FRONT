@@ -99,7 +99,7 @@ function SuspendForm({ companyId, companyName, onClose, onSuspended }: SuspendCo
         </Field>
 
         {formError && (
-          <p className="animate-shake rounded-md border border-danger/30 bg-danger-soft px-3 py-2 text-sm text-danger">
+          <p className="animate-shake rounded-lg border border-danger/30 bg-danger-soft px-3.5 py-3 text-sm text-danger">
             {formError}
           </p>
         )}
@@ -110,7 +110,7 @@ function SuspendForm({ companyId, companyName, onClose, onSuspended }: SuspendCo
           type="button"
           onClick={onClose}
           disabled={isSaving}
-          className="rounded-md border border-line px-4 py-2 text-sm font-medium text-fg hover:bg-paper disabled:opacity-60"
+          className="rounded-lg border border-line shadow-sm px-4 py-2 text-sm font-medium text-fg hover:bg-paper disabled:opacity-60"
         >
           Cancel
         </button>

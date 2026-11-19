@@ -9,7 +9,14 @@ import type { LeadOwnerOption } from "@/features/auth/types/auth.types";
 import { authService } from "@/features/auth/services/authService";
 import OwnerPicker from "@/shared/components/OwnerPicker";
 import Spinner from "@/shared/components/Spinner";
-import { inputClass, Section, Field } from "@/shared/components/FormLayout";
+import {
+  Field,
+  FormHeader,
+  inputClass,
+  primaryButtonClass,
+  secondaryButtonClass,
+  Section,
+} from "@/shared/components/FormLayout";
 import ModernStatusSelect from "@/shared/components/ModernStatusSelect";
 import { useLeadPicklists } from "@/features/picklists/hooks/useLeadPicklists";
 import { toSelectOptions, toStatusOptions } from "@/features/picklists/utils/optionHelpers";
@@ -259,45 +266,29 @@ export default function LeadForm({
 
   return (
     <form onSubmit={handleSubmit}>
-      <div className="sticky top-0 z-10 -mx-3 -mt-3 flex items-center justify-between gap-2 rounded-t-[7px] border-b border-line bg-surface px-3 py-2.5 sm:-mx-5 sm:-mt-5 sm:px-5 sm:py-3">
-        <h1 className="font-serif text-2xl text-fg">
-          {mode === "create" ? "Create Lead" : "Edit Lead"}
-        </h1>
-        <div className="flex gap-3">
+      <FormHeader
+        title={mode === "create" ? "Create Lead" : "Edit Lead"}
+        subtitle={mode === "create" ? "Add a new lead to your pipeline." : "Update this lead's details."}
+      >
+        <button type="button" onClick={onCancel} className={secondaryButtonClass}>
+          Cancel
+        </button>
+        {onSaveAndNext && (
           <button
             type="button"
-            onClick={onCancel}
-            className="rounded-md border border-line px-4 py-2 text-sm font-medium text-fg hover:bg-paper"
+            onClick={handleSaveAndNext}
+            disabled={isSavingNext || isSubmitting}
+            className={secondaryButtonClass}
           >
-            Cancel
+            {isSavingNext && <Spinner size="sm" />}
+            {isSavingNext ? "Saving…" : "Save and Next"}
           </button>
-          {onSaveAndNext && (
-            <button
-              type="button"
-              onClick={handleSaveAndNext}
-              disabled={isSavingNext || isSubmitting}
-              className="flex items-center gap-2 rounded-md border border-line px-4 py-2 text-sm font-semibold text-fg hover:bg-paper disabled:opacity-60"
-            >
-              {isSavingNext && <Spinner size="sm" />}
-              {isSavingNext ? "Saving…" : "Save and Next"}
-            </button>
-          )}
-          <button
-            type="submit"
-            disabled={isSubmitting || isSavingNext}
-            className="flex items-center gap-2 rounded-md bg-ink px-4 py-2 text-sm font-semibold text-white transition hover:bg-ink-2 active:scale-[0.98] disabled:opacity-60"
-          >
-            {isSubmitting && <Spinner size="sm" className="border-white/30 border-t-white" />}
-            {isSubmitting ? "Saving…" : "Save"}
-          </button>
-        </div>
-      </div>
-
-      {notice && (
-        <p className="mt-4 rounded-md border border-success/30 bg-success-soft px-3 py-2 text-sm text-success">
-          {notice}
-        </p>
-      )}
+        )}
+        <button type="submit" disabled={isSubmitting || isSavingNext} className={primaryButtonClass}>
+          {isSubmitting && <Spinner size="sm" className="border-white/30 border-t-white" />}
+          {isSubmitting ? "Saving…" : "Save"}
+        </button>
+      </FormHeader>
 
       {warning && <FormWarning message={warning} className="mt-4" />}
       {error && (

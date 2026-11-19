@@ -38,7 +38,7 @@ const MENU_GAP = 6;
 const VIEWPORT_MARGIN = 8;
 
 const TRIGGER_SIZE = {
-  md: "px-3 py-2.5 text-sm",
+  md: "px-3.5 py-2.5 text-sm",
   sm: "px-2.5 py-1.5 text-sm",
 } as const;
 
@@ -214,8 +214,8 @@ export default function Select({
           else openMenu();
         }}
         onKeyDown={handleKeyDown}
-        className={`flex w-full items-center justify-between gap-2 rounded-md border bg-surface text-left text-fg outline-none transition focus:border-slate focus:ring-2 focus:ring-slate-light disabled:cursor-not-allowed disabled:opacity-60 ${
-          ariaInvalid ? "border-danger" : open ? "border-slate ring-2 ring-slate-light" : "border-line"
+        className={`flex w-full items-center justify-between gap-2 rounded-lg border bg-surface text-left text-fg shadow-sm outline-none transition hover:border-slate/50 focus:border-slate focus:ring-4 focus:ring-slate/15 disabled:cursor-not-allowed disabled:opacity-60 ${
+          ariaInvalid ? "border-danger hover:border-danger" : open ? "border-slate ring-4 ring-slate/15" : "border-line"
         } ${TRIGGER_SIZE[size]} ${className}`}
       >
         <span className={`min-w-0 flex-1 truncate ${selected && !selected.muted ? "" : "text-ink-soft"}`}>

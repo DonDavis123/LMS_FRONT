@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ChevronDown } from "lucide-react";
-import { inputClass } from "@/shared/components/FormLayout";
+import { AlertCircle, ChevronDown } from "lucide-react";
+import { inputClass, inputErrorClass } from "@/shared/components/FormLayout";
 import {
   COUNTRIES,
   DEFAULT_COUNTRY_ISO,
@@ -102,7 +102,7 @@ export default function ValidatedInput({
   }, [enabled, typed, formatError, trimmed, unchanged, kind, excludeType, excludeId]);
 
   const message = formatVisible ? formatError : duplicateMessage;
-  const inputStateClass = message ? "border-danger focus:border-danger" : "";
+  const inputStateClass = message ? inputErrorClass : "";
 
   if (kind === "phone") {
     const parsed = splitPhone(value, iso);
@@ -163,7 +163,7 @@ export default function ValidatedInput({
             placeholder={placeholder?.replace(/^\+\d+/, "") || "98765 43210"}
           />
         </div>
-        {message && <p className="mt-1 text-xs text-danger">{message}</p>}
+        {message && <FieldMessage message={message} />}
       </>
     );
   }
@@ -184,7 +184,16 @@ export default function ValidatedInput({
         className={`${inputClass} ${inputStateClass}`}
         placeholder={placeholder}
       />
-      {message && <p className="mt-1 text-xs text-danger">{message}</p>}
+      {message && <FieldMessage message={message} />}
     </>
+  );
+}
+
+function FieldMessage({ message }: { message: string }) {
+  return (
+    <p role="alert" className="mt-1.5 flex items-start gap-1.5 text-xs font-medium text-danger">
+      <AlertCircle size={13} className="mt-px shrink-0" aria-hidden="true" />
+      <span>{message}</span>
+    </p>
   );
 }

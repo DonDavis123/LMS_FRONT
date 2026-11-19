@@ -1,5 +1,6 @@
 "use client";
 
+import { formCardClass } from "@/shared/components/FormLayout";
 import { useRouter } from "next/navigation";
 import LeadForm from "@/features/leads/components/LeadForm";
 import { LeadService } from "@/features/leads/services/LeadService";
@@ -20,7 +21,7 @@ export default function NewLeadPage() {
   }
 
   return (
-    <div className="mx-auto max-w-4xl rounded-lg border border-line bg-surface p-3 sm:p-5">
+    <div className={formCardClass}>
       <LeadForm
         mode="create"
         onSubmit={handleSubmit}

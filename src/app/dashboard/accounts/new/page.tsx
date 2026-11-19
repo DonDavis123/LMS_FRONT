@@ -1,5 +1,6 @@
 "use client";
 
+import { formCardClass } from "@/shared/components/FormLayout";
 import { useRouter } from "next/navigation";
 import AccountForm from "@/features/accounts/components/AccountForm";
 import { AccountService } from "@/features/accounts/services/AccountService";
@@ -14,7 +15,7 @@ export default function NewAccountPage() {
   }
 
   return (
-    <div className="mx-auto max-w-4xl rounded-lg border border-line bg-surface p-3 sm:p-5">
+    <div className={formCardClass}>
       <AccountForm mode="create" onSubmit={handleSubmit} onCancel={() => router.back()} />
     </div>
   );

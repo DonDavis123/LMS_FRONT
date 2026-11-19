@@ -48,7 +48,7 @@ function LostReasonForm({ dealName, onConfirm, onCancel }: Omit<LostReasonModalP
           Why was <span className="font-medium text-fg">{dealName}</span> lost? This is kept on the deal and its timeline.
         </p>
         {error && (
-          <p role="alert" className="mb-3 animate-shake rounded-md border border-danger/30 bg-danger-soft px-3 py-2 text-sm text-danger">
+          <p role="alert" className="mb-3 animate-shake rounded-lg border border-danger/30 bg-danger-soft px-3.5 py-3 text-sm text-danger">
             {error}
           </p>
         )}
@@ -70,7 +70,7 @@ function LostReasonForm({ dealName, onConfirm, onCancel }: Omit<LostReasonModalP
         <button
           type="button"
           onClick={onCancel}
-          className="rounded-md border border-line px-4 py-2 text-sm font-medium text-fg hover:bg-paper"
+          className="rounded-lg border border-line shadow-sm px-4 py-2 text-sm font-medium text-fg hover:bg-paper"
         >
           Cancel
         </button>

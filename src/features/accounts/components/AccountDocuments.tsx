@@ -125,7 +125,7 @@ export default function AccountDocuments({ accountId, initialDocuments }: Accoun
         <button
           type="button"
           onClick={addDraft}
-          className="flex items-center gap-1.5 rounded-md bg-ink px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-ink-2 active:scale-[0.98]"
+          className="flex items-center gap-1.5 rounded-lg bg-ink shadow-sm px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-ink-2 active:scale-[0.98]"
         >
           <Plus size={14} />
           Add
@@ -251,7 +251,7 @@ function DraftRow({
           type="button"
           onClick={() => onSave(draft)}
           disabled={draft.saving}
-          className="rounded-md bg-ink px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-ink-2 disabled:opacity-60"
+          className="rounded-lg bg-ink shadow-sm px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-ink-2 disabled:opacity-60"
         >
           {draft.saving ? "Saving…" : "Save"}
         </button>

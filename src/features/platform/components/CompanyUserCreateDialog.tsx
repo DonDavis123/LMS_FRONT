@@ -194,7 +194,7 @@ function CreateCompanyUserForm({ companyId, companyName, onClose, onCreated }: C
         </Field>
 
         {formError && (
-          <p className="animate-shake rounded-md border border-danger/30 bg-danger-soft px-3 py-2 text-sm text-danger">
+          <p className="animate-shake rounded-lg border border-danger/30 bg-danger-soft px-3.5 py-3 text-sm text-danger">
             {formError}
           </p>
         )}
@@ -205,14 +205,14 @@ function CreateCompanyUserForm({ companyId, companyName, onClose, onCreated }: C
           type="button"
           onClick={onClose}
           disabled={isSaving}
-          className="rounded-md border border-line px-4 py-2 text-sm font-medium text-fg hover:bg-paper disabled:opacity-60"
+          className="rounded-lg border border-line shadow-sm px-4 py-2 text-sm font-medium text-fg hover:bg-paper disabled:opacity-60"
         >
           Cancel
         </button>
         <button
           type="submit"
           disabled={isSaving}
-          className="flex items-center gap-2 rounded-md bg-ink px-4 py-2 text-sm font-semibold text-white transition hover:bg-ink-2 active:scale-[0.98] disabled:opacity-60"
+          className="flex items-center gap-2 rounded-lg bg-ink shadow-sm px-4 py-2 text-sm font-semibold text-white transition hover:bg-ink-2 active:scale-[0.98] disabled:opacity-60"
         >
           {isSaving && <Spinner size="sm" className="border-white/30 border-t-white" />}
           {isSaving ? "Creating…" : "Create user"}

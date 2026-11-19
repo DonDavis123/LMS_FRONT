@@ -226,7 +226,7 @@ export default function TaskForm({
       <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
         {warning && <FormWarning message={warning} className="mb-4" />}
         {error && (
-          <p ref={errorRef as React.RefObject<HTMLParagraphElement>} className="mb-4 animate-shake rounded-md border border-danger/30 bg-danger-soft px-3 py-2 text-sm text-danger">
+          <p ref={errorRef as React.RefObject<HTMLParagraphElement>} className="mb-4 animate-shake rounded-lg border border-danger/30 bg-danger-soft px-3.5 py-3 text-sm text-danger">
             {error}
           </p>
         )}
@@ -350,14 +350,14 @@ export default function TaskForm({
         <button
           type="button"
           onClick={onCancel}
-          className="rounded-md border border-line px-4 py-2 text-sm font-medium text-fg hover:bg-paper"
+          className="rounded-lg border border-line shadow-sm px-4 py-2 text-sm font-medium text-fg hover:bg-paper"
         >
           Cancel
         </button>
         <button
           type="submit"
           disabled={isSubmitting}
-          className="flex items-center gap-2 rounded-md bg-ink px-4 py-2 text-sm font-semibold text-white transition hover:bg-ink-2 active:scale-[0.98] disabled:opacity-60"
+          className="flex items-center gap-2 rounded-lg bg-ink shadow-sm px-4 py-2 text-sm font-semibold text-white transition hover:bg-ink-2 active:scale-[0.98] disabled:opacity-60"
         >
           {isSubmitting && <Spinner size="sm" className="border-white/30 border-t-white" />}
           {isSubmitting ? "Saving…" : "Save"}
