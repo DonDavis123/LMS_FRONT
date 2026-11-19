@@ -19,6 +19,7 @@ import ExportMenu from "@/features/exports/components/ExportMenu";
 import { confirmDelete } from "@/shared/utils/confirmDelete";
 import { useSelectionKeyboard } from "@/shared/hooks/useSelectionKeyboard";
 import { useBulkMail } from "@/features/mailing/hooks/useBulkMail";
+import RowCallButton from "@/features/calls/components/RowCallButton";
 import ServerPagination from "@/shared/components/ServerPagination";
 import type { PaginationMeta } from "@/shared/types/pagination";
 
@@ -241,6 +242,7 @@ export default function ContactList({
                   <SortableHeader label="Email" field="email" sort={sort} onSortChange={onSortChange} />
                   <th className="px-4 py-3">Phone</th>
                   <SortableHeader label="Contact Owner" field="contact_owner" sort={sort} onSortChange={onSortChange} />
+                  <th className="px-4 py-3">Calls</th>
                 </tr>
               </thead>
               <tbody>
@@ -308,6 +310,14 @@ export default function ContactList({
                     <td className="px-4 py-3 text-ink-soft">{contact.email || "—"}</td>
                     <td className="px-4 py-3 text-ink-soft">{contact.phone || "—"}</td>
                     <td className="px-4 py-3 text-ink-soft">{contact.contact_owner_name ?? "Unassigned"}</td>
+                    <td className="px-4 py-3">
+                      <RowCallButton
+                        kind="contact"
+                        recordId={contact.id}
+                        recordName={contact.name || "(No name)"}
+                        related={{ personType: "contact", personId: contact.id, personLabel: contact.name || "", accountId: contact.account_id ?? "", accountLabel: contact.account_name ?? "" }}
+                      />
+                    </td>
                   </tr>
                 ))}
               </tbody>

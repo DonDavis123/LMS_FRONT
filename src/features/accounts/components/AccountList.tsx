@@ -19,6 +19,7 @@ import ExportMenu from "@/features/exports/components/ExportMenu";
 import { confirmDelete } from "@/shared/utils/confirmDelete";
 import { useSelectionKeyboard } from "@/shared/hooks/useSelectionKeyboard";
 import { useBulkMail } from "@/features/mailing/hooks/useBulkMail";
+import RowCallButton from "@/features/calls/components/RowCallButton";
 import ServerPagination from "@/shared/components/ServerPagination";
 import type { PaginationMeta } from "@/shared/types/pagination";
 
@@ -238,6 +239,7 @@ export default function AccountList({
                   <th className="px-4 py-3">Phone</th>
                   <SortableHeader label="Industry" field="industry" sort={sort} onSortChange={onSortChange} />
                   <SortableHeader label="Account Owner" field="account_owner" sort={sort} onSortChange={onSortChange} />
+                  <th className="px-4 py-3">Calls</th>
                 </tr>
               </thead>
               <tbody>
@@ -297,6 +299,14 @@ export default function AccountList({
                     <td className="px-4 py-3 text-ink-soft">{account.phone || "—"}</td>
                     <td className="px-4 py-3 text-ink-soft">{account.industry || "—"}</td>
                     <td className="px-4 py-3 text-ink-soft">{account.account_owner_name ?? "Unassigned"}</td>
+                    <td className="px-4 py-3">
+                      <RowCallButton
+                        kind="account"
+                        recordId={account.id}
+                        recordName={account.account_name || "(No name)"}
+                        related={{ personType: "", personId: "", personLabel: "", accountId: account.id, accountLabel: account.account_name || "" }}
+                      />
+                    </td>
                   </tr>
                 ))}
               </tbody>

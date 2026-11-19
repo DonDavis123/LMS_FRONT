@@ -28,8 +28,14 @@ interface CallRecordListResponse {
   pagination: PaginatedResponse<CallRecordRow>["pagination"];
 }
 
-/** Which record a call list is scoped to (a lead's or a contact's calls). */
-export type CallRecordKind = "lead" | "contact";
+/** Which record a call list is scoped to (a lead's, contact's or account's calls). */
+export type CallRecordKind = "lead" | "contact" | "account";
+
+const RECORD_KIND_FILTER_FIELD: Record<CallRecordKind, string> = {
+  lead: "lead_id",
+  contact: "contact_id",
+  account: "account_id",
+};
 
 export const CallService = {
   async getCallsPage(
@@ -80,7 +86,7 @@ export const CallService = {
     return { results: data.results, pagination: data.pagination };
   },
 
-  /** Calls logged on one lead or contact, newest first by default. */
+  /** Calls logged on one lead, contact or account, newest first by default. */
   async getCallsForRecord(
     kind: CallRecordKind,
     recordId: string,
@@ -88,7 +94,7 @@ export const CallService = {
     pageSize = DEFAULT_PAGE_SIZE,
   ): Promise<PaginatedResponse<Call>> {
     return this.getCallsPage(page, pageSize, null, [
-      { field: kind === "lead" ? "lead_id" : "contact_id", operator: "equals", value: recordId },
+      { field: RECORD_KIND_FILTER_FIELD[kind], operator: "equals", value: recordId },
     ]);
   },
 

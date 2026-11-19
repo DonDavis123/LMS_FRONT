@@ -27,6 +27,7 @@ import { confirmDelete } from "@/shared/utils/confirmDelete";
 import { formatDateTime } from "@/shared/utils/formatDate";
 import { useSelectionKeyboard } from "@/shared/hooks/useSelectionKeyboard";
 import { useBulkMail } from "@/features/mailing/hooks/useBulkMail";
+import RowCallButton from "@/features/calls/components/RowCallButton";
 import ServerPagination from "@/shared/components/ServerPagination";
 import type { PaginationMeta } from "@/shared/types/pagination";
 
@@ -275,6 +276,7 @@ export default function LeadList({
                   <SortableHeader label="Lead Status" field="lead_status" sort={sort} onSortChange={onSortChange} />
                   <SortableHeader label="Lead Owner" field="owner" sort={sort} onSortChange={onSortChange} />
                   <SortableHeader label="Created" field="created_at" sort={sort} onSortChange={onSortChange} />
+                  <th className="px-4 py-3">Calls</th>
                 </tr>
               </thead>
               <tbody>
@@ -361,6 +363,14 @@ export default function LeadList({
                     </td>
                     <td className="px-4 py-3 text-ink-soft">{lead.owner?.name ?? "Unassigned"}</td>
                     <td className="whitespace-nowrap px-4 py-3 text-ink-soft">{formatDateTime(lead.created_at) || "—"}</td>
+                    <td className="px-4 py-3">
+                      <RowCallButton
+                        kind="lead"
+                        recordId={lead.id}
+                        recordName={lead.name || "(No name)"}
+                        related={{ personType: "lead", personId: lead.id, personLabel: lead.name || "", accountId: "", accountLabel: "" }}
+                      />
+                    </td>
                   </tr>
                 ))}
               </tbody>
