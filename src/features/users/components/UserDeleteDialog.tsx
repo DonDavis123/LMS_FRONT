@@ -47,8 +47,8 @@ function readStatus(error: unknown): number | null {
   return typeof status === "number" ? status : null;
 }
 
-function plural(count: number, noun: string): string {
-  return `${count} ${noun}${count === 1 ? "" : "s"}`;
+function plural(count: number, noun: string, many = `${noun}s`): string {
+  return `${count} ${count === 1 ? noun : many}`;
 }
 
 /**
