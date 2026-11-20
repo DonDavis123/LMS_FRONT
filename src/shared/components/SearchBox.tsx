@@ -9,21 +9,11 @@ interface SearchBoxProps {
   onSearchChange: (search: string) => void;
   placeholder: string;
   ariaLabel: string;
-  /**
-   * Press "/" anywhere on the page to jump into this box. Opt-in so that only
-   * one box per page (the main list search) claims the shortcut.
-   */
-  enableShortcut?: boolean;
 }
 
 // Backend limit for `search`.
 const SEARCH_MAX_LENGTH = 100;
 const SEARCH_DEBOUNCE_MS = 300;
-
-function isTypingTarget(target: EventTarget | null): boolean {
-  if (!(target instanceof HTMLElement)) return false;
-  return target.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName);
-}
 
 /**
  * Debounced server-side search box.
@@ -31,14 +21,12 @@ function isTypingTarget(target: EventTarget | null): boolean {
  * - Grows slightly on focus and lights up with the brand accent.
  * - Shows a small spinner in place of the magnifier while a search is pending.
  * - Clear button (and Esc) resets instantly, without waiting for the debounce.
- * - Optional "/" shortcut to focus, advertised with a key hint.
  */
 export default function SearchBox({
   value,
   onSearchChange,
   placeholder,
   ariaLabel,
-  enableShortcut = false,
 }: SearchBoxProps) {
   const [input, setInput] = useState(value);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -50,20 +38,6 @@ export default function SearchBox({
     const timer = window.setTimeout(() => onSearchChange(next), SEARCH_DEBOUNCE_MS);
     return () => window.clearTimeout(timer);
   }, [input, value, onSearchChange]);
-
-  // "/" focuses the box, like GitHub, Linear and Gmail.
-  useEffect(() => {
-    if (!enableShortcut) return;
-    function onKeyDown(event: KeyboardEvent) {
-      if (event.key !== "/" || event.metaKey || event.ctrlKey || event.altKey) return;
-      if (isTypingTarget(event.target)) return;
-      event.preventDefault();
-      inputRef.current?.focus();
-      inputRef.current?.select();
-    }
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [enableShortcut]);
 
   const hasText = input.length > 0;
   // Typed text that the list hasn't applied yet.
@@ -119,16 +93,7 @@ export default function SearchBox({
         >
           <X size={12} aria-hidden="true" />
         </button>
-      ) : (
-        enableShortcut && (
-          <kbd
-            aria-hidden="true"
-            className="pointer-events-none absolute right-2.5 top-1/2 hidden -translate-y-1/2 select-none rounded border border-line bg-surface px-1.5 font-sans text-[11px] font-medium leading-5 text-ink-soft transition-opacity group-focus-within:opacity-0 sm:block"
-          >
-            /
-          </kbd>
-        )
-      )}
+      ) : null}
     </div>
   );
 }

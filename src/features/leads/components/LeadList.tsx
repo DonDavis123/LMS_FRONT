@@ -215,7 +215,7 @@ export default function LeadList({
           </p>
         </div>
         <div className="order-3 flex w-full min-w-0 flex-wrap items-center gap-2 sm:order-2 sm:w-auto sm:flex-1 sm:px-2">
-          <SearchBox value={search} onSearchChange={onSearchChange} placeholder="Search name, email or company" ariaLabel="Search leads" enableShortcut />
+          <SearchBox value={search} onSearchChange={onSearchChange} placeholder="Search name, email or company" ariaLabel="Search leads" />
           <FilterBar
             fields={fields}
             filters={filters}
