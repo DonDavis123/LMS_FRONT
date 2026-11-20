@@ -114,7 +114,7 @@ export default function CompanyEditCard({ company, onCompanyChange, onNotify }: 
                 setFieldErrors((current) => ({ ...current, website: undefined }));
               }}
               aria-invalid={Boolean(fieldErrors.website)}
-              placeholder="https://example.com"
+              placeholder="https://www.acmeindustries.com"
               autoComplete="off"
               className={inputClass}
             />

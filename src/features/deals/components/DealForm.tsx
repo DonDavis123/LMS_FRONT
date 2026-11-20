@@ -224,7 +224,7 @@ export default function DealForm({
               value={form.name}
               onChange={(event) => update("name", event.target.value)}
               className={inputClass}
-              placeholder="Website redesign — Phase 1"
+              placeholder="Acme Industries – ERP Implementation"
             />
           </Field>
 
@@ -239,7 +239,7 @@ export default function DealForm({
                 inputMode="decimal"
                 autoComplete="off"
                 className={`${inputClass} pl-7`}
-                placeholder="1,00,000"
+                placeholder="5,00,000"
               />
             </div>
           </Field>

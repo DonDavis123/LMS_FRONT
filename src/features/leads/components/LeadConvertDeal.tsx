@@ -61,7 +61,7 @@ export default function LeadConvertDeal({ draft, onChange }: LeadConvertDealProp
                 onChange={(e) => onChange({ ...draft, amount: e.target.value })}
                 inputMode="decimal"
                 autoComplete="off"
-                placeholder="1,00,000"
+                placeholder="5,00,000"
                 className={inputClass}
               />
             </label>

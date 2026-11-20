@@ -235,7 +235,7 @@ export default function AccountForm({ mode, initialAccount, onSubmit, onCancel }
             value={form.account_name}
             onChange={(e) => update("account_name", e.target.value)}
             className={inputClass}
-            placeholder="ABC Technologies Pvt Ltd"
+            placeholder="Acme Industries Pvt Ltd"
           />
         </Field>
 
@@ -244,6 +244,7 @@ export default function AccountForm({ mode, initialAccount, onSubmit, onCancel }
             value={form.account_site}
             onChange={(e) => update("account_site", e.target.value)}
             className={inputClass}
+            placeholder="Head Office"
           />
         </Field>
         <Field label="Company Number">
@@ -251,6 +252,7 @@ export default function AccountForm({ mode, initialAccount, onSubmit, onCancel }
             value={form.account_number}
             onChange={(e) => update("account_number", e.target.value)}
             className={inputClass}
+            placeholder="ACC-1001"
           />
         </Field>
 
@@ -259,7 +261,7 @@ export default function AccountForm({ mode, initialAccount, onSubmit, onCancel }
             value={form.account_type}
             onChange={(e) => update("account_type", e.target.value)}
             className={inputClass}
-            placeholder="Customer, Partner, Prospect…"
+            placeholder="Customer"
           />
         </Field>
         <Field label="Ownership">
@@ -276,7 +278,7 @@ export default function AccountForm({ mode, initialAccount, onSubmit, onCancel }
             value={form.website}
             onChange={(e) => update("website", e.target.value)}
             className={inputClass}
-            placeholder="https://abctech.com"
+            placeholder="https://www.acmeindustries.com"
           />
         </Field>
         <Field label="Phone" required>
@@ -287,6 +289,7 @@ export default function AccountForm({ mode, initialAccount, onSubmit, onCancel }
             required
             showError={attempted}
             duplicateCheck={{ excludeType: "account", excludeId: initialAccount?.id, originalValue: initialAccount?.phone ?? "" }}
+            placeholder="98765 43210"
           />
         </Field>
 
@@ -314,6 +317,7 @@ export default function AccountForm({ mode, initialAccount, onSubmit, onCancel }
             value={form.employees}
             onChange={(e) => update("employees", e.target.value)}
             className={inputClass}
+            placeholder="250"
           />
         </Field>
         <Field label="Annual Revenue">
@@ -323,6 +327,7 @@ export default function AccountForm({ mode, initialAccount, onSubmit, onCancel }
             value={form.annual_revenue}
             onChange={(e) => update("annual_revenue", e.target.value)}
             className={inputClass}
+            placeholder="50000000"
           />
         </Field>
 
@@ -331,6 +336,7 @@ export default function AccountForm({ mode, initialAccount, onSubmit, onCancel }
             value={form.ticker_symbol}
             onChange={(e) => update("ticker_symbol", e.target.value)}
             className={inputClass}
+            placeholder="ACME"
           />
         </Field>
         <Field label="SIC Code">
@@ -338,6 +344,7 @@ export default function AccountForm({ mode, initialAccount, onSubmit, onCancel }
             value={form.sic_code}
             onChange={(e) => update("sic_code", e.target.value)}
             className={inputClass}
+            placeholder="3599"
           />
         </Field>
       </Section>
@@ -348,6 +355,7 @@ export default function AccountForm({ mode, initialAccount, onSubmit, onCancel }
             value={form.billing_address}
             onChange={(e) => update("billing_address", e.target.value)}
             className={inputClass}
+            placeholder="21, MG Road"
           />
         </Field>
         <Field label="Billing City">
@@ -355,6 +363,7 @@ export default function AccountForm({ mode, initialAccount, onSubmit, onCancel }
             value={form.billing_city}
             onChange={(e) => update("billing_city", e.target.value)}
             className={inputClass}
+            placeholder="Bengaluru"
           />
         </Field>
         <Field label="Billing State">
@@ -362,6 +371,7 @@ export default function AccountForm({ mode, initialAccount, onSubmit, onCancel }
             value={form.billing_state}
             onChange={(e) => update("billing_state", e.target.value)}
             className={inputClass}
+            placeholder="Karnataka"
           />
         </Field>
         <Field label="Billing Country">
@@ -369,6 +379,7 @@ export default function AccountForm({ mode, initialAccount, onSubmit, onCancel }
             value={form.billing_country}
             onChange={(e) => update("billing_country", e.target.value)}
             className={inputClass}
+            placeholder="India"
           />
         </Field>
         <Field label="Billing Postal Code">
@@ -376,6 +387,7 @@ export default function AccountForm({ mode, initialAccount, onSubmit, onCancel }
             value={form.billing_postal_code}
             onChange={(e) => update("billing_postal_code", e.target.value)}
             className={inputClass}
+            placeholder="560001"
           />
         </Field>
       </Section>
@@ -386,6 +398,7 @@ export default function AccountForm({ mode, initialAccount, onSubmit, onCancel }
             value={form.description}
             onChange={(e) => update("description", e.target.value)}
             className={`${inputClass} min-h-[88px] resize-y`}
+            placeholder="Mid-size manufacturer evaluating an ERP rollout across three plants."
           />
         </Field>
       </Section>

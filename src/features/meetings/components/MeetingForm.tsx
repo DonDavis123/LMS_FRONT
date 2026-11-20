@@ -392,6 +392,7 @@ export default function MeetingForm({
             value={form.title}
             onChange={(e) => update("title", e.target.value)}
             className={fieldClass}
+            placeholder="Product demo with Acme Industries"
           />
         </ZohoRow>
 
@@ -400,7 +401,7 @@ export default function MeetingForm({
           <input
             value={form.location}
             onChange={(e) => update("location", e.target.value)}
-            placeholder="Enter location or meeting link"
+            placeholder="Conference Room A or https://meet.google.com/abc-defg-hij"
             className={fieldClass}
           />
         </ZohoRow>

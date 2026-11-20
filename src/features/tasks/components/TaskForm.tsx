@@ -238,7 +238,7 @@ export default function TaskForm({
               value={form.subject}
               onChange={(e) => update("subject", e.target.value)}
               className={inputClass}
-              placeholder="Call to discuss proposal"
+              placeholder="Follow up on proposal with Acme Industries"
             />
           </Field>
 

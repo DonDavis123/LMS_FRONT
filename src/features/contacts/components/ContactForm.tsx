@@ -269,7 +269,7 @@ export default function ContactForm({ mode, initialContact, onSubmit, onCancel }
             value={form.name}
             onChange={(e) => update("name", e.target.value)}
             className={inputClass}
-            placeholder="Don Davis"
+            placeholder="Arjun Mehta"
           />
         </Field>
         <Field label="Email">
@@ -277,7 +277,7 @@ export default function ContactForm({ mode, initialContact, onSubmit, onCancel }
             kind="email"
             value={form.email}
             onChange={(value) => update("email", value)}
-            placeholder="don.davis@abctech.com"
+            placeholder="arjun.mehta@acmeindustries.com"
             showError={attempted}
             duplicateCheck={{ excludeType: "contact", excludeId: initialContact?.id, originalValue: initialContact?.email ?? "" }}
           />
@@ -290,6 +290,7 @@ export default function ContactForm({ mode, initialContact, onSubmit, onCancel }
             required
             showError={attempted}
             duplicateCheck={{ excludeType: "contact", excludeId: initialContact?.id, originalValue: initialContact?.phone ?? "" }}
+            placeholder="98765 43210"
           />
         </Field>
         <Field label="Lead Source">
@@ -305,6 +306,7 @@ export default function ContactForm({ mode, initialContact, onSubmit, onCancel }
             value={form.description}
             onChange={(e) => update("description", e.target.value)}
             className={`${inputClass} min-h-[88px] resize-y`}
+            placeholder="Primary point of contact for procurement."
           />
         </Field>
       </Section>
@@ -336,7 +338,7 @@ export default function ContactForm({ mode, initialContact, onSubmit, onCancel }
             value={form.title}
             onChange={(e) => update("title", e.target.value)}
             className={inputClass}
-            placeholder="IT Manager"
+            placeholder="Procurement Manager"
           />
         </Field>
         <Field label="Secondary Email">
@@ -346,6 +348,7 @@ export default function ContactForm({ mode, initialContact, onSubmit, onCancel }
             onChange={(value) => update("secondary_email", value)}
             showError={attempted}
             duplicateCheck={{ excludeType: "contact", excludeId: initialContact?.id, originalValue: initialContact?.secondary_email ?? "" }}
+            placeholder="a.mehta@acmeindustries.com"
           />
         </Field>
         <Field label="Mobile">
@@ -355,6 +358,7 @@ export default function ContactForm({ mode, initialContact, onSubmit, onCancel }
             onChange={(value) => update("mobile", value)}
             showError={attempted}
             duplicateCheck={{ excludeType: "contact", excludeId: initialContact?.id, originalValue: initialContact?.mobile ?? "" }}
+            placeholder="98765 43210"
           />
         </Field>
         <Field label="Home Phone">
@@ -364,6 +368,7 @@ export default function ContactForm({ mode, initialContact, onSubmit, onCancel }
             onChange={(value) => update("home_phone", value)}
             showError={attempted}
             duplicateCheck={{ excludeType: "contact", excludeId: initialContact?.id, originalValue: initialContact?.home_phone ?? "" }}
+            placeholder="044 2345 6789"
           />
         </Field>
         <Field label="Other Phone">
@@ -373,6 +378,7 @@ export default function ContactForm({ mode, initialContact, onSubmit, onCancel }
             onChange={(value) => update("other_phone", value)}
             showError={attempted}
             duplicateCheck={{ excludeType: "contact", excludeId: initialContact?.id, originalValue: initialContact?.other_phone ?? "" }}
+            placeholder="98765 43210"
           />
         </Field>
         <Field label="Department">
@@ -380,6 +386,7 @@ export default function ContactForm({ mode, initialContact, onSubmit, onCancel }
             value={form.department}
             onChange={(e) => update("department", e.target.value)}
             className={inputClass}
+            placeholder="Procurement"
           />
         </Field>
         <Field label="Vendor Name">
@@ -387,6 +394,7 @@ export default function ContactForm({ mode, initialContact, onSubmit, onCancel }
             value={form.vendor_name}
             onChange={(e) => update("vendor_name", e.target.value)}
             className={inputClass}
+            placeholder="Acme Supplies Ltd"
           />
         </Field>
         <Field label="Date of Birth">
@@ -401,6 +409,7 @@ export default function ContactForm({ mode, initialContact, onSubmit, onCancel }
             value={form.assistant}
             onChange={(e) => update("assistant", e.target.value)}
             className={inputClass}
+            placeholder="Neha Iyer"
           />
         </Field>
         <Field label="Assistant Phone">
@@ -409,6 +418,7 @@ export default function ContactForm({ mode, initialContact, onSubmit, onCancel }
             value={form.assistant_phone}
             onChange={(value) => update("assistant_phone", value)}
             showError={attempted}
+            placeholder="98765 43210"
           />
         </Field>
         <Field label="Reporting To">
@@ -444,6 +454,7 @@ export default function ContactForm({ mode, initialContact, onSubmit, onCancel }
             value={form.mailing_address}
             onChange={(e) => update("mailing_address", e.target.value)}
             className={inputClass}
+            placeholder="21, MG Road"
           />
         </Field>
         <Field label="Mailing City">
@@ -451,6 +462,7 @@ export default function ContactForm({ mode, initialContact, onSubmit, onCancel }
             value={form.mailing_city}
             onChange={(e) => update("mailing_city", e.target.value)}
             className={inputClass}
+            placeholder="Bengaluru"
           />
         </Field>
         <Field label="Mailing State">
@@ -458,6 +470,7 @@ export default function ContactForm({ mode, initialContact, onSubmit, onCancel }
             value={form.mailing_state}
             onChange={(e) => update("mailing_state", e.target.value)}
             className={inputClass}
+            placeholder="Karnataka"
           />
         </Field>
         <Field label="Mailing Country">
@@ -465,6 +478,7 @@ export default function ContactForm({ mode, initialContact, onSubmit, onCancel }
             value={form.mailing_country}
             onChange={(e) => update("mailing_country", e.target.value)}
             className={inputClass}
+            placeholder="India"
           />
         </Field>
         <Field label="Mailing Postal Code">
@@ -472,6 +486,7 @@ export default function ContactForm({ mode, initialContact, onSubmit, onCancel }
             value={form.mailing_postal_code}
             onChange={(e) => update("mailing_postal_code", e.target.value)}
             className={inputClass}
+            placeholder="560001"
           />
         </Field>
         <Field label="Other Address" fullWidth>

@@ -86,7 +86,7 @@ function SuspendForm({ companyId, companyName, onClose, onSuspended }: SuspendCo
             rows={3}
             aria-invalid={Boolean(fieldError)}
             autoFocus
-            placeholder="e.g. Unpaid invoice"
+            placeholder="e.g. Overdue subscription payment"
             className={`${inputClass} resize-none`}
           />
           {fieldError ? (

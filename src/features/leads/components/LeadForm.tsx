@@ -313,7 +313,7 @@ export default function LeadForm({
             value={form.name}
             onChange={(e) => update("name", e.target.value)}
             className={inputClass}
-            placeholder="John Davis"
+            placeholder="Priya Sharma"
           />
         </Field>
 
@@ -323,7 +323,7 @@ export default function LeadForm({
             value={form.phone}
             onChange={(value) => update("phone", value)}
             required
-            placeholder="+914412345678"
+            placeholder="98765 43210"
             showError={attempted}
             duplicateCheck={{ excludeType: "lead", excludeId: initialLead?.id, originalValue: initialLead?.phone ?? "" }}
           />
@@ -333,7 +333,7 @@ export default function LeadForm({
             kind="email"
             value={form.email}
             onChange={(value) => update("email", value)}
-            placeholder="john.davis@abctech.com"
+            placeholder="priya.sharma@acmeindustries.com"
             showError={attempted}
             duplicateCheck={{ excludeType: "lead", excludeId: initialLead?.id, originalValue: initialLead?.email ?? "" }}
           />
@@ -353,7 +353,7 @@ export default function LeadForm({
             value={form.description}
             onChange={(e) => update("description", e.target.value)}
             className={`${inputClass} min-h-[96px] resize-y`}
-            placeholder="Potential enterprise software customer."
+            placeholder="Requested a product demo and pricing details."
           />
         </Field>
       </Section>
@@ -379,7 +379,7 @@ export default function LeadForm({
                 value={form.company_name}
                 onChange={(e) => update("company_name", e.target.value)}
                 className={inputClass}
-                placeholder="ABC Technologies Pvt Ltd"
+                placeholder="Acme Industries Pvt Ltd"
               />
             </Field>
             <Field label="Title">
@@ -387,7 +387,7 @@ export default function LeadForm({
                 value={form.title}
                 onChange={(e) => update("title", e.target.value)}
                 className={inputClass}
-                placeholder="IT Manager"
+                placeholder="Operations Manager"
               />
             </Field>
 
@@ -396,6 +396,7 @@ export default function LeadForm({
                 value={form.fax}
                 onChange={(e) => update("fax", e.target.value)}
                 className={inputClass}
+                placeholder="+91 80 4123 4567"
               />
             </Field>
             <Field label="Website">
@@ -403,7 +404,7 @@ export default function LeadForm({
                 value={form.website}
                 onChange={(e) => update("website", e.target.value)}
                 className={inputClass}
-                placeholder="https://abctech.com"
+                placeholder="https://www.acmeindustries.com"
               />
             </Field>
 
@@ -412,7 +413,7 @@ export default function LeadForm({
             kind="phone"
             value={form.mobile_number}
             onChange={(value) => update("mobile_number", value)}
-            placeholder="+919876543210"
+            placeholder="98765 43210"
             showError={attempted}
             duplicateCheck={{ excludeType: "lead", excludeId: initialLead?.id, originalValue: initialLead?.mobile_number ?? "" }}
           />
@@ -450,7 +451,7 @@ export default function LeadForm({
                 value={form.number_of_employees}
                 onChange={(e) => update("number_of_employees", e.target.value)}
                 className={inputClass}
-                placeholder="150"
+                placeholder="250"
               />
             </Field>
             <Field label="Annual Revenue">
@@ -460,7 +461,7 @@ export default function LeadForm({
                 value={form.annual_revenue}
                 onChange={(e) => update("annual_revenue", e.target.value)}
                 className={inputClass}
-                placeholder="10000000"
+                placeholder="50000000"
               />
             </Field>
           </Section>
@@ -479,7 +480,7 @@ export default function LeadForm({
                 value={form.city}
                 onChange={(e) => update("city", e.target.value)}
                 className={inputClass}
-                placeholder="Chennai"
+                placeholder="Bengaluru"
               />
             </Field>
 
@@ -488,7 +489,7 @@ export default function LeadForm({
                 value={form.address}
                 onChange={(e) => update("address", e.target.value)}
                 className={inputClass}
-                placeholder="12 MG Road"
+                placeholder="21, MG Road"
               />
             </Field>
 
@@ -497,7 +498,7 @@ export default function LeadForm({
                 value={form.state}
                 onChange={(e) => update("state", e.target.value)}
                 className={inputClass}
-                placeholder="Tamil Nadu"
+                placeholder="Karnataka"
               />
             </Field>
             <Field label="Zip / Postal Code">
@@ -505,7 +506,7 @@ export default function LeadForm({
                 value={form.postal_code}
                 onChange={(e) => update("postal_code", e.target.value)}
                 className={inputClass}
-                placeholder="600001"
+                placeholder="560001"
               />
             </Field>
           </Section>

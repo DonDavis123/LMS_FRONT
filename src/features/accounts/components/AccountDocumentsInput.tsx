@@ -70,7 +70,7 @@ export default function AccountDocumentsInput({ drafts, onChange }: AccountDocum
                   }}
                   maxLength={255}
                   className={inputClass}
-                  placeholder="Document name"
+                  placeholder="e.g. Service agreement"
                   aria-label="Document name"
                 />
                 <input
@@ -81,7 +81,7 @@ export default function AccountDocumentsInput({ drafts, onChange }: AccountDocum
                   }}
                   maxLength={2000}
                   className={inputClass}
-                  placeholder="https://example.com/document.pdf"
+                  placeholder="https://www.acmeindustries.com/docs/service-agreement.pdf"
                   aria-label="Document URL"
                   inputMode="url"
                 />

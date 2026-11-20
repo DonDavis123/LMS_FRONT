@@ -167,6 +167,7 @@ function CreateCompanyForm({ onClose, onCreated }: Omit<CompanyCreateDialogProps
             autoComplete="off"
             autoFocus
             className={inputClass}
+            placeholder="Acme Industries Pvt Ltd"
           />
           {fieldErrors.company_name && (
             <span className="mt-1 block text-xs text-danger">{fieldErrors.company_name}</span>
@@ -182,7 +183,7 @@ function CreateCompanyForm({ onClose, onCreated }: Omit<CompanyCreateDialogProps
               clearFieldError("website");
             }}
             aria-invalid={Boolean(fieldErrors.website)}
-            placeholder="https://example.com"
+            placeholder="https://www.acmeindustries.com"
             autoComplete="off"
             className={inputClass}
           />
@@ -201,6 +202,7 @@ function CreateCompanyForm({ onClose, onCreated }: Omit<CompanyCreateDialogProps
             aria-invalid={Boolean(fieldErrors.admin_name)}
             autoComplete="off"
             className={inputClass}
+            placeholder="Rahul Verma"
           />
           {fieldErrors.admin_name && <span className="mt-1 block text-xs text-danger">{fieldErrors.admin_name}</span>}
         </Field>
@@ -216,6 +218,7 @@ function CreateCompanyForm({ onClose, onCreated }: Omit<CompanyCreateDialogProps
             aria-invalid={Boolean(fieldErrors.admin_email)}
             autoComplete="off"
             className={inputClass}
+            placeholder="rahul.verma@acmeindustries.com"
           />
           {fieldErrors.admin_email && (
             <span className="mt-1 block text-xs text-danger">{fieldErrors.admin_email}</span>

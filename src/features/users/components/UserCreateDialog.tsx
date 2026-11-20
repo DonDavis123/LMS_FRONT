@@ -123,6 +123,7 @@ function CreateUserForm({ onClose, onCreated }: Omit<UserCreateDialogProps, "isO
             autoComplete="off"
             autoFocus
             className={inputClass}
+            placeholder="Priya Sharma"
           />
           {fieldErrors.name && <span className="mt-1 block text-xs text-danger">{fieldErrors.name}</span>}
         </Field>
@@ -138,6 +139,7 @@ function CreateUserForm({ onClose, onCreated }: Omit<UserCreateDialogProps, "isO
             aria-invalid={Boolean(fieldErrors.email)}
             autoComplete="off"
             className={inputClass}
+            placeholder="priya.sharma@acmeindustries.com"
           />
           {fieldErrors.email && <span className="mt-1 block text-xs text-danger">{fieldErrors.email}</span>}
         </Field>

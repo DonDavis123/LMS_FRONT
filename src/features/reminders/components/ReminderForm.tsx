@@ -153,7 +153,7 @@ export default function ReminderForm({
               maxLength={255}
               onChange={(e) => update("subject", e.target.value)}
               className={inputClass}
-              placeholder="Call John about quotation"
+              placeholder="Follow up with Priya Sharma on the quotation"
             />
           </Field>
 
