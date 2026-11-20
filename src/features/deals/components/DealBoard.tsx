@@ -10,6 +10,7 @@ import { isClosedStage, STAGE_META } from "@/features/deals/utils/dealStages";
 import DealCard from "@/features/deals/components/DealCard";
 import LostReasonModal from "@/features/deals/components/LostReasonModal";
 import { extractApiError } from "@/shared/utils/apiError";
+import { CreateButtonLabel, createButtonClass } from "@/shared/components/FormLayout";
 
 export type ToastTone = "success" | "error";
 
@@ -228,9 +229,9 @@ export default function DealBoard({
           <button
             type="button"
             onClick={onCreateClick}
-            className="mt-1 rounded-md bg-ink px-4 py-2 text-sm font-semibold text-white transition hover:bg-ink-2 active:scale-[0.98]"
+            className={`mt-1 ${createButtonClass} !px-4 !py-2`}
           >
-            + Create Deal
+            <CreateButtonLabel>Create Deal</CreateButtonLabel>
           </button>
         )}
       </div>

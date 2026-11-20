@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { Plus } from "lucide-react";
 
 /**
  * Shared visual language for CRM forms (Lead, Contact, Account, Call,
@@ -28,6 +29,29 @@ export const secondaryButtonClass =
 
 export const primaryButtonClass =
   "inline-flex items-center justify-center gap-2 rounded-lg bg-ink px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-ink-2 hover:shadow-md active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 sm:px-5";
+
+/**
+ * Primary "+ Create ..." call-to-action used in every list header and empty
+ * state. Brand amber gradient with navy text (AA contrast), a soft amber
+ * glow, a lift on hover and a press effect. Pair with `CreateButtonLabel`.
+ */
+export const createButtonClass =
+  "group/create inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-lg bg-linear-to-b from-amber to-amber-dark px-3.5 py-1.5 text-sm font-bold text-ink shadow-[0_1px_2px_rgba(18,33,58,0.18),0_6px_14px_-6px_rgba(201,136,38,0.65),inset_0_1px_0_rgba(255,255,255,0.4)] ring-1 ring-inset ring-amber-dark/50 transition-all duration-200 hover:-translate-y-px hover:brightness-105 hover:shadow-[0_2px_4px_rgba(18,33,58,0.2),0_10px_20px_-8px_rgba(201,136,38,0.8),inset_0_1px_0_rgba(255,255,255,0.45)] active:translate-y-0 active:scale-[0.97] active:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/50 disabled:cursor-not-allowed disabled:opacity-60";
+
+/** Icon + label for `createButtonClass` (the plus turns on hover). */
+export function CreateButtonLabel({ children }: { children: ReactNode }) {
+  return (
+    <>
+      <Plus
+        size={16}
+        strokeWidth={2.75}
+        aria-hidden="true"
+        className="transition-transform duration-200 group-hover/create:rotate-90"
+      />
+      {children}
+    </>
+  );
+}
 
 interface FormHeaderProps {
   title: string;

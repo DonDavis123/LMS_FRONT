@@ -14,6 +14,7 @@ import RecordTimeline from "@/shared/components/RecordTimeline";
 import { Tabs } from "@/shared/components/Tabs";
 import { formatLocalDateTime, isoToLocalInputValue } from "@/shared/utils/dateTime";
 import { backLabelFor, withReturnTo } from "@/shared/utils/returnTo";
+import { RecordSectionTitle, recordCardClass, recordGridClass } from "@/shared/components/RecordSection";
 
 interface Props { task: Task; onTaskChange: (task: Task) => void; /** Where "Back" goes when the task was opened from another page (e.g. the calendar). */ returnTo?: string | null; }
 
@@ -94,9 +95,9 @@ export default function TaskDetail({ task, onTaskChange, returnTo = null }: Prop
       <div key={activeTab} className="animate-fade-in">
         {activeTab === "overview" ? (
           <>
-            <div className="mt-4 rounded-lg border border-line bg-surface p-6">
-              <h2 className="mb-4 text-xs font-semibold uppercase tracking-wide text-ink-soft">Overview</h2>
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div className={`mt-4 ${recordCardClass}`}>
+              <RecordSectionTitle>Overview</RecordSectionTitle>
+              <div className={recordGridClass}>
                 <Row label="Subject" value={task.subject} onSave={v => updateField("subject", v)} />
                 <Row label="Owner" value={task.owner_name} editable={false} />
                 <Row label="Assigned To" value={task.assigned_to_name} editable={false} />
@@ -108,14 +109,14 @@ export default function TaskDetail({ task, onTaskChange, returnTo = null }: Prop
               </div>
             </div>
 
-            <div className="mt-4 rounded-lg border border-line bg-surface p-6">
-              <h2 className="mb-4 text-xs font-semibold uppercase tracking-wide text-ink-soft">Description</h2>
+            <div className={`mt-4 ${recordCardClass}`}>
+              <RecordSectionTitle>Description</RecordSectionTitle>
               <Row label="Description" value={task.description} type="textarea" fullWidth onSave={v=>updateField("description",v)} />
             </div>
 
-            <div className="mt-4 rounded-lg border border-line bg-surface p-6">
-              <h2 className="mb-4 text-xs font-semibold uppercase tracking-wide text-ink-soft">System Information</h2>
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div className={`mt-4 ${recordCardClass}`}>
+              <RecordSectionTitle>System Information</RecordSectionTitle>
+              <div className={recordGridClass}>
                 <Row label="Created At" value={formatDateTime(task.created_at) || null} editable={false}/>
                 <Row label="Updated At" value={formatDateTime(task.updated_at) || null} editable={false}/>
               </div>

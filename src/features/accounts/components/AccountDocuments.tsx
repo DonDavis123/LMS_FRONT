@@ -8,6 +8,7 @@ import { normalizeDocumentUrl } from "@/features/accounts/utils/documentUrl";
 import { inputClass } from "@/shared/components/FormLayout";
 import { extractApiError } from "@/shared/utils/apiError";
 import { confirmDelete } from "@/shared/utils/confirmDelete";
+import { recordCardClass } from "@/shared/components/RecordSection";
 
 interface AccountDocumentsProps {
   accountId: string;
@@ -119,7 +120,7 @@ export default function AccountDocuments({ accountId, initialDocuments }: Accoun
   const editingIds = new Set(drafts.filter((draft) => draft.id).map((draft) => draft.id));
 
   return (
-    <div className="mt-4 rounded-lg border border-line bg-surface p-6">
+    <div className={`mt-4 ${recordCardClass}`}>
       <div className="mb-4 flex items-center justify-between gap-3">
         <h3 className="text-xs font-semibold uppercase tracking-wide text-ink-soft">Documents</h3>
         <button

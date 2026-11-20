@@ -21,6 +21,7 @@ import RecordTimeline from "@/shared/components/RecordTimeline";
 import { Tabs } from "@/shared/components/Tabs";
 import { RecordChip, type SelectedRecord } from "@/features/meetings/components/SelectedRecordsField";
 import { backLabelFor } from "@/shared/utils/returnTo";
+import { RecordSectionTitle, recordCardClass, recordGridClass } from "@/shared/components/RecordSection";
 
 interface Props {
   meeting: Meeting;
@@ -181,9 +182,9 @@ export default function MeetingDetail({ meeting, onMeetingChange, returnTo = nul
 
               <MeetingConference meeting={meeting} onMeetingChange={onMeetingChange} />
 
-              <div className="mt-4 rounded-lg border border-line bg-surface p-6">
-                <h2 className="mb-4 text-xs font-semibold uppercase tracking-wide text-ink-soft">Overview</h2>
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div className={`mt-4 ${recordCardClass}`}>
+                <RecordSectionTitle>Overview</RecordSectionTitle>
+                <div className={recordGridClass}>
                   <Row label="Title" value={meeting.title} onSave={(value) => updateField("title", value)} />
                   <Row label="Host" value={meeting.host_name} editable={false} />
                   <Row label="Location" value={meeting.location} onSave={(value) => updateField("location", value)} />
@@ -205,8 +206,8 @@ export default function MeetingDetail({ meeting, onMeetingChange, returnTo = nul
                 </div>
               </div>
 
-              <div className="mt-4 rounded-lg border border-line bg-surface p-6">
-                <h2 className="mb-4 text-xs font-semibold uppercase tracking-wide text-ink-soft">Description</h2>
+              <div className={`mt-4 ${recordCardClass}`}>
+                <RecordSectionTitle>Description</RecordSectionTitle>
                 <DescriptionBlock
                   value={meeting.description}
                   onSave={(value) => updateField("description", value)}

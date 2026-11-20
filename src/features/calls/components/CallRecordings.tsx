@@ -9,6 +9,7 @@ import { MAX_RECORDINGS_PER_CALL, type CallRecording } from "@/features/calls/ty
 import type { RelatedToValue } from "@/shared/components/RelatedToPicker";
 import { extractApiError } from "@/shared/utils/apiError";
 import { confirmDelete } from "@/shared/utils/confirmDelete";
+import { recordCardClass } from "@/shared/components/RecordSection";
 
 interface CallRecordingsProps {
   callId: string;
@@ -69,7 +70,7 @@ export default function CallRecordings({ callId, completed, onChanged, related }
   }
 
   return (
-    <div className="mt-4 rounded-lg border border-line bg-surface p-6">
+    <div className={`mt-4 ${recordCardClass}`}>
       <div className="mb-4 flex items-center justify-between gap-3">
         <h2 className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-ink-soft">
           Call Recordings

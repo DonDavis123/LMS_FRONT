@@ -18,6 +18,7 @@ import { useSelectionKeyboard } from "@/shared/hooks/useSelectionKeyboard";
 import ServerPagination from "@/shared/components/ServerPagination";
 import ModernStatusSelect from "@/shared/components/ModernStatusSelect";
 import type { PaginationMeta } from "@/shared/types/pagination";
+import { CreateButtonLabel, createButtonClass } from "@/shared/components/FormLayout";
 
 interface TaskListProps {
   tasks: Task[];
@@ -208,9 +209,9 @@ export default function TaskList({
         <div className="order-2 ml-auto flex gap-2 sm:order-3">
           <button
             onClick={onCreateClick}
-            className="whitespace-nowrap rounded-md bg-amber px-3 py-1.5 text-sm font-semibold text-fg transition hover:bg-amber-dark active:scale-[0.98]"
+            className={createButtonClass}
           >
-            + Create Task
+            <CreateButtonLabel>Create Task</CreateButtonLabel>
           </button>
         </div>
       </div>
@@ -240,9 +241,9 @@ export default function TaskList({
           {!(filters.length > 0) && (
             <button
               onClick={onCreateClick}
-              className="mt-1 rounded-md bg-ink px-4 py-2 text-sm font-semibold text-white transition hover:bg-ink-2 active:scale-[0.98]"
+              className={`mt-1 ${createButtonClass} !px-4 !py-2`}
             >
-              + Create Task
+              <CreateButtonLabel>Create Task</CreateButtonLabel>
             </button>
           )}
         </div>

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Check, Pencil, X } from "lucide-react";
 import ModernStatusSelect from "@/shared/components/ModernStatusSelect";
 import DateInput, { DateTimeInput } from "@/shared/components/DateInput";
+import { inputClass } from "@/shared/components/FormLayout";
 
 /** Friendly read-only text for date values; 12-hour clock for date-times. */
 function formatForDisplay(raw: string, type: string): string | null {
@@ -79,22 +80,26 @@ export default function InlineEditRow({
   function cancel() { setDraft(normalized); setError(false); setEditing(false); }
 
   return (
-    <div className={`group relative min-w-0 overflow-hidden rounded-xl border border-transparent px-3 py-2.5 transition-all duration-200 hover:border-line hover:bg-paper/70 ${editing ? "border-line bg-paper/80 shadow-sm" : ""} ${fullWidth ? "sm:col-span-2" : ""}`}>
-      <p className="text-xs text-ink-soft">{label}</p>
+    <div className={`group relative min-w-0 ${fullWidth ? "sm:col-span-2" : ""}`}>
+      <p className="mb-1.5 block text-[13px] font-semibold tracking-wide text-fg">{label}</p>
       {!editing ? (
-        <div className="flex min-h-7 items-center justify-between gap-2">
-          <p className="min-w-0 max-w-full flex-1 whitespace-pre-wrap break-words text-sm text-fg">
+        <div
+          className={`flex min-h-[42px] items-start justify-between gap-2 rounded-lg border border-line px-3.5 py-2.5 text-base shadow-sm transition sm:text-sm ${
+            editable && onSave ? "bg-surface hover:border-slate/50" : "bg-paper/60"
+          }`}
+        >
+          <p className="min-w-0 max-w-full flex-1 whitespace-pre-wrap break-words text-fg">
             {displayValue ?? formatForDisplay(normalized, type) ?? (normalized.trim() ? normalized : "—")}
           </p>
           {editable && onSave && (
             <button type="button" onClick={() => setEditing(true)} aria-label={`Edit ${label}`}
-              className="shrink-0 rounded p-1 text-ink-soft opacity-0 transition hover:bg-line hover:text-fg group-hover:opacity-100 focus:opacity-100">
+              className="-my-0.5 -mr-1.5 shrink-0 rounded-md p-1 text-ink-soft opacity-0 transition hover:bg-line hover:text-fg group-hover:opacity-100 focus:opacity-100">
               <Pencil size={14} />
             </button>
           )}
         </div>
       ) : (
-        <div className="mt-2 flex min-w-0 max-w-full items-start gap-2 animate-inline-edit">
+        <div className="flex min-w-0 max-w-full items-start gap-2 animate-inline-edit">
           {type === "textarea" ? (
             <textarea autoFocus value={draft} onChange={e => setDraft(e.target.value)} className={editClass + " min-h-20 resize-y"} />
           ) : type === "select" ? (
@@ -121,8 +126,8 @@ export default function InlineEditRow({
           ) : (
             <input autoFocus type={type} value={draft} onChange={e => setDraft(e.target.value)} className={editClass} />
           )}
-          <button type="button" disabled={saving} onClick={save} aria-label={`Save ${label}`} className="shrink-0 rounded-lg bg-ink p-2 text-white shadow-sm transition-all hover:-translate-y-0.5 hover:bg-ink-2 hover:shadow-md active:scale-95 disabled:opacity-50"><Check size={14}/></button>
-          <button type="button" disabled={saving} onClick={cancel} aria-label={`Cancel editing ${label}`} className="shrink-0 rounded-lg border border-line bg-surface p-2 text-ink-soft shadow-sm transition-all hover:-translate-y-0.5 hover:bg-paper hover:text-fg active:scale-95 disabled:opacity-50"><X size={14}/></button>
+          <button type="button" disabled={saving} onClick={save} aria-label={`Save ${label}`} className="shrink-0 rounded-lg bg-ink p-2.5 text-white shadow-sm transition-all hover:-translate-y-0.5 hover:bg-ink-2 hover:shadow-md active:scale-95 disabled:opacity-50"><Check size={14}/></button>
+          <button type="button" disabled={saving} onClick={cancel} aria-label={`Cancel editing ${label}`} className="shrink-0 rounded-lg border border-line bg-surface p-2.5 text-ink-soft shadow-sm transition-all hover:-translate-y-0.5 hover:bg-paper hover:text-fg active:scale-95 disabled:opacity-50"><X size={14}/></button>
         </div>
       )}
       {error && <p className="mt-1 text-xs text-danger">Couldn&apos;t save. Try again.</p>}
@@ -130,4 +135,4 @@ export default function InlineEditRow({
   );
 }
 
-const editClass = "min-w-0 w-full max-w-full flex-1 rounded-xl border border-line bg-surface px-3 py-2 text-sm text-fg shadow-inner outline-none transition-all duration-200 focus:border-slate focus:ring-4 focus:ring-slate-light/50";
+const editClass = `${inputClass} min-w-0 max-w-full flex-1`;

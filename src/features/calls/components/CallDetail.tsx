@@ -24,6 +24,7 @@ import type { RelatedToValue } from "@/shared/components/RelatedToPicker";
 import { confirmDelete } from "@/shared/utils/confirmDelete";
 import { formatDateTime } from "@/shared/utils/formatDate";
 import { withReturnTo } from "@/shared/utils/returnTo";
+import { RecordSectionTitle, recordCardClass, recordGridClass } from "@/shared/components/RecordSection";
 
 interface CallDetailProps {
   call: CallDetailData;
@@ -208,9 +209,9 @@ export default function CallDetail({ call, onCallChange, returnTo = null, onNoti
             />
           ) : activeTab === "overview" ? (
             <>
-              <div className="mt-4 rounded-lg border border-line bg-surface p-6">
-                <h2 className="mb-4 text-xs font-semibold uppercase tracking-wide text-ink-soft">Call Information</h2>
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div className={`mt-4 ${recordCardClass}`}>
+                <RecordSectionTitle>Call Information</RecordSectionTitle>
+                <div className={recordGridClass}>
                   <div className="min-w-0 rounded-xl border border-transparent px-3 py-2.5">
                     <p className="text-xs text-ink-soft">{recordLabel(record.type)}</p>
                     <p className="flex min-h-7 items-center text-sm">
@@ -248,8 +249,8 @@ export default function CallDetail({ call, onCallChange, returnTo = null, onNoti
                 </div>
               </div>
 
-              <div className="mt-4 rounded-lg border border-line bg-surface p-6">
-                <h2 className="mb-4 text-xs font-semibold uppercase tracking-wide text-ink-soft">Call Notes</h2>
+              <div className={`mt-4 ${recordCardClass}`}>
+                <RecordSectionTitle>Call Notes</RecordSectionTitle>
                 <InlineEditRow
                   label="Notes"
                   value={call.description}
@@ -260,7 +261,7 @@ export default function CallDetail({ call, onCallChange, returnTo = null, onNoti
                 />
               </div>
 
-              <div className="mt-4 rounded-lg border border-line bg-surface p-6">
+              <div className={`mt-4 ${recordCardClass}`}>
                 <div className="mb-4 flex items-center justify-between gap-3">
                   <h2 className="text-xs font-semibold uppercase tracking-wide text-ink-soft">
                     Other calls with {recordName}
@@ -304,9 +305,9 @@ export default function CallDetail({ call, onCallChange, returnTo = null, onNoti
                 )}
               </div>
 
-              <div className="mt-4 rounded-lg border border-line bg-surface p-6">
-                <h2 className="mb-4 text-xs font-semibold uppercase tracking-wide text-ink-soft">System Information</h2>
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div className={`mt-4 ${recordCardClass}`}>
+                <RecordSectionTitle>System Information</RecordSectionTitle>
+                <div className={recordGridClass}>
                   <InlineEditRow label="Logged At" value={formatDateTime(call.created_at)} editable={false} />
                   <InlineEditRow label="Last Updated" value={formatDateTime(call.updated_at)} editable={false} />
                 </div>

@@ -11,7 +11,7 @@ import ContactSummaryCard from "@/features/contacts/components/ContactSummaryCar
 import RecordTimeline from "@/shared/components/RecordTimeline";
 import InlineEditRow from "@/shared/components/InlineEditRow";
 import { Tabs } from "@/shared/components/Tabs";
-import { RecordSection } from "@/shared/components/RecordSection";
+import { RecordSection, RecordSectionTitle, recordCardClass, recordGridClass } from "@/shared/components/RecordSection";
 import { formatDateTime } from "@/shared/utils/formatDate";
 
 import { useContactPicklists } from "@/features/picklists/hooks/useLeadPicklists";
@@ -131,9 +131,9 @@ export default function ContactDetail({ contact, onContactChange }: ContactDetai
         />
       ) : (
         <div className="animate-fade-in">
-          <div className="mt-4 rounded-lg border border-line bg-surface p-6">
-            <h2 className="mb-4 text-xs font-semibold uppercase tracking-wide text-ink-soft">Overview</h2>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div className={`mt-4 ${recordCardClass}`}>
+            <RecordSectionTitle>Overview</RecordSectionTitle>
+            <div className={recordGridClass}>
               <Row label="Contact Owner" value={contact.contact_owner_name} editable={false} />
               <Row label="Account" value={contact.account_name} editable={false} />
               <Row label="Email" value={contact.email} onSave={(raw) => updateField("email", raw)} />

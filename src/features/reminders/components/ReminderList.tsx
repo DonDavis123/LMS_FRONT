@@ -5,6 +5,7 @@ import { AlarmClock, Trash2 } from "lucide-react";
 import Switch from "@/shared/components/Switch";
 import type { Reminder } from "@/features/reminders/types/reminder.types";
 import { formatLocalDateAndTime } from "@/shared/utils/dateTime";
+import { CreateButtonLabel, createButtonClass } from "@/shared/components/FormLayout";
 
 interface ReminderListProps {
   reminders: Reminder[];
@@ -20,9 +21,6 @@ interface ReminderListProps {
   backHref?: string | null;
   backLabel?: string;
 }
-
-const createButtonClass =
-  "whitespace-nowrap rounded-md bg-amber px-3 py-1.5 text-sm font-semibold text-fg transition hover:bg-amber-dark active:scale-[0.98]";
 
 export default function ReminderList({
   reminders,
@@ -51,7 +49,7 @@ export default function ReminderList({
           </p>
         </div>
         <button type="button" onClick={onCreateClick} className={createButtonClass}>
-          + Create Reminder
+          <CreateButtonLabel>Create Reminder</CreateButtonLabel>
         </button>
       </div>
 
@@ -76,9 +74,9 @@ export default function ReminderList({
             <button
               type="button"
               onClick={onCreateClick}
-              className="mt-1 rounded-md bg-ink px-4 py-2 text-sm font-semibold text-white transition hover:bg-ink-2 active:scale-[0.98]"
+              className={`mt-1 ${createButtonClass} !px-4 !py-2`}
             >
-              + Create Reminder
+              <CreateButtonLabel>Create Reminder</CreateButtonLabel>
             </button>
           </div>
         )

@@ -13,6 +13,7 @@ import { MeetingService } from "@/features/meetings/services/MeetingService";
 import { RecordChip } from "@/features/meetings/components/SelectedRecordsField";
 import { confirmDelete } from "@/shared/utils/confirmDelete";
 import { useSelectionKeyboard } from "@/shared/hooks/useSelectionKeyboard";
+import { CreateButtonLabel, createButtonClass } from "@/shared/components/FormLayout";
 
 interface MeetingListProps {
   meetings: MeetingListItem[];
@@ -179,9 +180,9 @@ export default function MeetingList({
           <button
             type="button"
             onClick={onCreateClick}
-            className="whitespace-nowrap rounded-md bg-amber px-3 py-1.5 text-sm font-semibold text-fg transition hover:bg-amber-dark active:scale-[0.98]"
+            className={createButtonClass}
           >
-            + Create Meeting
+            <CreateButtonLabel>Create Meeting</CreateButtonLabel>
           </button>
         </div>
       </div>
@@ -220,9 +221,9 @@ export default function MeetingList({
           <button
             type="button"
             onClick={onCreateClick}
-            className="mt-1 rounded-md bg-ink px-4 py-2 text-sm font-semibold text-white transition hover:bg-ink-2 active:scale-[0.98]"
+            className={`mt-1 ${createButtonClass} !px-4 !py-2`}
           >
-            + Create Meeting
+            <CreateButtonLabel>Create Meeting</CreateButtonLabel>
           </button>
         </div>
       ) : (

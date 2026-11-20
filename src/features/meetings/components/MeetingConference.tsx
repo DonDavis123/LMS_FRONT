@@ -13,6 +13,7 @@ import type {
   Meeting,
   MeetingConferenceFields,
 } from "@/features/meetings/types/meeting.types";
+import { RecordSectionTitle, recordCardClass } from "@/shared/components/RecordSection";
 
 interface Props {
   meeting: Meeting;
@@ -117,10 +118,10 @@ export default function MeetingConference({ meeting, onMeetingChange }: Props) {
   );
 
   return (
-    <div className="mt-4 rounded-lg border border-line bg-surface p-6">
-      <h2 className="mb-4 text-xs font-semibold uppercase tracking-wide text-ink-soft">
+    <div className={`mt-4 ${recordCardClass}`}>
+      <RecordSectionTitle>
         Google Meet
-      </h2>
+      </RecordSectionTitle>
 
       {status === "created" && meeting.meet_link ? (
         <div>

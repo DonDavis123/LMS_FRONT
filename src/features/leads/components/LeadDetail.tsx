@@ -10,7 +10,7 @@ import LeadSummaryCard from "@/features/leads/components/LeadSummaryCard";
 import RecordTimeline from "@/shared/components/RecordTimeline";
 import InlineEditRow from "@/shared/components/InlineEditRow";
 import { Tabs } from "@/shared/components/Tabs";
-import { RecordSection } from "@/shared/components/RecordSection";
+import { RecordSection, RecordSectionTitle, recordCardClass, recordGridClass } from "@/shared/components/RecordSection";
 import { formatDateTime } from "@/shared/utils/formatDate";
 import { useLeadPicklists } from "@/features/picklists/hooks/useLeadPicklists";
 import { toSelectOptions } from "@/features/picklists/utils/optionHelpers";
@@ -180,11 +180,11 @@ async function handleStatusClick(status: LeadStatus) {
           />
 
           {/* Overview */}
-          <div className="mt-4 rounded-lg border border-line bg-surface p-6">
-            <h2 className="mb-4 text-xs font-semibold uppercase tracking-wide text-ink-soft">
+          <div className={`mt-4 ${recordCardClass}`}>
+            <RecordSectionTitle>
               Overview
-            </h2>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            </RecordSectionTitle>
+            <div className={recordGridClass}>
               <Row label="Lead Owner" value={lead.owner?.name} editable={false} />
               <Row label="Email" value={lead.email} onSave={(raw) => updateField("email", raw)} />
               <Row label="Phone" value={lead.phone} onSave={(raw) => updateField("phone", raw)} />

@@ -32,6 +32,7 @@ import { useBulkMail } from "@/features/mailing/hooks/useBulkMail";
 import RowCallButton from "@/features/calls/components/RowCallButton";
 import ServerPagination from "@/shared/components/ServerPagination";
 import type { PaginationMeta } from "@/shared/types/pagination";
+import { CreateButtonLabel, createButtonClass } from "@/shared/components/FormLayout";
 
 interface LeadListProps {
   leads: Lead[];
@@ -236,9 +237,9 @@ export default function LeadList({
           )}
           <Link
             href="/dashboard/leads/new"
-            className="whitespace-nowrap rounded-md bg-amber px-3 py-1.5 text-sm font-semibold text-fg transition hover:bg-amber-dark active:scale-[0.98]"
+            className={createButtonClass}
           >
-            + Create Lead
+            <CreateButtonLabel>Create Lead</CreateButtonLabel>
           </Link>
         </div>
       </div>
@@ -424,9 +425,9 @@ function EmptyState({ hasFilters }: { hasFilters: boolean }) {
       {!hasFilters && (
         <Link
           href="/dashboard/leads/new"
-          className="mt-1 rounded-md bg-ink px-4 py-2 text-sm font-semibold text-white transition hover:bg-ink-2 active:scale-[0.98]"
+          className={`mt-1 ${createButtonClass} !px-4 !py-2`}
         >
-          + Create Lead
+          <CreateButtonLabel>Create Lead</CreateButtonLabel>
         </Link>
       )}
     </div>

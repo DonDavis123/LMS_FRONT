@@ -11,7 +11,7 @@ import AccountSummaryCard from "@/features/accounts/components/AccountSummaryCar
 import RecordTimeline from "@/shared/components/RecordTimeline";
 import InlineEditRow from "@/shared/components/InlineEditRow";
 import { Tabs } from "@/shared/components/Tabs";
-import { RecordSection } from "@/shared/components/RecordSection";
+import { RecordSection, RecordSectionTitle, recordCardClass, recordGridClass } from "@/shared/components/RecordSection";
 import { formatDateTime } from "@/shared/utils/formatDate";
 import type { AccountContactSummary } from "@/features/accounts/types/account.types";
 import { useAccountPicklists } from "@/features/picklists/hooks/useLeadPicklists";
@@ -179,9 +179,9 @@ export default function AccountDetail({ account, onAccountChange }: AccountDetai
         <RecordTimeline module="accounts" recordId={account.id} showLeadOrigin />
       ) : (
         <div className="animate-fade-in">
-          <div className="mt-4 rounded-lg border border-line bg-surface p-6">
-            <h2 className="mb-4 text-xs font-semibold uppercase tracking-wide text-ink-soft">Overview</h2>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div className={`mt-4 ${recordCardClass}`}>
+            <RecordSectionTitle>Overview</RecordSectionTitle>
+            <div className={recordGridClass}>
               <Row label="Account Owner" value={account.account_owner_name} editable={false} />
               <Row label="Website" value={account.website} onSave={(raw) => updateField("website", raw)} />
               <Row label="Phone" value={account.phone} onSave={(raw) => updateField("phone", raw)} />
@@ -239,7 +239,7 @@ export default function AccountDetail({ account, onAccountChange }: AccountDetai
                   <Row label="Description" value={account.description} type="textarea" onSave={(raw) => updateField("description", raw)} fullWidth />
                 </RecordSection>
 
-          <div className="mt-4 rounded-lg border border-line bg-surface p-6">
+          <div className={`mt-4 ${recordCardClass}`}>
             <h3 className="mb-4 text-xs font-semibold uppercase tracking-wide text-ink-soft">Associated Contacts</h3>
             {associatedContacts.length === 0 ? (
               <p className="text-sm text-ink-soft">No contacts are associated with this account.</p>

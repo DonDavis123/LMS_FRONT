@@ -22,6 +22,7 @@ import { DEAL_STAGES } from "@/features/deals/utils/dealStages";
 import { formatCloseDate, isOverdue } from "@/features/deals/utils/dealDates";
 import { formatCurrency } from "@/features/deals/utils/formatCurrency";
 import DealStageBadge from "@/features/deals/components/DealStageBadge";
+import { CreateButtonLabel, createButtonClass } from "@/shared/components/FormLayout";
 
 interface DealListProps {
   deals: Deal[];
@@ -185,9 +186,9 @@ export default function DealList({
             <button
               type="button"
               onClick={onCreateClick}
-              className="mt-1 rounded-md bg-ink px-4 py-2 text-sm font-semibold text-white transition hover:bg-ink-2 active:scale-[0.98]"
+              className={`mt-1 ${createButtonClass} !px-4 !py-2`}
             >
-              + Create Deal
+              <CreateButtonLabel>Create Deal</CreateButtonLabel>
             </button>
           )}
         </div>
