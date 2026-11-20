@@ -186,7 +186,7 @@ export default function TaskList({
   function relatedLabel(task: Task): string {
     if (task.lead_id) return task.lead_name ? `Lead: ${task.lead_name}` : "Lead";
     if (task.contact_id) return task.contact_name ? `Contact: ${task.contact_name}` : "Contact";
-    if (task.account_id) return task.account_name ? `Account: ${task.account_name}` : "Account";
+    if (task.account_id) return task.account_name ? `Company: ${task.account_name}` : "Company";
     return "—";
   }
 
@@ -236,7 +236,7 @@ export default function TaskList({
           <p className="max-w-sm text-sm text-ink-soft">
             {filters.length > 0
               ? "Try a different search term, or remove a filter."
-              : "Create a task to follow up on a lead, contact, or account."}
+              : "Create a task to follow up on a lead, contact, or company."}
           </p>
           {!(filters.length > 0) && (
             <button

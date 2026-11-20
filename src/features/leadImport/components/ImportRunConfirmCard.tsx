@@ -47,7 +47,7 @@ export default function ImportRunConfirmCard({ summary, onStart, onBack }: Impor
           )}
           <Row label="Left out">{formatCount(summary.leftOut)} {plural(summary.leftOut, "row", "rows")}</Row>
           <Row label="Converted">
-            {formatCount(summary.converted)} {plural(summary.converted, "row", "rows")} will become an account and a contact
+            {formatCount(summary.converted)} {plural(summary.converted, "row", "rows")} will become a company and a contact
           </Row>
           <Row label="Owner">{summary.ownerText}</Row>
           <Row label="Duplicates">{summary.duplicateText}</Row>

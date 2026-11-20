@@ -25,7 +25,7 @@ export default function ActivityRelatedPicker({ value, onChange, includeAccount 
     ["", "None"],
     ["lead", "Lead"],
     ["contact", "Contact"],
-    ...(includeAccount ? ([["account", "Account"]] as const) : []),
+    ...(includeAccount ? ([["account", "Company"]] as const) : []),
   ];
 
   function choose(next: RelatedType) {

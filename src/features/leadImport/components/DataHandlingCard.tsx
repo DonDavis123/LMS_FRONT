@@ -14,8 +14,8 @@ interface DataHandlingCardProps {
 }
 
 const ACCOUNT_OPTIONS: SelectOption[] = [
-  { value: "use_existing", label: "Reuse an account with the same company name" },
-  { value: "create_new", label: "Always create a new account" },
+  { value: "use_existing", label: "Reuse a company with the same company name" },
+  { value: "create_new", label: "Always create a new company" },
 ];
 const CONTACT_OPTIONS: SelectOption[] = [
   { value: "use_existing", label: "Reuse a contact with the same email or phone" },
@@ -82,19 +82,19 @@ export default function DataHandlingCard({ options, hasConvertedColumn, onPatch 
 
       {hasConvertedColumn && (
         <div className="mt-4 border-t border-line pt-4">
-          <h4 className="text-xs font-semibold uppercase tracking-wide text-ink-soft">Accounts and contacts</h4>
+          <h4 className="text-xs font-semibold uppercase tracking-wide text-ink-soft">Companies and contacts</h4>
           <p className="mt-1 text-sm text-fg">
-            New rows marked yes, true, 1 or converted become an Account and a Contact, like the Convert Lead button, and
+            New rows marked yes, true, 1 or converted become a Company and a Contact, like the Convert Lead button, and
             the lead is kept as converted.
           </p>
           <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2">
             <div className="min-w-0 space-y-1">
-              <p className="text-xs font-medium text-fg">Accounts</p>
+              <p className="text-xs font-medium text-fg">Companies</p>
               <Select
                 value={options.account_match}
                 options={ACCOUNT_OPTIONS}
                 onChange={(value) => onPatch({ account_match: value as AccountContactMatch })}
-                ariaLabel="Accounts for converted rows"
+                ariaLabel="Companies for converted rows"
               />
             </div>
             <div className="min-w-0 space-y-1">

@@ -220,7 +220,7 @@ export default function CallDetail({ call, onCallChange, returnTo = null, onNoti
                       </Link>
                     </p>
                   </div>
-                  <InlineEditRow label="Account" value={call.account_name} editable={false} />
+                  <InlineEditRow label="Company" value={call.account_name} editable={false} />
                   <InlineEditRow
                     label="Call Type"
                     value={call.call_type}

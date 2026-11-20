@@ -61,7 +61,7 @@ export default function TaskDetail({ task, onTaskChange, returnTo = null }: Prop
     catch { window.alert("Couldn't delete this task. Try again."); }
   }
 
-  const related = task.lead_id ? `Lead: ${task.lead_name || task.lead_id}` : task.contact_id ? `Contact: ${task.contact_name || task.contact_id}` : task.account_id ? `Account: ${task.account_name || task.account_id}` : "—";
+  const related = task.lead_id ? `Lead: ${task.lead_name || task.lead_id}` : task.contact_id ? `Contact: ${task.contact_name || task.contact_id}` : task.account_id ? `Company: ${task.account_name || task.account_id}` : "—";
 
   return (
     <div className="mx-auto max-w-5xl">

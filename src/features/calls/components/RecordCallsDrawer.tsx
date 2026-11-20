@@ -31,7 +31,7 @@ const PAGE_SIZE = 10;
 const KIND_LABEL: Record<CallRecordKind, string> = {
   lead: "Lead",
   contact: "Contact",
-  account: "Account",
+  account: "Company",
 };
 
 /**
@@ -143,7 +143,7 @@ export default function RecordCallsDrawer({
           />
           {kind === "account" && (
             <p className="mt-2 text-xs text-ink-soft">
-              A call is logged against a contact — pick one of this account&apos;s contacts in the form.
+              A call is logged against a contact — pick one of this company&apos;s contacts in the form.
             </p>
           )}
         </div>
@@ -217,7 +217,7 @@ export default function RecordCallsDrawer({
                           <dd className="text-fg">{call.entry_method === "TIMER" ? "Call timer" : "Manual entry"}</dd>
                           {call.account_name && (
                             <>
-                              <dt className="text-ink-soft">Account</dt>
+                              <dt className="text-ink-soft">Company</dt>
                               <dd className="text-fg">{call.account_name}</dd>
                             </>
                           )}

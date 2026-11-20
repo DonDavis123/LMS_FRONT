@@ -110,19 +110,19 @@ const ACCOUNT_FIELDS: PicklistFieldMeta[] = [
   {
     field: "industry",
     label: "Industry",
-    description: "The industry an account belongs to.",
+    description: "The industry a company belongs to.",
     maxLength: 150,
   },
   {
     field: "rating",
     label: "Rating",
-    description: "How an account is rated.",
+    description: "How a company is rated.",
     maxLength: 100,
   },
   {
     field: "ownership",
     label: "Ownership",
-    description: "How an account is owned, e.g. Private or Public.",
+    description: "How a company is owned, e.g. Private or Public.",
     maxLength: 50,
   },
 ];
@@ -138,9 +138,9 @@ export const PICKLIST_MODULES: PicklistModuleMeta[] = [
   },
   {
     module: "accounts",
-    label: "Accounts",
-    recordSingular: "account",
-    recordPlural: "accounts",
+    label: "Companies",
+    recordSingular: "company",
+    recordPlural: "companies",
     fields: ACCOUNT_FIELDS,
   },
 ];

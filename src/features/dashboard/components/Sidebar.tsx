@@ -33,7 +33,7 @@ interface SidebarProps {
 const NAV_ITEMS = [
   { href: "/dashboard/leads", label: "Leads", icon: UsersIcon },
   { href: "/dashboard/contacts", label: "Contacts", icon: Contact2 },
-  { href: "/dashboard/accounts", label: "Accounts", icon: Building2 },
+  { href: "/dashboard/accounts", label: "Companies", icon: Building2 },
   { href: "/dashboard/deals", label: "Deals", icon: Handshake },
 ];
 

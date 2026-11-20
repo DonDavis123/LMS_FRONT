@@ -43,7 +43,7 @@ export default function AccountSummaryCard({
       // the account name still prefixes the follow-up so it keeps its context.
       personType: "",
       personId: "",
-      personLabel: accountName || "Account",
+      personLabel: accountName || "Company",
       accountId,
       accountLabel: accountName || "",
     }),
@@ -51,12 +51,12 @@ export default function AccountSummaryCard({
   );
 
   const bodyId = `account-summary-${accountId}`;
-  const followUpSource = accountName ? `account summary of ${accountName}` : "account summary";
+  const followUpSource = accountName ? `company summary of ${accountName}` : "company summary";
   const expanded = Boolean(summary) && open;
 
   return (
     <section
-      aria-label="Account summary"
+      aria-label="Company summary"
       className="mt-3 overflow-hidden rounded-xl border border-line bg-surface shadow-[0_1px_2px_rgba(18,33,58,0.04)]"
     >
       {/* Header row — the only thing visible until a summary exists */}
@@ -69,15 +69,15 @@ export default function AccountSummaryCard({
         </span>
 
         <div className="min-w-0 flex-1">
-          <h2 className="text-sm font-semibold leading-tight text-fg">Account summary</h2>
+          <h2 className="text-sm font-semibold leading-tight text-fg">Company summary</h2>
           <p className="truncate text-xs leading-snug text-ink-soft">
             {summary
               ? `Updated ${formatDateTime(summary.generated_at)}`
               : loading
-                ? "Reading the account's history…"
+                ? "Reading the company's history…"
                 : loadingStored
                   ? "Loading the saved summary…"
-                  : "A quick briefing: where this account stands and what to do next."}
+                  : "A quick briefing: where this company stands and what to do next."}
           </p>
         </div>
 

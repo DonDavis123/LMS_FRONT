@@ -157,7 +157,7 @@ export default function AccountForm({ mode, initialAccount, onSubmit, onCancel }
     const { documents, error: documentError } = buildDocumentPayload(documentDrafts);
     // Collect every problem so the banner lists them all, not just the first.
     const problems = [
-      ...(form.account_name.trim() ? [] : ["Account Name is required."]),
+      ...(form.account_name.trim() ? [] : ["Company Name is required."]),
       ...(mode === "create" && documentError ? [documentError] : []),
       ...allContactFieldErrors([["phone", form.phone, true]]),
     ];
@@ -193,7 +193,7 @@ export default function AccountForm({ mode, initialAccount, onSubmit, onCancel }
         ...(mode === "create" && documents.length > 0 ? { documents } : {}),
       });
     } catch (submitError) {
-      setError(extractApiErrors(submitError, "Couldn't save this account. Check the fields and try again."));
+      setError(extractApiErrors(submitError, "Couldn't save this company. Check the fields and try again."));
       setIsSubmitting(false);
     }
   }
@@ -201,8 +201,8 @@ export default function AccountForm({ mode, initialAccount, onSubmit, onCancel }
   return (
     <form onSubmit={handleSubmit}>
       <FormHeader
-        title={mode === "create" ? "Create Account" : "Edit Account"}
-        subtitle={mode === "create" ? "Add a company or organisation." : "Update this account's details."}
+        title={mode === "create" ? "Create Company" : "Edit Company"}
+        subtitle={mode === "create" ? "Add a company or organisation." : "Update this company's details."}
       >
         <button type="button" onClick={onCancel} className={secondaryButtonClass}>
           Cancel
@@ -218,8 +218,8 @@ export default function AccountForm({ mode, initialAccount, onSubmit, onCancel }
         <FormErrorMessage message={error} errorRef={errorRef} />
       )}
 
-      <Section title="Account Information">
-        <Field label="Account Owner">
+      <Section title="Company Information">
+        <Field label="Company Owner">
           <OwnerPicker
             owners={owners}
             value={form.owner_id}
@@ -230,7 +230,7 @@ export default function AccountForm({ mode, initialAccount, onSubmit, onCancel }
             }}
           />
         </Field>
-        <Field label="Account Name" required>
+        <Field label="Company Name" required>
           <input
             value={form.account_name}
             onChange={(e) => update("account_name", e.target.value)}
@@ -239,14 +239,14 @@ export default function AccountForm({ mode, initialAccount, onSubmit, onCancel }
           />
         </Field>
 
-        <Field label="Account Site">
+        <Field label="Company Site">
           <input
             value={form.account_site}
             onChange={(e) => update("account_site", e.target.value)}
             className={inputClass}
           />
         </Field>
-        <Field label="Account Number">
+        <Field label="Company Number">
           <input
             value={form.account_number}
             onChange={(e) => update("account_number", e.target.value)}
@@ -254,7 +254,7 @@ export default function AccountForm({ mode, initialAccount, onSubmit, onCancel }
           />
         </Field>
 
-        <Field label="Account Type">
+        <Field label="Company Type">
           <input
             value={form.account_type}
             onChange={(e) => update("account_type", e.target.value)}

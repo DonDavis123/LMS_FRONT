@@ -11,7 +11,7 @@ export default function UndoResultView({ result }: { result: UndoResult }) {
   const counts = result.undo_report?.counts;
   const rows: Array<[string, number]> = [
     ["Leads removed", num(counts?.leads_removed)],
-    ["Accounts removed", num(counts?.accounts_removed)],
+    ["Companies removed", num(counts?.accounts_removed)],
     ["Contacts removed", num(counts?.contacts_removed)],
     ["Leads restored", num(counts?.leads_restored)],
     ["Left alone", num(counts?.left_alone)],

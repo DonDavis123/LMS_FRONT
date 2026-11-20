@@ -53,7 +53,7 @@ const SKIP_LABELS: Record<MailSkipReason, string> = {
   OPTED_OUT: "Opted out of email",
   DUPLICATE_EMAIL: "Duplicate address",
   NOT_FOUND: "No longer available",
-  NO_CONTACTS: "Account has no contacts",
+  NO_CONTACTS: "Company has no contacts",
 };
 
 const SKIPPED_NAMES_SHOWN = 25;
@@ -61,7 +61,7 @@ const SKIPPED_NAMES_SHOWN = 25;
 const ENTITY_NOUN: Record<MailEntity, string> = {
   contacts: "contacts",
   leads: "leads",
-  accounts: "accounts",
+  accounts: "companies",
 };
 
 function noop() {}
@@ -219,7 +219,7 @@ export default function BulkMailDialog({ entity, selection, mailer, onClose }: B
             Send mail to selected {noun}
           </h2>
           {entity === "accounts" && (
-            <p className="mt-1 text-sm text-ink-soft">Accounts are mailed through their contacts.</p>
+            <p className="mt-1 text-sm text-ink-soft">Companies are mailed through their contacts.</p>
           )}
         </div>
 

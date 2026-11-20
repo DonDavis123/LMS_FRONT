@@ -39,7 +39,7 @@ function readOrigin(searchParams: URLSearchParams): Origin | null {
 export default function ConvertedLeadHistory({ lead }: ConvertedLeadHistoryProps) {
   const searchParams = useSearchParams();
   const origin = readOrigin(searchParams);
-  const originLabel = origin?.kind === "accounts" ? "Account" : "Contact";
+  const originLabel = origin?.kind === "accounts" ? "Company" : "Contact";
   const backHref = origin ? `/dashboard/${origin.kind}/${origin.id}` : null;
 
   return (
@@ -81,7 +81,7 @@ export default function ConvertedLeadHistory({ lead }: ConvertedLeadHistoryProps
             This lead has been converted, so it&apos;s history only and can&apos;t be edited.
             {backHref
               ? ` To make changes, update the ${originLabel.toLowerCase()}.`
-              : " To make changes, update its Contact or Account."}
+              : " To make changes, update its Contact or Company."}
           </span>
         </p>
         <div className="flex shrink-0 flex-wrap gap-2">
@@ -104,7 +104,7 @@ export default function ConvertedLeadHistory({ lead }: ConvertedLeadHistoryProps
                 href="/dashboard/accounts"
                 className="rounded-md border border-line px-4 py-2 text-sm font-medium text-fg hover:bg-paper"
               >
-                Go to Accounts
+                Go to Companies
               </Link>
             </>
           )}

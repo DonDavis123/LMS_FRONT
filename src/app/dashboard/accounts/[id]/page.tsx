@@ -28,7 +28,7 @@ function AccountDetailPageInner() {
         if (!cancelled) setAccount(data);
       })
       .catch(() => {
-        if (!cancelled) setError("Couldn't load this account.");
+        if (!cancelled) setError("Couldn't load this company.");
       });
     return () => {
       cancelled = true;
@@ -46,8 +46,8 @@ function AccountDetailPageInner() {
   
       router.push(withReturnTo(`/dashboard/accounts/${params.id}`, returnTo));
     } catch (error) {
-      console.error("Failed to update account:", error);
-      setError("Couldn't update this account.");
+      console.error("Failed to update company:", error);
+      setError("Couldn't update this company.");
     }
   }
 

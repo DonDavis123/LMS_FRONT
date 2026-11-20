@@ -158,7 +158,7 @@ export default function DealForm({
       return;
     }
     if (!form.account_id && !form.contact_id) {
-      setError("Select an account or a contact for this deal.");
+      setError("Select a company or a contact for this deal.");
       return;
     }
     const probability = Number(form.probability);
@@ -289,13 +289,13 @@ export default function DealForm({
             />
           </Field>
 
-          <Field label="Account">
+          <Field label="Company">
             <RecordPicker
               kind="account"
               value={form.account_id}
               label={form.accountLabel}
-              placeholder="Select account…"
-              ariaLabel="Account"
+              placeholder="Select company…"
+              ariaLabel="Company"
               onChange={(id, label) => {
                 update("account_id", id);
                 update("accountLabel", label);
@@ -317,7 +317,7 @@ export default function DealForm({
             />
           </Field>
 
-          <p className="text-xs text-ink-soft sm:col-span-2">Link the deal to an account, a contact, or both — at least one is required.</p>
+          <p className="text-xs text-ink-soft sm:col-span-2">Link the deal to a company, a contact, or both — at least one is required.</p>
 
           <Field label="Description" fullWidth>
             <textarea

@@ -50,7 +50,7 @@ export default function ExportMenu({ entity, noun, query, total, disabled = fals
   const isEmpty = total === 0;
   const tooLarge = total > MAX_EXPORT_ROWS;
   const blocked = isEmpty || tooLarge;
-  const singular = total === 1 ? noun.replace(/s$/, "") : noun;
+  const singular = total === 1 ? noun.replace(/ies$/, "y").replace(/s$/, "") : noun;
 
   const close = useCallback(() => {
     setOpen(false);

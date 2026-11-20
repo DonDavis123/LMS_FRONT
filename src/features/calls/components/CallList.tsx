@@ -85,7 +85,7 @@ export default function CallList({
           { value: "CONTACT", label: "Contact" },
         ],
       },
-      { field: "account_name", label: "Account", type: "text" },
+      { field: "account_name", label: "Company", type: "text" },
       { field: "outcome", label: "Outcome", type: "choice", choices: toChoices(CALL_OUTCOMES) },
       { field: "call_type", label: "Call Type", type: "choice", choices: toChoices(CALL_TYPES) },
       { field: "call_start_time", label: "Call Date", type: "date" },

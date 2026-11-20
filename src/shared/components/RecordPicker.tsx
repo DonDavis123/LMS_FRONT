@@ -41,7 +41,7 @@ interface RecordPickerProps {
   ariaLabel?: string;
 }
 
-const KIND_PLURAL: Record<RecordKind, string> = { lead: "leads", contact: "contacts", account: "accounts" };
+const KIND_PLURAL: Record<RecordKind, string> = { lead: "leads", contact: "contacts", account: "companies" };
 
 const TRIGGER_CLASS = {
   box: "flex w-full items-center justify-between gap-2 rounded-lg border border-line bg-surface px-3.5 py-2.5 text-left text-sm shadow-sm outline-none transition hover:border-slate/50 focus:border-slate focus:ring-4 focus:ring-slate/15 disabled:opacity-60",

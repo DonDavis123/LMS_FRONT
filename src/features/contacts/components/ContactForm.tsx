@@ -317,7 +317,7 @@ export default function ContactForm({ mode, initialContact, onSubmit, onCancel }
         lessLabel="Show fewer fields"
       >
         <Section title="More Details">
-        <Field label="Account Name">
+        <Field label="Company Name">
           <RecordPicker
             kind="account"
             value={form.account_id}
@@ -327,8 +327,8 @@ export default function ContactForm({ mode, initialContact, onSubmit, onCancel }
               update("accountLabel", label);
             }}
             onCreate={() => router.push("/dashboard/accounts/new")}
-            createLabel="New Account"
-            placeholder="No account"
+            createLabel="New Company"
+            placeholder="No company"
           />
         </Field>
         <Field label="Title">

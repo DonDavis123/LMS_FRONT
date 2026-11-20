@@ -57,7 +57,7 @@ function AccountsPageInner() {
         }
       })
       .catch(() => {
-        if (!cancelled) setError("Couldn't load accounts from the server.");
+        if (!cancelled) setError("Couldn't load companies from the server.");
       })
       .finally(() => {
         if (!cancelled) setIsLoading(false);
@@ -71,9 +71,9 @@ function AccountsPageInner() {
   useEffect(() => {
     const createdId = searchParams.get("created");
     const message = createdId
-      ? "Account created successfully"
+      ? "Company created successfully"
       : searchParams.get("updated") === "1"
-      ? "Account updated successfully"
+      ? "Company updated successfully"
       : null;
 
     if (message) {

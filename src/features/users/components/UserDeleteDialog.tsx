@@ -330,7 +330,7 @@ function ImpactSummary({ preview }: { preview: UserDeletionPreview }) {
   const transferRows = [
     transfer.leads && plural(impact.leads, "lead"),
     transfer.contacts && plural(impact.contacts, "contact"),
-    transfer.accounts && plural(impact.accounts, "account"),
+    transfer.accounts && plural(impact.accounts, "company", "companies"),
     transfer.meetings && plural(impact.meetings, "hosted meeting"),
   ].filter((row): row is string => Boolean(row));
 

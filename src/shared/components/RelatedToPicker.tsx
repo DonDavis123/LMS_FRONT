@@ -58,17 +58,17 @@ export default function RelatedToPicker({ value, onChange, disableAccountForLead
       </div>
 
       <div>
-        <p className="mb-1.5 text-sm font-medium text-fg">Account</p>
+        <p className="mb-1.5 text-sm font-medium text-fg">Company</p>
         <RecordPicker
           kind="account"
           value={value.accountId}
           label={value.accountLabel}
           onChange={(id, label) => onChange({ ...value, accountId: id, accountLabel: label })}
-          placeholder={accountLocked ? "Not available for leads" : "Select an account…"}
+          placeholder={accountLocked ? "Not available for leads" : "Select a company…"}
           disabled={accountLocked}
         />
         {accountLocked && (
-          <span className="mt-1.5 block text-xs text-ink-soft">Accounts can only be linked to a call with a contact.</span>
+          <span className="mt-1.5 block text-xs text-ink-soft">Companies can only be linked to a call with a contact.</span>
         )}
       </div>
     </div>

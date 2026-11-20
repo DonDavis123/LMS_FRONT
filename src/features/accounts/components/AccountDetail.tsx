@@ -102,14 +102,14 @@ export default function AccountDetail({ account, onAccountChange }: AccountDetai
       await AccountService.deleteAccount(account.id);
       router.push("/dashboard/accounts");
     } catch {
-      window.alert("Couldn't delete this account. Try again.");
+      window.alert("Couldn't delete this company. Try again.");
     }
   }
 
   return (
     <div className="mx-auto max-w-5xl">
       <Link href={returnTo ?? "/dashboard/accounts"} className="text-sm text-slate hover:text-fg">
-        {returnTo ? "← Back to Lead Conversion" : "← Back to Accounts"}
+        {returnTo ? "← Back to Lead Conversion" : "← Back to Companies"}
       </Link>
 
       <div className="mt-3 flex items-center justify-between gap-4">
@@ -118,14 +118,14 @@ export default function AccountDetail({ account, onAccountChange }: AccountDetai
             {account.account_name?.trim()?.charAt(0).toUpperCase() || "?"}
           </div>
           <div>
-            <h1 className="font-serif text-2xl text-fg">{account.account_name || "Unnamed Account"}</h1>
-            <p className="text-sm text-ink-soft">{account.industry || "Account"}</p>
+            <h1 className="font-serif text-2xl text-fg">{account.account_name || "Unnamed Company"}</h1>
+            <p className="text-sm text-ink-soft">{account.industry || "Company"}</p>
           </div>
         </div>
 
         <div className="flex flex-wrap items-center justify-end gap-2">
           <CreateTaskFromRecord related={{ personType: "", personId: "", personLabel: "", accountId: account.id, accountLabel: account.account_name }} />
-          <SendMailButton entity="accounts" recordId={account.id} recordName={account.account_name || "Account"} />
+          <SendMailButton entity="accounts" recordId={account.id} recordName={account.account_name || "Company"} />
           <Link
             href={`/dashboard/accounts/${account.id}?edit=1`}
             className="rounded-md border border-line px-4 py-2 text-sm font-medium text-fg hover:bg-paper"
@@ -137,7 +137,7 @@ export default function AccountDetail({ account, onAccountChange }: AccountDetai
               type="button"
               onClick={() => setIsMenuOpen((v) => !v)}
               className="rounded-md border border-line p-2 text-ink-soft hover:bg-paper"
-              aria-label="Account actions"
+              aria-label="Company actions"
             >
               <MoreVertical size={16} />
             </button>
@@ -182,7 +182,7 @@ export default function AccountDetail({ account, onAccountChange }: AccountDetai
           <div className={`mt-4 ${recordCardClass}`}>
             <RecordSectionTitle>Overview</RecordSectionTitle>
             <div className={recordGridClass}>
-              <Row label="Account Owner" value={account.account_owner_name} editable={false} />
+              <Row label="Company Owner" value={account.account_owner_name} editable={false} />
               <Row label="Website" value={account.website} onSave={(raw) => updateField("website", raw)} />
               <Row label="Phone" value={account.phone} onSave={(raw) => updateField("phone", raw)} />
               <Row label="Industry" value={account.industry} type="select" options={toSelectOptions(picklists.industry, account.industry)} onSave={(raw) => updateField("industry", raw)} />
@@ -192,7 +192,7 @@ export default function AccountDetail({ account, onAccountChange }: AccountDetai
           <RecordDeals
             kind="account"
             recordId={account.id}
-            recordName={account.account_name || "this account"}
+            recordName={account.account_name || "this company"}
             returnTo={`/dashboard/accounts/${account.id}`}
           />
 
@@ -210,12 +210,12 @@ export default function AccountDetail({ account, onAccountChange }: AccountDetai
           <div className={`grid transition-[grid-template-rows] duration-300 ease-in-out ${showDetails ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}>
             <div className="overflow-hidden">
               <div className="mt-4 space-y-4">
-                <RecordSection title="Account Information">
-                  <Row label="Account Owner" value={account.account_owner_name} editable={false} />
-                  <Row label="Account Name" value={account.account_name} onSave={(raw) => updateField("account_name", raw)} />
-                  <Row label="Account Site" value={account.account_site} onSave={(raw) => updateField("account_site", raw)} />
-                  <Row label="Account Number" value={account.account_number} onSave={(raw) => updateField("account_number", raw)} />
-                  <Row label="Account Type" value={account.account_type} onSave={(raw) => updateField("account_type", raw)} />
+                <RecordSection title="Company Information">
+                  <Row label="Company Owner" value={account.account_owner_name} editable={false} />
+                  <Row label="Company Name" value={account.account_name} onSave={(raw) => updateField("account_name", raw)} />
+                  <Row label="Company Site" value={account.account_site} onSave={(raw) => updateField("account_site", raw)} />
+                  <Row label="Company Number" value={account.account_number} onSave={(raw) => updateField("account_number", raw)} />
+                  <Row label="Company Type" value={account.account_type} onSave={(raw) => updateField("account_type", raw)} />
                   <Row label="Ownership" value={account.ownership} type="select" options={toSelectOptions(picklists.ownership, account.ownership)} onSave={(raw) => updateField("ownership", raw)} />
                   <Row label="Website" value={account.website} onSave={(raw) => updateField("website", raw)} />
                   <Row label="Phone" value={account.phone} onSave={(raw) => updateField("phone", raw)} />
@@ -242,7 +242,7 @@ export default function AccountDetail({ account, onAccountChange }: AccountDetai
           <div className={`mt-4 ${recordCardClass}`}>
             <h3 className="mb-4 text-xs font-semibold uppercase tracking-wide text-ink-soft">Associated Contacts</h3>
             {associatedContacts.length === 0 ? (
-              <p className="text-sm text-ink-soft">No contacts are associated with this account.</p>
+              <p className="text-sm text-ink-soft">No contacts are associated with this company.</p>
             ) : (
               <div className="divide-y divide-line">
                 {associatedContacts.map((contact) => (

@@ -34,7 +34,7 @@ export const AccountService = {
       return data;
     }
 
-    throw new Error("Invalid accounts response from the server.");
+    throw new Error("Invalid companies response from the server.");
   },
 
   // Compatibility method for existing pickers/forms that need a plain array.
@@ -70,7 +70,7 @@ export const AccountService = {
     const { data } = await apiClient.delete<{ message?: string; detail?: string } | undefined>(
       `/accounts/${id}/delete/`
     );
-    return data?.message ?? data?.detail ?? "Account deleted successfully";
+    return data?.message ?? data?.detail ?? "Company deleted successfully";
   },
 
   // ---- Documents (name + URL links attached to an account) ----

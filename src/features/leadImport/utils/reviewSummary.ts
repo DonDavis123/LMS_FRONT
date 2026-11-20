@@ -94,7 +94,7 @@ export function extraSentence(numbers: ReviewNumbers): string | null {
   const parts: string[] = [];
   if (numbers.converted > 0) {
     parts.push(
-      `${formatCount(numbers.converted)} ${plural(numbers.converted, "row is", "rows are")} marked as converted and will be added with an account and a contact.`,
+      `${formatCount(numbers.converted)} ${plural(numbers.converted, "row is", "rows are")} marked as converted and will be added with a company and a contact.`,
     );
   }
   if (numbers.leftOut > 0) {
@@ -169,6 +169,6 @@ export function buildTiles(numbers: ReviewNumbers): TileInfo[] {
       filter: "error",
     },
     { id: "leftOut", label: "Left out", value: numbers.leftOut, detail: "Not imported", filter: "excluded" },
-    { id: "converted", label: "Converted", value: numbers.converted, detail: "With account and contact", filter: "converted" },
+    { id: "converted", label: "Converted", value: numbers.converted, detail: "With company and contact", filter: "converted" },
   ];
 }

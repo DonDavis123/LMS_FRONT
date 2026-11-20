@@ -214,7 +214,7 @@ export default function DealList({
                   <SortableHeader label="Stage" field="stage" sort={sort} onSortChange={onSortChange} />
                   <SortableHeader label="Probability" field="probability" sort={sort} onSortChange={onSortChange} />
                   <SortableHeader label="Expected Close" field="expected_close_date" sort={sort} onSortChange={onSortChange} />
-                  <th className="px-4 py-3">Account / Contact</th>
+                  <th className="px-4 py-3">Company / Contact</th>
                   <SortableHeader label="Owner" field="owner" sort={sort} onSortChange={onSortChange} />
                 </tr>
               </thead>

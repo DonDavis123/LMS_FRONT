@@ -331,7 +331,7 @@ export default function DealDetail({ deal, onDealChange, returnTo = null, initia
             </RecordSection>
 
             <RecordSection title="Related Records">
-              <LinkRow label="Account" name={deal.account_name} href={deal.account_id ? `/dashboard/accounts/${deal.account_id}` : null} />
+              <LinkRow label="Company" name={deal.account_name} href={deal.account_id ? `/dashboard/accounts/${deal.account_id}` : null} />
               <LinkRow label="Contact" name={deal.contact_name} href={deal.contact_id ? `/dashboard/contacts/${deal.contact_id}` : null} />
               <LinkRow
                 label="Source Lead"

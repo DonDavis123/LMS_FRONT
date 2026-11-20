@@ -152,11 +152,11 @@ export default function LeadConvert({ lead }: LeadConvertProps) {
     if (submittingRef.current) return;
 
     if (hasCompany && accountChoice === null) {
-      setError("Select an existing Account or choose Create a new Account.");
+      setError("Select an existing Company or choose Create a new Company.");
       return;
     }
     if (hasCompany && accountChoice === NEW && !lead.company_name.trim()) {
-      setError("A company name is required to create a new Account.");
+      setError("A company name is required to create a new Company.");
       return;
     }
     if (contactChoice === null) {
@@ -273,7 +273,7 @@ export default function LeadConvert({ lead }: LeadConvertProps) {
               <h1 className="mt-1 font-serif text-2xl text-fg">Convert {lead.name || "Lead"}</h1>
               <p className="mt-1 text-sm text-ink-soft">
                 {hasCompany ? <>Company: <span className="text-fg">{lead.company_name}</span> · </> : "No company · "}
-                Choose what to do with the Account and the Contact. Each decision is independent.
+                Choose what to do with the Company and the Contact. Each decision is independent.
               </p>
             </div>
           </div>
@@ -300,17 +300,17 @@ export default function LeadConvert({ lead }: LeadConvertProps) {
             <Step
               number={1}
               icon={<Building2 size={18} />}
-              title="Account"
+              title="Company"
               count={hasCompany ? accounts.length : 0}
             >
               {hasCompany ? (
                 <MatchGroup<MatchingAccount>
-                  kind="Account"
+                  kind="Company"
                   groupName="account-choice"
                   matches={accounts}
                   choice={accountChoice}
                   onChoice={changeAccountChoice}
-                  emptyText="No possible existing Account was found. You can create a new Account."
+                  emptyText="No possible existing Company was found. You can create a new Company."
                   getViewHref={(a) => withReturnTo(`/dashboard/accounts/${a.id}`, convertHref)}
                   getSearchText={(a) => `${a.account_name} ${a.website ?? ""} ${a.phone ?? ""}`}
                   renderMatch={(a) => (
@@ -319,20 +319,20 @@ export default function LeadConvert({ lead }: LeadConvertProps) {
                       <span className="text-xs text-ink-soft">{a.website || "No website"} · {a.phone || "No phone"}</span>
                     </>
                   )}
-                  newTitle="Create a new Account"
-                  newDescription={`A new Account will be created from the lead's company: ${lead.company_name}.`}
+                  newTitle="Create a new Company"
+                  newDescription={`A new Company will be created from the lead's company: ${lead.company_name}.`}
                 />
               ) : (
                 <Notice>
-                  <span className="font-medium text-fg">No Account is required for this Lead.</span>{" "}
+                  <span className="font-medium text-fg">No Company is required for this Lead.</span>{" "}
                   This Lead has no company name, so it can be converted as a Contact only.
                 </Notice>
               )}
 
               {hasCompany && selectedAccount && contacts.length === 0 && (
                 <Notice tone="positive">
-                  <span className="font-medium text-fg">This Account can be reused.</span>{" "}
-                  You can create a new Contact for this Account.
+                  <span className="font-medium text-fg">This Company can be reused.</span>{" "}
+                  You can create a new Contact for this Company.
                 </Notice>
               )}
             </Step>
@@ -368,7 +368,7 @@ export default function LeadConvert({ lead }: LeadConvertProps) {
 
               {hasCompany && selectedAccount && contacts.length === 0 && contactChoice === NEW && (
                 <Notice>
-                  Account selected. No matching Contact was found. A new Contact will be created under this Account.
+                  Company selected. No matching Contact was found. A new Contact will be created under this Company.
                 </Notice>
               )}
               {selectedContact && (
@@ -382,7 +382,7 @@ export default function LeadConvert({ lead }: LeadConvertProps) {
               <h2 className="text-sm font-semibold text-fg">Conversion Summary</h2>
               <dl className="mt-3 grid gap-3 sm:grid-cols-2">
                 <div>
-                  <dt className="text-xs font-semibold uppercase tracking-wide text-ink-soft">Account</dt>
+                  <dt className="text-xs font-semibold uppercase tracking-wide text-ink-soft">Company</dt>
                   <dd className="mt-1 flex items-center gap-2 text-sm text-fg">{accountSummary.icon}{accountSummary.text}</dd>
                 </div>
                 <div>
@@ -477,7 +477,7 @@ function MatchGroup<T extends { id: string }>({
   newTitle,
   newDescription,
 }: {
-  kind: "Account" | "Contact";
+  kind: "Company" | "Contact";
   groupName: string;
   matches: T[];
   choice: Choice;

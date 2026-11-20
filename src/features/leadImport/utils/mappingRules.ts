@@ -21,7 +21,7 @@ export const DESCRIPTION_FIELD = "description";
 
 const SPECIAL_FIELD_HELP: Record<string, string> = {
   [OWNER_FIELD]: "Matched to your team members",
-  [CONVERTED_FIELD]: "Yes rows become an Account and Contact",
+  [CONVERTED_FIELD]: "Yes rows become a Company and Contact",
 };
 
 export const MAX_EXAMPLES = 3;

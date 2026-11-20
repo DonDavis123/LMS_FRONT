@@ -86,15 +86,15 @@ export default function AccountList({
 
   const fields = useMemo<FilterFieldConfig[]>(
     () => [
-      { field: "account_name", label: "Account Name", type: "text" },
-      { field: "account_number", label: "Account Number", type: "text" },
-      { field: "account_type", label: "Account Type", type: "text" },
+      { field: "account_name", label: "Company Name", type: "text" },
+      { field: "account_number", label: "Company Number", type: "text" },
+      { field: "account_type", label: "Company Type", type: "text" },
       { field: "billing_city", label: "Billing City", type: "text" },
       { field: "billing_country", label: "Billing Country", type: "text" },
       { field: "annual_revenue", label: "Annual Revenue", type: "number" },
       {
         field: "account_owner",
-        label: "Account Owner",
+        label: "Company Owner",
         type: "uuid",
         choices: owners.map((o) => ({ value: o.id, label: o.name })),
       },
@@ -129,7 +129,7 @@ export default function AccountList({
   async function handleBulkDelete() {
     const ids = Array.from(selectedIds);
     if (!ids.length) return;
-    if (!await confirmDelete(`Delete ${ids.length} selected accounts? This can't be undone.`)) return;
+    if (!await confirmDelete(`Delete ${ids.length} selected companies? This can't be undone.`)) return;
     setBulkDeleting(true);
     try {
       const results = await Promise.allSettled(ids.map((id) => AccountService.deleteAccount(id)));
@@ -157,7 +157,7 @@ export default function AccountList({
         setRemovingId(null);
       }, ROW_REMOVE_MS);
     } catch {
-      window.alert("Couldn't delete this account. Try again.");
+      window.alert("Couldn't delete this company. Try again.");
     }
   }
 
@@ -166,13 +166,13 @@ export default function AccountList({
     <div className="lp-card lp-list-page">
       <div className="lp-list-head flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-line bg-surface px-3 py-2.5 sm:px-4">
         <div className="order-1 min-w-0">
-          <h1 className="font-serif text-lg leading-tight text-fg">Accounts</h1>
+          <h1 className="font-serif text-lg leading-tight text-fg">Companies</h1>
           <p className="text-xs text-ink-soft">
-            {pagination.total} total {accounts.length === 1 ? "account" : "accounts"}
+            {pagination.total} total {accounts.length === 1 ? "company" : "companies"}
           </p>
         </div>
         <div className="order-3 flex w-full min-w-0 flex-wrap items-center gap-2 sm:order-2 sm:w-auto sm:flex-1 sm:px-2">
-          <SearchBox value={search} onSearchChange={onSearchChange} placeholder="Search by name, website or phone" ariaLabel="Search accounts" />
+          <SearchBox value={search} onSearchChange={onSearchChange} placeholder="Search by name, website or phone" ariaLabel="Search companies" />
           <FilterBar
             fields={fields}
             filters={filters}
@@ -180,12 +180,12 @@ export default function AccountList({
           />
         </div>
         <div className="order-2 ml-auto flex gap-2 sm:order-3">
-          <ExportMenu entity="accounts" noun="accounts" query={exportQuery} total={pagination.total} disabled={isLoading} />
+          <ExportMenu entity="accounts" noun="companies" query={exportQuery} total={pagination.total} disabled={isLoading} />
           <Link
             href="/dashboard/accounts/new"
             className={createButtonClass}
           >
-            <CreateButtonLabel>Create Account</CreateButtonLabel>
+            <CreateButtonLabel>Create Company</CreateButtonLabel>
           </Link>
         </div>
       </div>
@@ -213,7 +213,7 @@ export default function AccountList({
       ) : pageItems.length === 0 ? (
         <div className="flex flex-col items-center gap-3 px-4 py-16 text-center animate-scale-in">
           <p className="font-serif text-lg text-fg">
-            {isFiltered ? "No accounts match your search or filters" : "No accounts yet"}
+            {isFiltered ? "No companies match your search or filters" : "No companies yet"}
           </p>
           <p className="max-w-sm text-sm text-ink-soft">
             {isFiltered
@@ -225,7 +225,7 @@ export default function AccountList({
               href="/dashboard/accounts/new"
               className={`mt-1 ${createButtonClass} !px-4 !py-2`}
             >
-              <CreateButtonLabel>Create Account</CreateButtonLabel>
+              <CreateButtonLabel>Create Company</CreateButtonLabel>
             </Link>
           )}
         </div>
@@ -246,11 +246,11 @@ export default function AccountList({
                       />
                     )}
                   </th>
-                  <SortableHeader label="Account Name" field="account_name" sort={sort} onSortChange={onSortChange} />
+                  <SortableHeader label="Company Name" field="account_name" sort={sort} onSortChange={onSortChange} />
                   <SortableHeader label="Website" field="website" sort={sort} onSortChange={onSortChange} />
                   <th className="px-4 py-3">Phone</th>
                   <SortableHeader label="Industry" field="industry" sort={sort} onSortChange={onSortChange} />
-                  <SortableHeader label="Account Owner" field="account_owner" sort={sort} onSortChange={onSortChange} />
+                  <SortableHeader label="Company Owner" field="account_owner" sort={sort} onSortChange={onSortChange} />
                   <th className="lp-sticky-end px-4 py-3">Calls</th>
                 </tr>
               </thead>
@@ -271,7 +271,7 @@ export default function AccountList({
                       });
                     }}
                     onDoubleClick={() => { if (!selectionMode) router.push(`/dashboard/accounts/${account.id}`); }}
-                    title="Double-click to open account details"
+                    title="Double-click to open company details"
                     className={`group cursor-pointer border-b border-line last:border-0 hover:bg-paper hover:shadow-[inset_2px_0_0_var(--color-amber)] ${
                       removingId === account.id ? "animate-row-remove" : ""
                     } ${highlightId === account.id ? "animate-row-highlight" : ""}`}

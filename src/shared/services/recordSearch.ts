@@ -23,7 +23,7 @@ export interface RecordSearchPage {
 export const RECORD_KIND_LABEL: Record<RecordKind, string> = {
   lead: "Lead",
   contact: "Contact",
-  account: "Account",
+  account: "Company",
 };
 
 // The backend list endpoints (/leads/, /contacts/, /accounts/) all accept a
@@ -89,7 +89,7 @@ export async function searchRecords(
     res.results.map((row) => ({
       id: row.id,
       kind,
-      label: row.account_name || "Unnamed Account",
+      label: row.account_name || "Unnamed Company",
       sublabel: row.website || row.phone || undefined,
       email: null,
     })),

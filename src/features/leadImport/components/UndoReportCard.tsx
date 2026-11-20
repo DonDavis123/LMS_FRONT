@@ -12,7 +12,7 @@ export default function UndoReportCard({ undo }: { undo: UndoReport }) {
   const lead = `This import was undone${when ? ` on ${when}` : ""}${who ? ` by ${who}` : ""}`;
   const counts: Array<[string, number]> = [
     ["Leads removed", undo.counts.leads_removed],
-    ["Accounts removed", undo.counts.accounts_removed],
+    ["Companies removed", undo.counts.accounts_removed],
     ["Contacts removed", undo.counts.contacts_removed],
     ["Leads restored", undo.counts.leads_restored],
     ["Left alone", undo.counts.left_alone],

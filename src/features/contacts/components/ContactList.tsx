@@ -87,7 +87,7 @@ export default function ContactList({
   const fields = useMemo<FilterFieldConfig[]>(
     () => [
       { field: "name", label: "Contact Name", type: "text" },
-      { field: "account_name", label: "Account", type: "text" },
+      { field: "account_name", label: "Company", type: "text" },
       { field: "email", label: "Email", type: "text" },
       { field: "mobile", label: "Mobile", type: "text" },
       { field: "department", label: "Department", type: "text" },
@@ -249,7 +249,7 @@ export default function ContactList({
                     )}
                   </th>
                   <SortableHeader label="Contact Name" field="name" sort={sort} onSortChange={onSortChange} />
-                  <SortableHeader label="Account" field="account" sort={sort} onSortChange={onSortChange} />
+                  <SortableHeader label="Company" field="account" sort={sort} onSortChange={onSortChange} />
                   <SortableHeader label="Email" field="email" sort={sort} onSortChange={onSortChange} />
                   <th className="px-4 py-3">Phone</th>
                   <SortableHeader label="Contact Owner" field="contact_owner" sort={sort} onSortChange={onSortChange} />

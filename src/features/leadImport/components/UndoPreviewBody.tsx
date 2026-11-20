@@ -117,7 +117,7 @@ export default function UndoPreviewBody({ preview, actionError, confirmed, onCon
             </h3>
             <ul className="mt-1.5 list-disc space-y-1 pl-5 text-sm text-fg">
               <li>{plural(num(preview.will_remove_leads), "lead")} will be removed.</li>
-              <li>{plural(num(preview.will_remove_accounts), "account")} will be removed.</li>
+              <li>{plural(num(preview.will_remove_accounts), "company", "companies")} will be removed.</li>
               <li>{plural(num(preview.will_remove_contacts), "contact")} will be removed.</li>
               {restore > 0 && <li>{plural(restore, "lead")} will be restored to their earlier values.</li>}
             </ul>
@@ -156,7 +156,7 @@ export default function UndoPreviewBody({ preview, actionError, confirmed, onCon
               {alreadyDeleted > 0 && <li>{plural(alreadyDeleted, "record was", "records were")} already deleted.</li>}
               {reusedAccounts > 0 && (
                 <li>
-                  {plural(reusedAccounts, "existing account was", "existing accounts were")} reused by the import and will be kept.
+                  {plural(reusedAccounts, "existing company was", "existing companies were")} reused by the import and will be kept.
                 </li>
               )}
               {reusedContacts > 0 && (

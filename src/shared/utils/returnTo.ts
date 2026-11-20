@@ -28,6 +28,6 @@ export function backLabelFor(returnTo: string | null | undefined, fallback: stri
   if (returnTo.startsWith("/dashboard/calendar")) return "← Back to Calendar";
   if (returnTo.startsWith("/dashboard/leads/")) return "← Back to Lead";
   if (returnTo.startsWith("/dashboard/contacts/")) return "← Back to Contact";
-  if (returnTo.startsWith("/dashboard/accounts/")) return "← Back to Account";
+  if (returnTo.startsWith("/dashboard/accounts/")) return "← Back to Company";
   return "← Back";
 }

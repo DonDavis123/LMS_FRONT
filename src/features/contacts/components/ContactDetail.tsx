@@ -135,7 +135,7 @@ export default function ContactDetail({ contact, onContactChange }: ContactDetai
             <RecordSectionTitle>Overview</RecordSectionTitle>
             <div className={recordGridClass}>
               <Row label="Contact Owner" value={contact.contact_owner_name} editable={false} />
-              <Row label="Account" value={contact.account_name} editable={false} />
+              <Row label="Company" value={contact.account_name} editable={false} />
               <Row label="Email" value={contact.email} onSave={(raw) => updateField("email", raw)} />
               <Row label="Phone" value={contact.phone} onSave={(raw) => updateField("phone", raw)} />
               <Row label="Mobile" value={contact.mobile} onSave={(raw) => updateField("mobile", raw)} />
@@ -148,7 +148,7 @@ export default function ContactDetail({ contact, onContactChange }: ContactDetai
             recordId={contact.id}
             recordName={contact.name || contact.email || "this contact"}
             returnTo={`/dashboard/contacts/${contact.id}`}
-            account={contact.account_id ? { id: contact.account_id, label: contact.account_name || "Account" } : undefined}
+            account={contact.account_id ? { id: contact.account_id, label: contact.account_name || "Company" } : undefined}
           />
 
           <button type="button" onClick={() => setShowDetails((v) => !v)} className="mt-4 flex items-center gap-1 text-sm font-medium text-slate hover:text-fg">
@@ -161,7 +161,7 @@ export default function ContactDetail({ contact, onContactChange }: ContactDetai
               <div className="mt-4 space-y-4">
                 <RecordSection title="Contact Information">
                   <Row label="Contact Owner" value={contact.contact_owner_name} editable={false} />
-                  <Row label="Account Name" value={contact.account_name} editable={false} />
+                  <Row label="Company Name" value={contact.account_name} editable={false} />
                   <Row label="Name" value={contact.name} onSave={(raw) => updateField("name", raw)} />
                   <Row label="Title" value={contact.title} onSave={(raw) => updateField("title", raw)} />
                   <Row label="Email" value={contact.email} onSave={(raw) => updateField("email", raw)} />

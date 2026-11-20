@@ -43,7 +43,7 @@ export default function LeadConvertDeal({ draft, onChange }: LeadConvertDealProp
       </div>
       <div className="p-4">
         {!draft.enabled ? (
-          <p className="text-sm text-ink-soft">Turn this on to open a deal for the new Account or Contact as part of the conversion.</p>
+          <p className="text-sm text-ink-soft">Turn this on to open a deal for the new Company or Contact as part of the conversion.</p>
         ) : (
           <div className="grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2">
             <label className="block sm:col-span-2">

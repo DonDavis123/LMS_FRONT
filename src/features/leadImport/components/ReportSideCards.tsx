@@ -75,10 +75,10 @@ function OwnersCard({ report }: { report: ImportReport }) {
 function ConvertedCard({ report }: { report: ImportReport }) {
   const c = report.converted;
   return (
-    <SideCard id="side-converted" title="Accounts and contacts">
+    <SideCard id="side-converted" title="Companies and contacts">
       <dl className="divide-y divide-line">
-        <Line label="Accounts created" value={c.accounts_created} />
-        <Line label="Accounts reused" value={c.accounts_reused} />
+        <Line label="Companies created" value={c.accounts_created} />
+        <Line label="Companies reused" value={c.accounts_reused} />
         <Line label="Contacts created" value={c.contacts_created} />
         <Line label="Contacts reused" value={c.contacts_reused} />
       </dl>

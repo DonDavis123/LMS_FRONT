@@ -60,13 +60,13 @@ export function duplicateSentence(options: ImportOptions): string {
 export function convertedSentence(options: ImportOptions): string {
   const account =
     options.account_match === "use_existing"
-      ? "an account with the same company name is reused"
-      : "a new account is always created";
+      ? "a company with the same company name is reused"
+      : "a new company is always created";
   const contact =
     options.contact_match === "use_existing"
       ? "a contact with the same email or phone is reused"
       : "a new contact is always created";
-  return `Rows marked as converted become an Account and a Contact: ${account}, and ${contact}.`;
+  return `Rows marked as converted become a Company and a Contact: ${account}, and ${contact}.`;
 }
 
 export function phoneSentence(options: ImportOptions): string {
