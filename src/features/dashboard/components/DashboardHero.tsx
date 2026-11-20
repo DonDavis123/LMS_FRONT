@@ -1,10 +1,13 @@
 "use client";
 
-import { Fragment, type ReactNode } from "react";
+import { Fragment, useId, useState, type ReactNode } from "react";
 import Link from "next/link";
-import { UserPlus } from "lucide-react";
+import { Sparkles, UserPlus } from "lucide-react";
 import type { AuthUser } from "@/features/auth/types/auth.types";
+import DailyBriefingPanel from "@/features/dashboard/components/DailyBriefingPanel";
+import { useDailyBriefing } from "@/features/dashboard/hooks/useDailyBriefing";
 import type { AsyncState, MyTasksData, ScheduleItem } from "@/features/dashboard/types/dashboard.types";
+import Spinner from "@/shared/components/Spinner";
 import {
   buildSummaryParts,
   diffInDays,
@@ -32,6 +35,29 @@ function withSeparators(parts: string[]): { text: string; separator: string }[] 
 
 export default function DashboardHero({ user, tasks, schedule, completingIds }: DashboardHeroProps) {
   const now = new Date();
+  const { briefing, loading: briefingLoading, error: briefingError, generate: generateBriefing } = useDailyBriefing();
+  const [briefingOpen, setBriefingOpen] = useState(false);
+  const briefingPanelId = useId();
+  const hasBriefingResult = briefing !== null || briefingError !== null;
+
+  // First click writes the plan (one model request); after that it only shows / hides it.
+  function handlePlanClick() {
+    if (briefingLoading) return;
+    if (hasBriefingResult) {
+      setBriefingOpen((open) => !open);
+      return;
+    }
+    setBriefingOpen(true);
+    void generateBriefing();
+  }
+
+  const planLabel = briefingLoading
+    ? "Planning…"
+    : hasBriefingResult
+      ? briefingOpen
+        ? "Hide plan"
+        : "Show plan"
+      : "Plan my day";
 
   let summary: ReactNode = GENERIC_SUMMARY;
   let isSummaryLoading = false;
@@ -83,14 +109,41 @@ export default function DashboardHero({ user, tasks, schedule, completingIds }: 
           )}
         </div>
 
-        <Link
-          href="/dashboard/leads/new"
-          className="inline-flex h-10 items-center gap-2 rounded-xl bg-ink px-4 text-sm font-medium text-white outline-none transition hover:bg-ink-2 focus-visible:ring-2 focus-visible:ring-slate focus-visible:ring-offset-2 focus-visible:ring-offset-surface active:scale-[0.98] dark:bg-slate"
-        >
-          <UserPlus size={15} aria-hidden="true" />
-          New lead
-        </Link>
+        <div className="flex flex-wrap items-center gap-2">
+          {user && (
+            <button
+              type="button"
+              onClick={handlePlanClick}
+              disabled={briefingLoading}
+              aria-expanded={briefingOpen}
+              aria-controls={briefingPanelId}
+              title="Let AI sort today's tasks and meetings by what to do first."
+              className="inline-flex h-10 items-center gap-2 rounded-xl border border-line bg-surface px-4 text-sm font-medium text-fg outline-none transition hover:bg-paper focus-visible:ring-2 focus-visible:ring-slate focus-visible:ring-offset-2 focus-visible:ring-offset-surface active:scale-[0.98] disabled:opacity-60"
+            >
+              {briefingLoading ? <Spinner size="sm" /> : <Sparkles size={15} aria-hidden="true" />}
+              {planLabel}
+            </button>
+          )}
+
+          <Link
+            href="/dashboard/leads/new"
+            className="inline-flex h-10 items-center gap-2 rounded-xl bg-ink px-4 text-sm font-medium text-white outline-none transition hover:bg-ink-2 focus-visible:ring-2 focus-visible:ring-slate focus-visible:ring-offset-2 focus-visible:ring-offset-surface active:scale-[0.98] dark:bg-slate"
+          >
+            <UserPlus size={15} aria-hidden="true" />
+            New lead
+          </Link>
+        </div>
       </div>
+
+      {user && briefingOpen && (
+        <DailyBriefingPanel
+          id={briefingPanelId}
+          briefing={briefing}
+          loading={briefingLoading}
+          error={briefingError}
+          onGenerate={() => void generateBriefing()}
+        />
+      )}
     </div>
   );
 }
