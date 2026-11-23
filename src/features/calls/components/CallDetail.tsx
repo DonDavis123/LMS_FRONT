@@ -196,7 +196,7 @@ export default function CallDetail({ call, onCallChange, returnTo = null, onNoti
           onChange={setActiveTab}
         />
 
-        <div key={activeTab} className="animate-fade-in">
+        <div key={activeTab} className="animate-tab-panel">
           {activeTab === "recordings" ? (
             <CallRecordings
               callId={call.id}

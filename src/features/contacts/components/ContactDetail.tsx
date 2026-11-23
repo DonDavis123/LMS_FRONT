@@ -119,18 +119,22 @@ export default function ContactDetail({ contact, onContactChange }: ContactDetai
       />
 
       {activeTab === "timeline" ? (
-        <RecordTimeline module="contacts" recordId={contact.id} showLeadOrigin />
+        <div key="timeline" className="animate-tab-panel">
+          <RecordTimeline module="contacts" recordId={contact.id} showLeadOrigin />
+        </div>
       ) : activeTab === "calls" ? (
-        <RecordCalls
-          kind="contact"
-          recordId={contact.id}
-          recordName={contact.name || contact.email || "this contact"}
-          related={callRelated}
-          returnTo={`/dashboard/contacts/${contact.id}?tab=calls`}
-          refreshKey={callsVersion}
-        />
+        <div key="calls" className="animate-tab-panel">
+          <RecordCalls
+            kind="contact"
+            recordId={contact.id}
+            recordName={contact.name || contact.email || "this contact"}
+            related={callRelated}
+            returnTo={`/dashboard/contacts/${contact.id}?tab=calls`}
+            refreshKey={callsVersion}
+          />
+        </div>
       ) : (
-        <div className="animate-fade-in">
+        <div className="animate-tab-panel">
           <div className={`mt-4 ${recordCardClass}`}>
             <RecordSectionTitle>Overview</RecordSectionTitle>
             <div className={recordGridClass}>

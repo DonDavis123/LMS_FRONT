@@ -168,7 +168,7 @@ async function handleStatusClick(status: LeadStatus) {
         onChange={setActiveTab}
       />
 
-      <div key={activeTab} className="animate-fade-in">
+      <div key={activeTab} className="animate-tab-panel">
       {activeTab === "overview" ? (
         <>
           {/* Status pipeline */}

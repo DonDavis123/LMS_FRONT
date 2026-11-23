@@ -160,7 +160,7 @@ export default function MeetingDetail({ meeting, onMeetingChange, returnTo = nul
           onChange={setActiveTab}
         />
 
-        <div key={activeTab} className="animate-fade-in">
+        <div key={activeTab} className="animate-tab-panel">
           {activeTab === "overview" ? (
             <>
               {emailNotice && (

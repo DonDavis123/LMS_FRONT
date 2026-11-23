@@ -176,9 +176,11 @@ export default function AccountDetail({ account, onAccountChange }: AccountDetai
       />
 
       {activeTab === "timeline" ? (
-        <RecordTimeline module="accounts" recordId={account.id} showLeadOrigin />
+        <div key="timeline" className="animate-tab-panel">
+          <RecordTimeline module="accounts" recordId={account.id} showLeadOrigin />
+        </div>
       ) : (
-        <div className="animate-fade-in">
+        <div className="animate-tab-panel">
           <div className={`mt-4 ${recordCardClass}`}>
             <RecordSectionTitle>Overview</RecordSectionTitle>
             <div className={recordGridClass}>

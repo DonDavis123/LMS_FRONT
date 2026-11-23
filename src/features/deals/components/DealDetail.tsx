@@ -295,7 +295,7 @@ export default function DealDetail({ deal, onDealChange, returnTo = null, initia
         onChange={setActiveTab}
       />
 
-      <div key={activeTab} className="animate-fade-in">
+      <div key={activeTab} className="animate-tab-panel">
         {activeTab === "overview" ? (
           <div className="mt-4 space-y-4">
             <RecordSection title="Deal Information">

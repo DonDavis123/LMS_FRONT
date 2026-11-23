@@ -92,7 +92,7 @@ export default function TaskDetail({ task, onTaskChange, returnTo = null }: Prop
         onChange={setActiveTab}
       />
 
-      <div key={activeTab} className="animate-fade-in">
+      <div key={activeTab} className="animate-tab-panel">
         {activeTab === "overview" ? (
           <>
             <div className={`mt-4 ${recordCardClass}`}>

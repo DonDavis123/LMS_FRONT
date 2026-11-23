@@ -777,3 +777,48 @@ button, a, input, select, textarea {
   scrollbar-color: var(--color-line) transparent;
   overscroll-behavior: contain;
 }
+
+/* --- Tab switcher + tab panel motion (shared/components/Tabs.tsx) --- */
+
+/* Thumb "stretch": the trailing edge stays put while the shape elongates
+   mid-travel, then settles. Transform-origin is set inline per direction. */
+@keyframes tab-thumb {
+  0% {
+    transform: scaleX(1) scaleY(1);
+  }
+  35% {
+    transform: scaleX(1.18) scaleY(0.94);
+  }
+  100% {
+    transform: scaleX(1) scaleY(1);
+  }
+}
+.animate-tab-thumb {
+  animation: tab-thumb 0.46s cubic-bezier(0.3, 1.15, 0.5, 1) both;
+}
+
+/* Tab content: soft rise + de-blur, with the first few blocks staggering in.
+   NOTE: fill-mode is `backwards` (not `both`) on purpose. A `transform` or
+   `filter` left behind after the animation ends would turn the panel into
+   the containing block for `position: fixed` descendants (menus, modals,
+   popovers) and clip them - see the warning in dashboard/template.tsx. */
+@keyframes tab-panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+    filter: blur(3px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+}
+.animate-tab-panel > * {
+  animation: tab-panel-in 0.42s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+}
+.animate-tab-panel > *:nth-child(2) { animation-delay: 0.05s; }
+.animate-tab-panel > *:nth-child(3) { animation-delay: 0.1s; }
+.animate-tab-panel > *:nth-child(4) { animation-delay: 0.15s; }
+.animate-tab-panel > *:nth-child(5) { animation-delay: 0.2s; }
+.animate-tab-panel > *:nth-child(n + 6) { animation-delay: 0.25s; }
