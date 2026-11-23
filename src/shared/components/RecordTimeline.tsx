@@ -504,7 +504,7 @@ export default function RecordTimeline({ module, recordId, showLeadOrigin = fals
                           <div className="min-w-0 flex-1 pb-3">
                             <div
                               // ring (not border): globals.css forces `* { border-color }`, which would defeat border-transparent.
-                              className="-mx-3 -mt-0.5 rounded-xl px-3 py-2 ring-1 ring-transparent transition-all duration-200 group-hover:bg-paper/70 group-hover:shadow-sm group-hover:ring-line"
+                              className="-ml-1 -mr-3 -mt-0.5 rounded-xl py-2 pl-3 pr-3 ring-1 ring-transparent transition-all duration-200 group-hover:bg-paper/70 group-hover:shadow-sm group-hover:ring-line"
                             >
                               <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-1">
                                 <p className="min-w-0 flex-1 text-sm leading-snug text-fg">
