@@ -3,7 +3,8 @@
 import { useState, type FormEvent } from "react";
 import Modal from "@/shared/components/Modal";
 import Spinner from "@/shared/components/Spinner";
-import { inputClass } from "@/shared/components/FormLayout";
+import { ThumbsDown } from "lucide-react";
+import { inputClass, ModalFormHeader } from "@/shared/components/FormLayout";
 import { extractApiError } from "@/shared/utils/apiError";
 
 interface LostReasonModalProps {
@@ -40,9 +41,13 @@ function LostReasonForm({ dealName, onConfirm, onCancel }: Omit<LostReasonModalP
 
   return (
     <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
-      <div className="shrink-0 border-b border-line px-5 py-3 pr-12">
-        <h2 id={TITLE_ID} className="font-serif text-xl text-fg">Mark deal as lost</h2>
-      </div>
+      <ModalFormHeader
+        id={TITLE_ID}
+        title="Mark deal as lost"
+        subtitle="Tell us why, so the team can learn from it."
+        icon={<ThumbsDown size={18} />}
+        tone="danger"
+      />
       <div className="px-5 py-4">
         <p className="mb-3 text-sm text-ink-soft">
           Why was <span className="font-medium text-fg">{dealName}</span> lost? This is kept on the deal and its timeline.

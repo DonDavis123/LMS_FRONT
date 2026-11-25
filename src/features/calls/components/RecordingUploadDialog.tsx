@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Mic } from "lucide-react";
+import { ModalFormHeader } from "@/shared/components/FormLayout";
 import Modal from "@/shared/components/Modal";
 import Spinner from "@/shared/components/Spinner";
 import RecordingPicker from "@/features/calls/components/RecordingPicker";
@@ -81,14 +82,12 @@ function UploadBody({
 
   return (
     <div className="flex min-h-0 flex-col">
-      <div className="shrink-0 border-b border-line px-5 py-4 pr-12">
-        <h2 id="recording-upload-title" className="font-serif text-lg text-fg">
-          Add call recording
-        </h2>
-        <p className="mt-0.5 text-xs text-ink-soft">
-          Attach the voice recording of this call so you can play it back later.
-        </p>
-      </div>
+      <ModalFormHeader
+        id="recording-upload-title"
+        title="Add call recording"
+        subtitle="Attach the voice recording of this call so you can play it back later."
+        icon={<Mic size={18} />}
+      />
 
       <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-5 py-4">
         <RecordingPicker value={picked} onChange={setPicked} disabled={uploading} />

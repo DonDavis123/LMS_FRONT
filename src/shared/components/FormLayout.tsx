@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Plus } from "lucide-react";
+import { FileText, Pencil, Plus } from "lucide-react";
 
 /**
  * Shared visual language for CRM forms (Lead, Contact, Account, Call,
@@ -22,7 +22,7 @@ export const inputErrorClass =
 
 /** The white card every full-page create / edit form sits in. */
 export const formCardClass =
-  "mx-auto max-w-4xl rounded-xl border border-line bg-surface p-4 shadow-sm sm:p-6";
+  "mx-auto max-w-4xl rounded-xl border border-line bg-surface p-4 shadow-[var(--lp-shadow)] sm:p-6";
 
 export const secondaryButtonClass =
   "inline-flex items-center justify-center gap-2 rounded-lg border border-line bg-surface px-3.5 py-2 text-sm font-semibold text-fg shadow-sm transition hover:border-slate/50 hover:bg-paper active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 sm:px-4";
@@ -53,26 +53,108 @@ export function CreateButtonLabel({ children }: { children: ReactNode }) {
   );
 }
 
+type HeaderTone = "amber" | "slate" | "danger";
+
+const TILE_TONE: Record<HeaderTone, string> = {
+  amber: "bg-linear-to-br from-amber/25 to-amber/10 text-amber-dark ring-amber/30 dark:text-amber",
+  slate: "bg-slate-light text-slate ring-slate/20",
+  danger: "bg-danger-soft text-danger ring-danger/25",
+};
+
+/** Header chrome shared by `FormHeader` (full page) and `ModalFormHeader` (dialogs). */
+const HEADER_ACCENT =
+  "before:absolute before:inset-x-0 before:top-0 before:h-[3px] before:bg-linear-to-r before:from-amber before:via-amber before:to-amber-dark/20";
+
+function HeaderTile({ tone, children }: { tone: HeaderTone; children: ReactNode }) {
+  return (
+    <span
+      aria-hidden="true"
+      className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl ring-1 animate-pop-in sm:h-11 sm:w-11 ${TILE_TONE[tone]}`}
+    >
+      {children}
+    </span>
+  );
+}
+
+/** Picks the default tile icon + colour from the wording of the title. */
+function defaultTile(title: string, icon?: ReactNode, tone?: HeaderTone) {
+  const isCreate = /^(create|new|add)\b/i.test(title);
+  const isEdit = /^(edit|update)\b/i.test(title);
+  return {
+    tone: tone ?? (isEdit ? "slate" : "amber"),
+    icon: icon ?? (isCreate ? <Plus size={20} strokeWidth={2.5} /> : isEdit ? <Pencil size={18} /> : <FileText size={18} />),
+  } as { tone: HeaderTone; icon: ReactNode };
+}
+
 interface FormHeaderProps {
   title: string;
   /** One short line under the title. */
   subtitle?: string;
+  /**
+   * Icon shown in the tile beside the title. Optional: by default it follows
+   * the title ("Create…/New…/Add…" → plus, "Edit…/Update…" → pencil).
+   */
+  icon?: ReactNode;
+  /** Tile colour. Defaults to amber (slate for "Edit…/Update…"). */
+  tone?: HeaderTone;
   /** The Cancel / Save buttons. */
   children: ReactNode;
 }
 
 /**
  * Sticky title bar of a full-page form. Pulls itself out to the edges of the
- * `formCardClass` card it sits in.
+ * `formCardClass` card it sits in: a brand amber accent runs along the top,
+ * an icon tile and serif title sit on the left, the action buttons on the
+ * right, and a hairline closes it off. Fades in opacity-only so it never
+ * leaves a transform behind (that would trap fixed pickers/menus).
  */
-export function FormHeader({ title, subtitle, children }: FormHeaderProps) {
+export function FormHeader({ title, subtitle, icon, tone, children }: FormHeaderProps) {
+  const tile = defaultTile(title, icon, tone);
+
   return (
-    <div className="sticky top-0 z-10 -mx-4 -mt-4 mb-1 flex flex-wrap items-center justify-between gap-x-4 gap-y-3 rounded-t-[11px] border-b border-line bg-surface/90 px-4 py-3.5 backdrop-blur supports-[backdrop-filter]:bg-surface/80 sm:-mx-6 sm:-mt-6 sm:px-6 sm:py-4">
-      <div className="min-w-0">
-        <h1 className="font-serif text-xl leading-tight text-fg sm:text-2xl">{title}</h1>
-        {subtitle && <p className="mt-0.5 text-xs text-ink-soft sm:text-sm">{subtitle}</p>}
+    <div className={`animate-fade-in sticky top-0 z-10 -mx-4 -mt-4 mb-1 flex flex-wrap items-center justify-between gap-x-4 gap-y-3 overflow-hidden rounded-t-[11px] border-b border-line bg-surface/90 px-4 py-3.5 shadow-[0_8px_16px_-14px_rgba(18,33,58,0.25)] backdrop-blur ${HEADER_ACCENT} supports-[backdrop-filter]:bg-surface/80 sm:-mx-6 sm:-mt-6 sm:px-6 sm:py-4`}>
+      <div className="flex min-w-0 items-center gap-3 sm:gap-4">
+        <HeaderTile tone={tile.tone}>{tile.icon}</HeaderTile>
+        <div className="min-w-0">
+          <h1 className="font-serif text-xl leading-tight tracking-tight text-fg sm:text-2xl">{title}</h1>
+          {subtitle && <p className="mt-0.5 text-xs text-ink-soft sm:text-sm">{subtitle}</p>}
+        </div>
       </div>
       <div className="flex shrink-0 flex-wrap gap-2 sm:gap-3">{children}</div>
+    </div>
+  );
+}
+
+interface ModalFormHeaderProps {
+  title: ReactNode;
+  /** One short line under the title. */
+  subtitle?: ReactNode;
+  /** Tile icon. Defaults follow the title wording (see `FormHeader`). */
+  icon?: ReactNode;
+  tone?: HeaderTone;
+  /** id of the title heading, for the dialog's `aria-labelledby`. */
+  id?: string;
+}
+
+/**
+ * Title bar of a form that lives in a `Modal` (Task, Call, Meeting, Deal,
+ * Reminder, …) — the same look as `FormHeader`, sized for a dialog. Leaves
+ * room on the right for the Modal's absolutely-positioned close button.
+ */
+export function ModalFormHeader({ title, subtitle, icon, tone, id }: ModalFormHeaderProps) {
+  const tile = defaultTile(typeof title === "string" ? title : "", icon, tone);
+
+  return (
+    <div className={`relative shrink-0 overflow-hidden rounded-t-[7px] border-b border-line bg-surface px-5 py-3.5 pr-14 ${HEADER_ACCENT}`}>
+      <div className="flex min-w-0 items-center gap-3">
+        <HeaderTile tone={tile.tone}>{tile.icon}</HeaderTile>
+        <div className="min-w-0">
+          <h2 id={id} className="break-words font-serif text-xl leading-tight tracking-tight text-fg">
+            {title}
+          </h2>
+          {subtitle && <p className="mt-0.5 text-xs text-ink-soft sm:text-sm">{subtitle}</p>}
+        </div>
+      </div>
     </div>
   );
 }

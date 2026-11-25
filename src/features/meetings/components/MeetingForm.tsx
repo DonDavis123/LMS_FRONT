@@ -3,7 +3,8 @@
 import FormWarning from "@/shared/components/FormWarning";
 import { useNoChangeGuard } from "@/shared/hooks/useNoChangeGuard";
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
-import { ChevronDown, ChevronRight, Link2 } from "lucide-react";
+import { CalendarDays, ChevronDown, ChevronRight, Link2 } from "lucide-react";
+import { ModalFormHeader } from "@/shared/components/FormLayout";
 import { userService } from "@/features/users/services/userService";
 import type { LeadOwnerOption } from "@/features/auth/types/auth.types";
 import { authService } from "@/features/auth/services/authService";
@@ -374,9 +375,11 @@ export default function MeetingForm({
 
   return (
     <form onSubmit={submit} className="flex min-h-0 flex-1 flex-col bg-surface text-fg">
-      <div className="shrink-0 border-b border-line px-5 py-4">
-        <h2 className="font-serif text-xl font-semibold">Meeting Information</h2>
-      </div>
+      <ModalFormHeader
+        title="Meeting Information"
+        subtitle="When, where and who is attending."
+        icon={<CalendarDays size={19} />}
+      />
 
       <div className="min-h-0 flex-1 overflow-y-auto px-5 py-2">
         {warning && <FormWarning message={warning} className="my-3" />}

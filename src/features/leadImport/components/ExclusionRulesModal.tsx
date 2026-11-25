@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus, X } from "lucide-react";
+import { Filter, Plus, X } from "lucide-react";
 import { useId, useMemo, useState } from "react";
 import type {
   ExclusionOperator,
@@ -25,6 +25,7 @@ import { columnLabel } from "@/features/leadImport/utils/mappingRules";
 import { primaryButton, secondaryButton, smallButton } from "@/features/leadImport/utils/reviewStyles";
 import { plural } from "@/features/leadImport/utils/reviewSummary";
 import Modal from "@/shared/components/Modal";
+import { ModalFormHeader } from "@/shared/components/FormLayout";
 import Select, { type SelectOption } from "@/shared/components/Select";
 import Switch from "@/shared/components/Switch";
 
@@ -97,13 +98,14 @@ export default function ExclusionRulesModal({
 
   return (
     <Modal isOpen onClose={onClose} ariaLabelledBy={titleId} maxWidthClass="max-w-2xl">
+      <ModalFormHeader
+        id={titleId}
+        title="Leave out rows by rule"
+        subtitle="A row is left out when any of the rules below matches it. Matching ignores upper and lower case."
+        icon={<Filter size={18} />}
+        tone="slate"
+      />
       <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-2 pt-4 sm:px-5">
-        <h2 id={titleId} className="pr-8 font-serif text-lg text-fg">
-          Leave out rows by rule
-        </h2>
-        <p className="mt-0.5 text-xs text-ink-soft">
-          A row is left out when any of the rules below matches it. Matching ignores upper and lower case.
-        </p>
 
         {presets.length > 0 && (
           <div className="mt-3">

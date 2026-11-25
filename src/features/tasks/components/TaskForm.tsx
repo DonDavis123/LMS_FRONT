@@ -10,7 +10,8 @@ import OwnerPicker from "@/shared/components/OwnerPicker";
 import { emptyRelatedTo, type RelatedToValue } from "@/shared/components/RelatedToPicker";
 import ActivityRelatedPicker from "@/shared/components/ActivityRelatedPicker";
 import Spinner from "@/shared/components/Spinner";
-import { inputClass, Field } from "@/shared/components/FormLayout";
+import { ListChecks } from "lucide-react";
+import { inputClass, Field, ModalFormHeader } from "@/shared/components/FormLayout";
 import DateInput from "@/shared/components/DateInput";
 import Time12hPicker from "@/shared/components/Time12hPicker";
 import ModernStatusSelect from "@/shared/components/ModernStatusSelect";
@@ -219,9 +220,11 @@ export default function TaskForm({
 
   return (
     <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
-      <div className="flex shrink-0 items-center justify-between border-b border-line px-5 py-3">
-        <h2 className="font-serif text-xl text-fg">{mode === "create" ? "Create Task" : "Edit Task"}</h2>
-      </div>
+      <ModalFormHeader
+        title={mode === "create" ? "Create Task" : "Edit Task"}
+        subtitle={mode === "create" ? "Add something to your to-do list." : "Update this task's details."}
+        icon={<ListChecks size={19} />}
+      />
 
       <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
         {warning && <FormWarning message={warning} className="mb-4" />}

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Check, Copy, ExternalLink, Mail } from "lucide-react";
 import Modal from "@/shared/components/Modal";
+import { ModalFormHeader } from "@/shared/components/FormLayout";
 import { extractApiError } from "@/shared/utils/apiError";
 import MailAccountDialog from "@/features/mailing/components/MailAccountDialog";
 import type { Mailer } from "@/features/mailing/hooks/useMailer";
@@ -213,15 +214,12 @@ export default function BulkMailDialog({ entity, selection, mailer, onClose }: B
     <>
       {/* While the Google mail dialog is on top, Escape must only close that one. */}
       <Modal isOpen onClose={accountDialogOpen ? noop : onClose} maxWidthClass="max-w-2xl" ariaLabelledBy="bulk-mail-title">
-        <div className="shrink-0 border-b border-line px-5 py-4">
-          <h2 id="bulk-mail-title" className="flex items-center gap-2 pr-8 font-serif text-lg text-fg">
-            <Mail size={18} className="text-slate" />
-            Send mail to selected {noun}
-          </h2>
-          {entity === "accounts" && (
-            <p className="mt-1 text-sm text-ink-soft">Companies are mailed through their contacts.</p>
-          )}
-        </div>
+        <ModalFormHeader
+          id="bulk-mail-title"
+          title={<>Send mail to selected {noun}</>}
+          subtitle={entity === "accounts" ? "Companies are mailed through their contacts." : undefined}
+          icon={<Mail size={18} />}
+        />
 
         <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
           {state.status === "loading" && (

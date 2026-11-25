@@ -1,6 +1,6 @@
 "use client";
 
-import { RefreshCw } from "lucide-react";
+import { RefreshCw, Undo2 } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useId, useRef } from "react";
 import UndoPreviewBody, { UndoErrorAlert } from "@/features/leadImport/components/UndoPreviewBody";
@@ -11,6 +11,7 @@ import type { UndoResult } from "@/features/leadImport/types/leadImport.types";
 import { importReportPath } from "@/features/leadImport/utils/importRoutes";
 import { primaryButton, secondaryButton } from "@/features/leadImport/utils/reviewStyles";
 import Modal from "@/shared/components/Modal";
+import { ModalFormHeader } from "@/shared/components/FormLayout";
 
 const dangerButton =
   "inline-flex items-center justify-center gap-1.5 rounded-md bg-danger px-3 py-1.5 text-sm font-semibold text-white transition hover:opacity-90 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fg disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100";
@@ -71,11 +72,12 @@ function UndoDialogContent({ jobId, fileName, titleId, onClose, onDone, onBusyCh
 
   return (
     <div ref={rootRef} tabIndex={-1} aria-busy={busy} className="flex min-h-0 flex-1 flex-col outline-none">
-      <div className="border-b border-line px-4 py-3 pr-12 sm:px-5">
-        <h2 id={titleId} className="break-words font-serif text-lg leading-tight text-fg">
-          Undo import of {name}
-        </h2>
-      </div>
+      <ModalFormHeader
+        id={titleId}
+        title={<>Undo import of {name}</>}
+        icon={<Undo2 size={18} />}
+        tone="slate"
+      />
 
       <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-5">
         {phase === "loading" && <UndoSkeleton />}

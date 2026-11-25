@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Bell, CalendarClock, Phone, SquareCheckBig, type LucideIcon } from "lucide-react";
+import { Bell, CalendarClock, CalendarPlus, Phone, SquareCheckBig, type LucideIcon } from "lucide-react";
 import Modal from "@/shared/components/Modal";
+import { ModalFormHeader } from "@/shared/components/FormLayout";
 import TaskForm from "@/features/tasks/components/TaskForm";
 import MeetingForm from "@/features/meetings/components/MeetingForm";
 import CallForm from "@/features/calls/components/CallForm";
@@ -51,10 +52,13 @@ export default function QuickAddDialog({ day, onClose, onCreated }: QuickAddDial
       maxWidthClass={kind === "reminder" ? "max-w-md" : undefined}
     >
       {day && kind === null && (
-        <div className="px-5 py-5">
-          <h2 className="font-serif text-xl text-fg">Add to calendar</h2>
-          {date && <p className="mt-1 text-sm text-ink-soft">{longDayTitle(date)}</p>}
-          <ul className="mt-4 grid gap-2">
+        <>
+          <ModalFormHeader
+            title="Add to calendar"
+            subtitle={date ? longDayTitle(date) : "Pick what you want to add."}
+            icon={<CalendarPlus size={19} />}
+          />
+          <ul className="grid gap-2 px-5 py-4">
             {CHOICES.map(({ kind: choice, label, hint, icon: Icon }) => (
               <li key={choice}>
                 <button
@@ -73,7 +77,7 @@ export default function QuickAddDialog({ day, onClose, onCreated }: QuickAddDial
               </li>
             ))}
           </ul>
-        </div>
+        </>
       )}
 
       {day && kind === "task" && (

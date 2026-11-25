@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Modal from "@/shared/components/Modal";
+import { ModalFormHeader } from "@/shared/components/FormLayout";
+import { Mail } from "lucide-react";
 import Spinner from "@/shared/components/Spinner";
 import { extractApiError } from "@/shared/utils/apiError";
 import { isPlausibleEmail } from "@/features/mailing/utils/gmailCompose";
@@ -67,14 +69,13 @@ export default function MailAccountDialog({
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} maxWidthClass="max-w-md" ariaLabelledBy="mail-account-title">
+      <ModalFormHeader
+        id="mail-account-title"
+        title="Google mail"
+        subtitle={`Gmail drafts open in this Google account. Leave it empty to use your login email${loginEmail ? ` (${loginEmail})` : ""}.`}
+        icon={<Mail size={18} />}
+      />
       <div className="p-5">
-        <h2 id="mail-account-title" className="pr-8 font-serif text-lg text-fg">
-          Google mail
-        </h2>
-        <p className="mt-1 text-sm text-ink-soft">
-          Gmail drafts open in this Google account. Leave it empty to use your login email
-          {loginEmail ? ` (${loginEmail})` : ""}.
-        </p>
 
         <label htmlFor="mail-account-input" className="mt-4 block text-xs font-semibold uppercase tracking-wide text-ink-soft">
           Google / Gmail address

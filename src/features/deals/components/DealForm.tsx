@@ -12,7 +12,8 @@ import RecordPicker from "@/shared/components/RecordPicker";
 import Select from "@/shared/components/Select";
 import DateInput from "@/shared/components/DateInput";
 import Spinner from "@/shared/components/Spinner";
-import { Field, inputClass } from "@/shared/components/FormLayout";
+import { Handshake } from "lucide-react";
+import { Field, inputClass, ModalFormHeader } from "@/shared/components/FormLayout";
 import { extractApiError } from "@/shared/utils/apiError";
 import type { CreateDealPayload, Deal, DealStage } from "@/features/deals/types/deal.types";
 import { CREATE_STAGES, DEFAULT_DEAL_STAGE, STAGE_META } from "@/features/deals/utils/dealStages";
@@ -199,11 +200,12 @@ export default function DealForm({
 
   return (
     <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
-      <div className="flex shrink-0 items-center justify-between border-b border-line px-5 py-3 pr-12">
-        <h2 id={DEAL_FORM_TITLE_ID} className="font-serif text-xl text-fg">
-          {mode === "create" ? "Create Deal" : "Edit Deal"}
-        </h2>
-      </div>
+      <ModalFormHeader
+        id={DEAL_FORM_TITLE_ID}
+        title={mode === "create" ? "Create Deal" : "Edit Deal"}
+        subtitle={mode === "create" ? "Add a new deal to your pipeline." : "Update this deal's details."}
+        icon={<Handshake size={19} />}
+      />
 
       <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
         {warning && <FormWarning message={warning} className="mb-4" />}

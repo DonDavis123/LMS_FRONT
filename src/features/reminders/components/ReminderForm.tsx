@@ -5,7 +5,8 @@ import { useNoChangeGuard } from "@/shared/hooks/useNoChangeGuard";
 import { useState, type FormEvent } from "react";
 import Spinner from "@/shared/components/Spinner";
 import Switch from "@/shared/components/Switch";
-import { Field, inputClass } from "@/shared/components/FormLayout";
+import { Bell } from "lucide-react";
+import { Field, inputClass, ModalFormHeader } from "@/shared/components/FormLayout";
 import DateInput from "@/shared/components/DateInput";
 import Time12hPicker from "@/shared/components/Time12hPicker";
 import type { CreateReminderPayload, Reminder } from "@/features/reminders/types/reminder.types";
@@ -125,11 +126,12 @@ export default function ReminderForm({
 
   return (
     <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
-      <div className="flex shrink-0 items-center justify-between border-b border-line px-5 py-3 pr-14">
-        <h2 id="reminder-form-title" className="font-serif text-xl text-fg">
-          {isEdit ? "Edit Reminder" : "Create Reminder"}
-        </h2>
-      </div>
+      <ModalFormHeader
+        id="reminder-form-title"
+        title={isEdit ? "Edit Reminder" : "Create Reminder"}
+        subtitle={isEdit ? "Update this reminder." : "Get notified at the right time."}
+        icon={<Bell size={19} />}
+      />
 
       <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
         {notice && (

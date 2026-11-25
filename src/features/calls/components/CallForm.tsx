@@ -4,7 +4,7 @@ import FormWarning from "@/shared/components/FormWarning";
 import { useNoChangeGuard } from "@/shared/hooks/useNoChangeGuard";
 import { DateTimeInput } from "@/shared/components/DateInput";
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import { Lock, Play, Square, Timer } from "lucide-react";
+import { Lock, Phone, Play, Square, Timer } from "lucide-react";
 import RecordingPicker from "@/features/calls/components/RecordingPicker";
 import type { PendingRecording } from "@/features/calls/types/callRecording.types";
 import { userService } from "@/features/users/services/userService";
@@ -13,7 +13,7 @@ import { authService } from "@/features/auth/services/authService";
 import OwnerPicker from "@/shared/components/OwnerPicker";
 import RelatedToPicker, { emptyRelatedTo, type RelatedToValue } from "@/shared/components/RelatedToPicker";
 import Spinner from "@/shared/components/Spinner";
-import { inputClass, Field } from "@/shared/components/FormLayout";
+import { inputClass, Field, ModalFormHeader } from "@/shared/components/FormLayout";
 import Select from "@/shared/components/Select";
 import { useFormError } from "@/shared/hooks/useFormError";
 import { extractApiError } from "@/shared/utils/apiError";
@@ -300,9 +300,12 @@ export default function CallForm(props: CallFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
-      <div className="flex shrink-0 items-center justify-between border-b border-line px-5 py-3">
-        <h2 className="font-serif text-xl text-fg">{mode === "create" ? (isCompleted ? "Log a Call" : "Schedule a Call") : "Edit Call"}</h2>
-      </div>
+      <ModalFormHeader
+        title={mode === "create" ? (isCompleted ? "Log a Call" : "Schedule a Call") : "Edit Call"}
+        subtitle={mode === "create" ? (isCompleted ? "Record a call that already happened." : "Plan an upcoming call.") : "Update this call's details."}
+        icon={<Phone size={19} />}
+        tone={mode === "create" ? "amber" : "slate"}
+      />
 
       <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
         {warning && <FormWarning message={warning} className="mb-4" />}
