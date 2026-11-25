@@ -107,14 +107,14 @@ export default function AccountDetail({ account, onAccountChange }: AccountDetai
   }
 
   return (
-    <div className="mx-auto max-w-5xl">
+    <div className="lp-detail mx-auto max-w-5xl">
       <Link href={returnTo ?? "/dashboard/accounts"} className="text-sm text-slate hover:text-fg">
         {returnTo ? "← Back to Lead Conversion" : "← Back to Companies"}
       </Link>
 
       <div className="mt-3 flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-full bg-slate-light text-lg font-semibold text-slate">
+          <div className="lp-pop flex h-11 w-11 items-center justify-center rounded-full bg-slate-light text-lg font-semibold text-slate">
             {account.account_name?.trim()?.charAt(0).toUpperCase() || "?"}
           </div>
           <div>
@@ -123,7 +123,7 @@ export default function AccountDetail({ account, onAccountChange }: AccountDetai
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center justify-end gap-2">
+        <div className="lp-actions flex flex-wrap items-center justify-end gap-2">
           <CreateTaskFromRecord related={{ personType: "", personId: "", personLabel: "", accountId: account.id, accountLabel: account.account_name }} />
           <SendMailButton entity="accounts" recordId={account.id} recordName={account.account_name || "Company"} />
           <Link

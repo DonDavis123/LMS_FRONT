@@ -97,14 +97,14 @@ async function handleStatusClick(status: LeadStatus) {
   const callRelated = { personType: "lead" as const, personId: lead.id, personLabel: lead.name || lead.email || "Lead", accountId: "", accountLabel: "" };
 
   return (
-    <div className="mx-auto max-w-5xl">
+    <div className="lp-detail mx-auto max-w-5xl">
       <Link href="/dashboard/leads" className="text-sm text-slate hover:text-fg">
         ← Back to Leads
       </Link>
 
       <div className="mt-3 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-full bg-slate-light text-lg font-semibold text-slate">
+          <div className="lp-pop flex h-11 w-11 items-center justify-center rounded-full bg-slate-light text-lg font-semibold text-slate">
             {(lead.name || lead.email || "?").slice(0, 1).toUpperCase()}
           </div>
           <div>
@@ -117,7 +117,7 @@ async function handleStatusClick(status: LeadStatus) {
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center justify-end gap-2">
+        <div className="lp-actions flex flex-wrap items-center justify-end gap-2">
           <Link
             href={`/dashboard/leads/${lead.id}/convert`}
             className="rounded-md bg-ink px-4 py-2 text-sm font-semibold text-white hover:bg-ink-2"

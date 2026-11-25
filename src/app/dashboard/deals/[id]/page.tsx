@@ -7,6 +7,8 @@ import { DealService } from "@/features/deals/services/DealService";
 import type { Deal } from "@/features/deals/types/deal.types";
 import { extractApiError } from "@/shared/utils/apiError";
 import { getSafeReturnTo, RETURN_TO_PARAM } from "@/shared/utils/returnTo";
+import DetailLoader from "@/shared/components/DetailLoader";
+import DetailSkeleton from "@/shared/components/DetailSkeleton";
 
 function Inner() {
   const params = useParams<{ id: string }>();
@@ -46,16 +48,11 @@ function Inner() {
       </div>
     );
   }
-  if (!deal) {
-    return (
-      <div className="mx-auto max-w-5xl space-y-3" aria-busy="true">
-        {Array.from({ length: 5 }).map((_, i) => (
-          <div key={i} className="h-10 animate-shimmer rounded-md" />
-        ))}
-      </div>
-    );
-  }
-  return <DealDetail deal={deal} onDealChange={setDeal} returnTo={returnTo} initialTab={initialTab} />;
+  return (
+    <DetailLoader ready={!!deal} skeleton={<DetailSkeleton avatar={false} actions={3} cards={2} fields={6} />}>
+      {deal && <DealDetail deal={deal} onDealChange={setDeal} returnTo={returnTo} initialTab={initialTab} />}
+    </DetailLoader>
+  );
 }
 
 export default function DealDetailPage() {

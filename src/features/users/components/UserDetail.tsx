@@ -32,7 +32,7 @@ export default function UserDetail({ user, currentUserId, onUserChange, onNotify
   const isSelf = currentUserId !== null && String(user.id).toLowerCase() === currentUserId.toLowerCase();
 
   return (
-    <div className="mx-auto max-w-5xl space-y-4">
+    <div className="lp-detail mx-auto max-w-5xl space-y-4">
       <Link href="/dashboard/users" className="text-sm text-slate hover:text-fg">
         ← Back to users
       </Link>
@@ -47,7 +47,7 @@ export default function UserDetail({ user, currentUserId, onUserChange, onNotify
       )}
 
       <div className="flex items-center gap-3">
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-slate-light text-lg font-semibold text-slate">
+        <div className="lp-pop flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-slate-light text-lg font-semibold text-slate">
           {displayName.slice(0, 1).toUpperCase()}
         </div>
         <div className="min-w-0">

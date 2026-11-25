@@ -9,6 +9,8 @@ import LeadDetail from "@/features/leads/components/LeadDetail";
 import ConvertedLeadHistory from "@/features/leads/components/ConvertedLeadHistory";
 import { LeadService } from "@/features/leads/services/LeadService";
 import type { Lead } from "@/features/leads/types/lead.types";
+import DetailLoader from "@/shared/components/DetailLoader";
+import DetailSkeleton from "@/shared/components/DetailSkeleton";
 
 function LeadDetailPageInner() {
   const params = useParams<{ id: string }>();
@@ -60,24 +62,17 @@ function LeadDetailPageInner() {
     return <p className="text-sm text-danger">{error}</p>;
   }
 
-  if (!lead) {
-    return (
-      <div className="mx-auto max-w-5xl space-y-3">
-        {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="h-10 animate-shimmer rounded-md" />
-        ))}
-      </div>
-    );
-  }
-
   return (
     <>
-      {/* Converted leads are history only — never render the editable view. */}
-      {lead.is_converted ? (
-        <ConvertedLeadHistory lead={lead} />
-      ) : (
-        <LeadDetail lead={lead} onLeadChange={setLead} />
-      )}
+      <DetailLoader ready={!!lead} skeleton={<DetailSkeleton summary pipeline avatar actions={5} />}>
+        {/* Converted leads are history only — never render the editable view. */}
+        {lead &&
+          (lead.is_converted ? (
+            <ConvertedLeadHistory lead={lead} />
+          ) : (
+            <LeadDetail lead={lead} onLeadChange={setLead} />
+          ))}
+      </DetailLoader>
       {toast && (
         <div className="fixed bottom-6 right-6 z-[60] flex items-center gap-2 rounded-md border border-success/30 bg-success-soft px-4 py-3 text-sm font-medium text-success shadow-lg animate-toast-in">
           <CheckCircle2 size={16} className="shrink-0 animate-pop-in" />

@@ -5,6 +5,8 @@ import TaskDetail from "@/features/tasks/components/TaskDetail";
 import { TaskService } from "@/features/tasks/services/TaskService";
 import type { Task } from "@/features/tasks/types/task.types";
 import { getSafeReturnTo, RETURN_TO_PARAM } from "@/shared/utils/returnTo";
+import DetailLoader from "@/shared/components/DetailLoader";
+import DetailSkeleton from "@/shared/components/DetailSkeleton";
 
 function Inner() {
   const params = useParams<{ id: string }>();
@@ -22,14 +24,11 @@ function Inner() {
   }, [params.id]);
 
   if (error) return <p className="text-sm text-danger">{error}</p>;
-  if (!task) {
-    return (
-      <div className="mx-auto max-w-5xl space-y-3">
-        {Array.from({ length: 5 }).map((_, i) => <div key={i} className="h-10 animate-shimmer rounded-md" />)}
-      </div>
-    );
-  }
-  return <TaskDetail task={task} onTaskChange={setTask} returnTo={returnTo} />;
+  return (
+    <DetailLoader ready={!!task} skeleton={<DetailSkeleton avatar={false} actions={2} cards={2} fields={8} />}>
+      {task && <TaskDetail task={task} onTaskChange={setTask} returnTo={returnTo} />}
+    </DetailLoader>
+  );
 }
 
 export default function TaskDetailPage() {

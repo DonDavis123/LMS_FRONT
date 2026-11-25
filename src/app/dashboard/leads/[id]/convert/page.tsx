@@ -5,6 +5,8 @@ import { useParams, useRouter } from "next/navigation";
 import LeadConvert from "@/features/leads/components/LeadConvert";
 import { LeadService } from "@/features/leads/services/LeadService";
 import type { Lead } from "@/features/leads/types/lead.types";
+import DetailLoader from "@/shared/components/DetailLoader";
+import DetailSkeleton from "@/shared/components/DetailSkeleton";
 
 export default function ConvertLeadPage() {
   const params = useParams<{ id: string }>();
@@ -33,15 +35,9 @@ export default function ConvertLeadPage() {
   }, [params.id, router]);
 
   if (error) return <p className="text-sm text-danger">{error}</p>;
-  if (!lead) {
-    return (
-      <div className="mx-auto max-w-2xl space-y-3">
-        {Array.from({ length: 3 }).map((_, i) => (
-          <div key={i} className="h-10 animate-shimmer rounded-md" />
-        ))}
-      </div>
-    );
-  }
-
-  return <LeadConvert lead={lead} />;
+  return (
+    <DetailLoader ready={!!lead} skeleton={<DetailSkeleton avatar={false} tabs={false} actions={0} cards={1} fields={4} className="max-w-2xl" />}>
+      {lead && <LeadConvert lead={lead} />}
+    </DetailLoader>
+  );
 }

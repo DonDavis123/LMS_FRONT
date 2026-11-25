@@ -107,7 +107,7 @@ export default function CallDetail({ call, onCallChange, returnTo = null, onNoti
 
   return (
     <>
-      <div className="mx-auto max-w-5xl">
+      <div className="lp-detail mx-auto max-w-5xl">
         <Link href={backHref} className="text-sm text-slate hover:text-fg">
           {backLabel(returnTo)}
         </Link>
@@ -126,7 +126,7 @@ export default function CallDetail({ call, onCallChange, returnTo = null, onNoti
             </div>
           </div>
 
-          <div className="flex shrink-0 items-center gap-2">
+          <div className="lp-actions flex shrink-0 items-center gap-2">
             <button
               type="button"
               onClick={() => setActiveTab("recordings")}

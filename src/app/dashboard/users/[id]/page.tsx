@@ -9,6 +9,8 @@ import { userService } from "@/features/users/services/userService";
 import type { ManagedUserDetail } from "@/features/users/types/user.types";
 import { useRequireSuperAdmin } from "@/features/auth/hooks/useRequireSuperAdmin";
 import { extractApiError } from "@/shared/utils/apiError";
+import DetailLoader from "@/shared/components/DetailLoader";
+import DetailSkeleton from "@/shared/components/DetailSkeleton";
 
 type LoadState = "loading" | "ready" | "not-found" | "error";
 
@@ -118,25 +120,19 @@ function UserDetailPageInner() {
     );
   }
 
-  if (loadState === "loading" || !user) {
-    return (
-      <div className="mx-auto max-w-5xl space-y-3">
-        {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="h-10 animate-shimmer rounded-md" />
-        ))}
-      </div>
-    );
-  }
-
   return (
     <>
-      <UserDetail
-        user={user}
-        currentUserId={currentUser?.id ?? null}
-        onUserChange={setUser}
-        onNotify={showToast}
-        onDeleted={handleDeleted}
-      />
+      <DetailLoader ready={loadState === "ready" && !!user} skeleton={<DetailSkeleton tabs={false} actions={0} cards={2} fields={6} />}>
+        {user && (
+          <UserDetail
+            user={user}
+            currentUserId={currentUser?.id ?? null}
+            onUserChange={setUser}
+            onNotify={showToast}
+            onDeleted={handleDeleted}
+          />
+        )}
+      </DetailLoader>
       {toast && (
         <div className="fixed bottom-6 right-6 z-[60] flex items-center gap-2 rounded-md border border-success/30 bg-success-soft px-4 py-3 text-sm font-medium text-success shadow-lg animate-toast-in">
           <CheckCircle2 size={16} className="shrink-0 animate-pop-in" />

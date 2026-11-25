@@ -43,7 +43,7 @@ export default function ConvertedLeadHistory({ lead }: ConvertedLeadHistoryProps
   const backHref = origin ? `/dashboard/${origin.kind}/${origin.id}` : null;
 
   return (
-    <div className="mx-auto max-w-5xl">
+    <div className="lp-detail mx-auto max-w-5xl">
       {backHref ? (
         <Link href={backHref} className="text-sm text-slate hover:text-fg">
           ← Back to {originLabel}

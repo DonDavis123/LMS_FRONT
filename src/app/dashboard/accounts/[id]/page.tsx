@@ -10,6 +10,8 @@ import AccountDetail from "@/features/accounts/components/AccountDetail";
 import AccountForm from "@/features/accounts/components/AccountForm";
 import { AccountService } from "@/features/accounts/services/AccountService";
 import type { Account, CreateAccountPayload } from "@/features/accounts/types/account.types";
+import DetailLoader from "@/shared/components/DetailLoader";
+import DetailSkeleton from "@/shared/components/DetailSkeleton";
 
 function AccountDetailPageInner() {
   const params = useParams<{ id: string }>();
@@ -52,30 +54,23 @@ function AccountDetailPageInner() {
   }
 
   if (error) return <p className="text-sm text-danger">{error}</p>;
-  if (!account) {
-    return (
-      <div className="mx-auto max-w-5xl space-y-3">
-        {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="h-10 animate-shimmer rounded-md" />
+  return (
+    <DetailLoader ready={!!account} skeleton={<DetailSkeleton summary avatar cards={1} fields={6} />}>
+      {account &&
+        (isEditing ? (
+          <div className={formCardClass}>
+            <AccountForm
+              mode="edit"
+              initialAccount={account}
+              onSubmit={handleSubmit}
+              onCancel={() => router.push(withReturnTo(`/dashboard/accounts/${params.id}`, returnTo))}
+            />
+          </div>
+        ) : (
+          <AccountDetail account={account} onAccountChange={setAccount} />
         ))}
-      </div>
-    );
-  }
-
-  if (isEditing) {
-    return (
-      <div className={formCardClass}>
-        <AccountForm
-          mode="edit"
-          initialAccount={account}
-          onSubmit={handleSubmit}
-          onCancel={() => router.push(withReturnTo(`/dashboard/accounts/${params.id}`, returnTo))}
-        />
-      </div>
-    );
-  }
-
-  return <AccountDetail account={account} onAccountChange={setAccount} />;
+    </DetailLoader>
+  );
 }
 
 export default function AccountDetailPage() {

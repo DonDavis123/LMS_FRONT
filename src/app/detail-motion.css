@@ -1,0 +1,196 @@
+/* ── Detail-page motion ────────────────────────────────────────────────
+   Imported from globals.css. Gives every record-detail page (Lead, Contact,
+   Account, Deal, Task, Call, Meeting, User, Company) the same polished
+   "data arrives" sequence once loading finishes:
+
+     1. the skeleton cross-fades out (DetailLoader) while the page rises in,
+     2. back link → header → summary → tabs → panel cascade top to bottom,
+     3. avatar pops, title slides in, action buttons cascade from the left,
+     4. field cards stagger in (recordGridClass → `.lp-fields`),
+     5. status steps / list items stagger (`.lp-stagger`),
+     6. late data (AI summary) unfolds smoothly (SmoothHeight).
+
+   Rules shared with the rest of the app's motion:
+   - fill-mode is always `backwards`, never `both`/`forwards`: a transform or
+     filter left on an element would make it the containing block for
+     `position: fixed` descendants (menus, modals) and clip them.
+   - the independent `translate` property is used instead of `transform`.
+   - reduced-motion users are covered by the global rule in globals.css. */
+
+:root {
+  --lp-detail-ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* `--lp-lead` is the extra delay the tab panel waits for the header to
+   settle. It only applies during the first 1.4s after the page mounts, so
+   switching tabs later has no added delay. (An unregistered custom property
+   animates discretely, so it flips to 0s when the animation ends.) */
+@keyframes lp-lead-off {
+  to { --lp-lead: 0s; }
+}
+.lp-detail {
+  --lp-lead: 0.3s;
+  animation: lp-lead-off 1ms linear 1.4s forwards;
+}
+
+@keyframes lp-detail-rise {
+  from { opacity: 0; translate: 0 14px; filter: blur(4px); }
+  to   { opacity: 1; translate: 0 0;    filter: blur(0); }
+}
+.lp-detail > *:not(.animate-tab-panel) {
+  animation: lp-detail-rise 0.6s var(--lp-detail-ease) calc(var(--lp-i, 0) * 70ms) backwards;
+}
+.lp-detail > :nth-child(1) { --lp-i: 0; }
+.lp-detail > :nth-child(2) { --lp-i: 1; }
+.lp-detail > :nth-child(3) { --lp-i: 2; }
+.lp-detail > :nth-child(4) { --lp-i: 3; }
+.lp-detail > :nth-child(5) { --lp-i: 4; }
+.lp-detail > :nth-child(6) { --lp-i: 5; }
+.lp-detail > :nth-child(7) { --lp-i: 6; }
+.lp-detail > :nth-child(n + 8) { --lp-i: 7; }
+
+/* Tab panel: its blocks keep their own rise (globals.css) but wait for the
+   header on first load. */
+.lp-detail > .animate-tab-panel > :nth-child(1) { animation-delay: var(--lp-lead, 0s); }
+.lp-detail > .animate-tab-panel > :nth-child(2) { animation-delay: calc(var(--lp-lead, 0s) + 0.05s); }
+.lp-detail > .animate-tab-panel > :nth-child(3) { animation-delay: calc(var(--lp-lead, 0s) + 0.1s); }
+.lp-detail > .animate-tab-panel > :nth-child(4) { animation-delay: calc(var(--lp-lead, 0s) + 0.15s); }
+.lp-detail > .animate-tab-panel > :nth-child(5) { animation-delay: calc(var(--lp-lead, 0s) + 0.2s); }
+.lp-detail > .animate-tab-panel > :nth-child(n + 6) { animation-delay: calc(var(--lp-lead, 0s) + 0.25s); }
+
+/* Header details */
+@keyframes lp-avatar-pop {
+  0%   { opacity: 0; scale: 0.5; }
+  60%  { opacity: 1; scale: 1.1; }
+  100% { opacity: 1; scale: 1; }
+}
+.lp-pop {
+  animation: lp-avatar-pop 0.6s cubic-bezier(0.34, 1.4, 0.64, 1) 0.12s backwards;
+}
+
+@keyframes lp-title-in {
+  from { opacity: 0; translate: -10px 0; filter: blur(5px); }
+  to   { opacity: 1; translate: 0 0;     filter: blur(0); }
+}
+.lp-detail h1 {
+  animation: lp-title-in 0.65s var(--lp-detail-ease) 0.16s backwards;
+}
+
+@keyframes lp-action-in {
+  from { opacity: 0; translate: 0 8px; scale: 0.96; }
+  to   { opacity: 1; translate: 0 0;   scale: 1; }
+}
+.lp-actions > * {
+  animation: lp-action-in 0.45s var(--lp-detail-ease) calc(0.24s + var(--lp-i, 0) * 55ms) backwards;
+}
+.lp-actions > :nth-child(1) { --lp-i: 0; }
+.lp-actions > :nth-child(2) { --lp-i: 1; }
+.lp-actions > :nth-child(3) { --lp-i: 2; }
+.lp-actions > :nth-child(4) { --lp-i: 3; }
+.lp-actions > :nth-child(5) { --lp-i: 4; }
+.lp-actions > :nth-child(n + 6) { --lp-i: 5; }
+
+/* Field grids (recordGridClass): each field settles in turn. */
+@keyframes lp-field-in {
+  from { opacity: 0; translate: 0 10px; filter: blur(3px); }
+  to   { opacity: 1; translate: 0 0;    filter: blur(0); }
+}
+.lp-fields > * {
+  animation: lp-field-in 0.55s var(--lp-detail-ease)
+    calc(var(--lp-lead, 0s) + 0.14s + var(--lp-i, 0) * 38ms) backwards;
+}
+.lp-fields > :nth-child(1) { --lp-i: 0; }
+.lp-fields > :nth-child(2) { --lp-i: 1; }
+.lp-fields > :nth-child(3) { --lp-i: 2; }
+.lp-fields > :nth-child(4) { --lp-i: 3; }
+.lp-fields > :nth-child(5) { --lp-i: 4; }
+.lp-fields > :nth-child(6) { --lp-i: 5; }
+.lp-fields > :nth-child(7) { --lp-i: 6; }
+.lp-fields > :nth-child(8) { --lp-i: 7; }
+.lp-fields > :nth-child(9) { --lp-i: 8; }
+.lp-fields > :nth-child(10) { --lp-i: 9; }
+.lp-fields > :nth-child(n + 11) { --lp-i: 10; }
+
+/* Section heading bar grows in. */
+@keyframes lp-bar-grow {
+  from { transform: scaleY(0); }
+  to   { transform: scaleY(1); }
+}
+.lp-bar {
+  transform-origin: center;
+  animation: lp-bar-grow 0.5s var(--lp-detail-ease) calc(var(--lp-lead, 0s) + 0.1s) backwards;
+}
+
+/* Generic stagger for short lists (status steps, summary points). */
+@keyframes lp-step-in {
+  from { opacity: 0; translate: -8px 0; }
+  to   { opacity: 1; translate: 0 0; }
+}
+.lp-stagger > * {
+  animation: lp-step-in 0.5s var(--lp-detail-ease)
+    calc(var(--lp-lead, 0s) + 0.08s + var(--lp-i, 0) * 45ms) backwards;
+}
+.lp-stagger > :nth-child(1) { --lp-i: 0; }
+.lp-stagger > :nth-child(2) { --lp-i: 1; }
+.lp-stagger > :nth-child(3) { --lp-i: 2; }
+.lp-stagger > :nth-child(4) { --lp-i: 3; }
+.lp-stagger > :nth-child(5) { --lp-i: 4; }
+.lp-stagger > :nth-child(6) { --lp-i: 5; }
+.lp-stagger > :nth-child(7) { --lp-i: 6; }
+.lp-stagger > :nth-child(8) { --lp-i: 7; }
+.lp-stagger > :nth-child(9) { --lp-i: 8; }
+.lp-stagger > :nth-child(n + 10) { --lp-i: 9; }
+
+/* Late-arriving content (the AI summary body): a soft rise, no page lead. */
+@keyframes lp-fade-up {
+  from { opacity: 0; translate: 0 8px; filter: blur(3px); }
+  to   { opacity: 1; translate: 0 0;   filter: blur(0); }
+}
+.lp-fade-up {
+  animation: lp-fade-up 0.5s var(--lp-detail-ease) 0.1s backwards;
+}
+.lp-late > * {
+  animation: lp-fade-up 0.5s var(--lp-detail-ease) calc(0.12s + var(--lp-i, 0) * 60ms) backwards;
+}
+.lp-late > :nth-child(1) { --lp-i: 0; }
+.lp-late > :nth-child(2) { --lp-i: 1; }
+.lp-late > :nth-child(3) { --lp-i: 2; }
+.lp-late > :nth-child(n + 4) { --lp-i: 3; }
+/* Inside a late block the lists must not also wait for the page lead. */
+.lp-late .lp-stagger > * {
+  animation-delay: calc(0.2s + var(--lp-i, 0) * 45ms);
+}
+
+/* ── Loading skeleton → content hand-off (DetailLoader) ───────────────── */
+@keyframes lp-skel-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.lp-skel > * {
+  animation: lp-skel-in 0.4s ease-out calc(var(--lp-i, 0) * 60ms) backwards;
+}
+.lp-skel > :nth-child(1) { --lp-i: 0; }
+.lp-skel > :nth-child(2) { --lp-i: 1; }
+.lp-skel > :nth-child(3) { --lp-i: 2; }
+.lp-skel > :nth-child(4) { --lp-i: 3; }
+.lp-skel > :nth-child(5) { --lp-i: 4; }
+.lp-skel > :nth-child(n + 6) { --lp-i: 5; }
+
+@keyframes lp-skel-out {
+  from { opacity: 1; }
+  to   { opacity: 0; filter: blur(2px); }
+}
+.lp-skel-exit {
+  animation: lp-skel-out 0.32s ease-in forwards;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lp-detail,
+  .lp-detail *,
+  .lp-skel *,
+  .lp-skel-exit {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0s !important;
+  }
+}

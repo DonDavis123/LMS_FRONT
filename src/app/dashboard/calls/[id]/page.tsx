@@ -8,6 +8,8 @@ import CallDetail from "@/features/calls/components/CallDetail";
 import { CallService } from "@/features/calls/services/CallService";
 import type { CallDetail as CallDetailData } from "@/features/calls/types/call.types";
 import { getSafeReturnTo, RETURN_TO_PARAM } from "@/shared/utils/returnTo";
+import DetailLoader from "@/shared/components/DetailLoader";
+import DetailSkeleton from "@/shared/components/DetailSkeleton";
 
 function CallDetailPageInner() {
   const params = useParams<{ id: string }>();
@@ -52,27 +54,21 @@ function CallDetailPageInner() {
     return <p className="text-sm text-danger">{error}</p>;
   }
 
-  if (!call) {
-    return (
-      <div className="mx-auto max-w-5xl space-y-3">
-        {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="h-10 animate-shimmer rounded-md" />
-        ))}
-      </div>
-    );
-  }
-
   return (
     <>
-      <CallDetail
-        call={call}
-        returnTo={returnTo}
-        onNotice={setToast}
-        onCallChange={(next) => {
-          setCall(next);
-          setToast("Call updated successfully");
-        }}
-      />
+      <DetailLoader ready={!!call} skeleton={<DetailSkeleton actions={3} cards={2} fields={6} />}>
+        {call && (
+          <CallDetail
+            call={call}
+            returnTo={returnTo}
+            onNotice={setToast}
+            onCallChange={(next) => {
+              setCall(next);
+              setToast("Call updated successfully");
+            }}
+          />
+        )}
+      </DetailLoader>
       {toast && (
         <div className="fixed bottom-6 right-6 z-[60] flex items-center gap-2 rounded-md border border-success/30 bg-success-soft px-4 py-3 text-sm font-medium text-success shadow-lg animate-toast-in">
           <CheckCircle2 size={16} className="shrink-0 animate-pop-in" />

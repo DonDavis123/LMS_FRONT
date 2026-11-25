@@ -42,7 +42,7 @@ export default function LeadStatusPipeline({ statuses, current, pending, onSelec
 
   return (
     <ol
-      className={`mt-4 grid grid-cols-2 gap-1.5 sm:grid-cols-4 ${wraps ? "lg:grid-cols-6" : "lg:flex lg:gap-0"}`}
+      className={`lp-stagger mt-4 grid grid-cols-2 gap-1.5 sm:grid-cols-4 ${wraps ? "lg:grid-cols-6" : "lg:flex lg:gap-0"}`}
       aria-label="Lead status"
     >
       {stages.map((status, index) => {

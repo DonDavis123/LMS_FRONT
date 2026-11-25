@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { AlertCircle, ChevronDown, RefreshCw, Sparkles } from "lucide-react";
 import Spinner from "@/shared/components/Spinner";
+import SmoothHeight from "@/shared/components/SmoothHeight";
 import CreateFollowUpMenu from "@/shared/components/CreateFollowUpMenu";
 import type { RelatedToValue } from "@/shared/components/RelatedToPicker";
 import { useAccountSummary } from "@/features/accounts/hooks/useAccountSummary";
@@ -124,6 +125,7 @@ export default function AccountSummaryCard({
         </div>
       </div>
 
+      <SmoothHeight>
       {(loading || loadingStored) && !summary && (
         <div className="space-y-2 border-t border-line px-3.5 py-3" aria-hidden="true">
           <div className="h-3.5 w-4/5 animate-shimmer rounded-md" />
@@ -156,7 +158,7 @@ export default function AccountSummaryCard({
           className={`border-t border-line transition-opacity ${loading ? "opacity-60" : ""}`}
         >
           {expanded && (
-            <div className="px-3.5 py-3">
+            <div className="lp-late px-3.5 py-3">
               <p className="text-sm font-medium leading-relaxed text-fg">{summary.headline}</p>
 
               {(summary.key_points.length > 0 || summary.next_steps.length > 0) && (
@@ -170,7 +172,7 @@ export default function AccountSummaryCard({
                       <h3 className="text-[11px] font-semibold uppercase tracking-wider text-ink-soft">
                         Key points
                       </h3>
-                      <ul className="mt-1.5 space-y-1.5">
+                      <ul className="lp-stagger mt-1.5 space-y-1.5">
                         {summary.key_points.map((point, index) => (
                           <li key={index} className="flex items-start gap-2 text-[13px] leading-snug text-fg">
                             <span
@@ -196,7 +198,7 @@ export default function AccountSummaryCard({
                       <h3 className="text-[11px] font-semibold uppercase tracking-wider text-ink-soft">
                         Next steps
                       </h3>
-                      <ol className="mt-1.5 space-y-1.5">
+                      <ol className="lp-stagger mt-1.5 space-y-1.5">
                         {summary.next_steps.map((step, index) => (
                           <li key={index} className="flex items-start gap-2 text-[13px] leading-snug text-fg">
                             <span
@@ -231,6 +233,7 @@ export default function AccountSummaryCard({
           )}
         </div>
       )}
+      </SmoothHeight>
     </section>
   );
 }

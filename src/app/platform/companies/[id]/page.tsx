@@ -8,6 +8,8 @@ import CompanyDetail from "@/features/platform/components/CompanyDetail";
 import { platformService } from "@/features/platform/services/platformService";
 import type { Company, CompanyDetail as CompanyDetailData } from "@/features/platform/types/platform.types";
 import { extractApiError } from "@/shared/utils/apiError";
+import DetailLoader from "@/shared/components/DetailLoader";
+import DetailSkeleton from "@/shared/components/DetailSkeleton";
 
 type LoadState = "loading" | "ready" | "not-found" | "error";
 
@@ -115,24 +117,18 @@ export default function PlatformCompanyDetailPage() {
     );
   }
 
-  if (loadState === "loading" || !company) {
-    return (
-      <div className="mx-auto max-w-5xl space-y-3">
-        {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="h-10 animate-shimmer rounded-md" />
-        ))}
-      </div>
-    );
-  }
-
   return (
     <>
-      <CompanyDetail
-        company={company}
-        onCompanyChange={handleCompanyChange}
-        onUsersChanged={handleUsersChanged}
-        onNotify={showToast}
-      />
+      <DetailLoader ready={loadState === "ready" && !!company} skeleton={<DetailSkeleton tabs={false} actions={0} cards={2} fields={6} />}>
+        {company && (
+          <CompanyDetail
+            company={company}
+            onCompanyChange={handleCompanyChange}
+            onUsersChanged={handleUsersChanged}
+            onNotify={showToast}
+          />
+        )}
+      </DetailLoader>
       {toast && (
         <div className="fixed bottom-6 right-6 z-[60] flex items-center gap-2 rounded-md border border-success/30 bg-success-soft px-4 py-3 text-sm font-medium text-success shadow-lg animate-toast-in">
           <CheckCircle2 size={16} className="shrink-0 animate-pop-in" />

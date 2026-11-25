@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "./detail-motion.css";
 
 /* Enables class-based dark mode: add/remove `.dark` on <html> to switch
    themes, instead of only following the OS-level color-scheme. */

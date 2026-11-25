@@ -65,12 +65,12 @@ export default function ContactDetail({ contact, onContactChange }: ContactDetai
   const callRelated = { personType: "contact" as const, personId: contact.id, personLabel: contact.name || contact.email || "Contact", accountId: contact.account_id || "", accountLabel: contact.account_name || "" };
 
   return (
-    <div className="mx-auto max-w-5xl">
+    <div className="lp-detail mx-auto max-w-5xl">
       <Link href={returnTo ?? "/dashboard/contacts"} className="text-sm text-slate hover:text-fg">{returnTo ? "← Back to Lead Conversion" : "← Back to Contacts"}</Link>
 
       <div className="mt-3 flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-full bg-slate-light text-lg font-semibold text-slate">
+          <div className="lp-pop flex h-11 w-11 items-center justify-center rounded-full bg-slate-light text-lg font-semibold text-slate">
             {(contact.name || contact.email || "?").slice(0, 1).toUpperCase()}
           </div>
           <div>
@@ -79,7 +79,7 @@ export default function ContactDetail({ contact, onContactChange }: ContactDetai
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center justify-end gap-2">
+        <div className="lp-actions flex flex-wrap items-center justify-end gap-2">
           {CALLS_ENABLED && <LogCallFromRecord related={callRelated} onLogged={() => setCallsVersion((v) => v + 1)} />}
           <CreateTaskFromRecord related={{ personType: "contact", personId: contact.id, personLabel: contact.name || contact.email || "Contact", accountId: contact.account_id || "", accountLabel: contact.account_name || "" }} />
           <SendMailButton entity="contacts" recordId={contact.id} recordName={contact.name || contact.email || "Contact"} email={contact.email} emailOptOut={contact.email_opt_out} />

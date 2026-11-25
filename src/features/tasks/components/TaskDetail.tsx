@@ -64,14 +64,14 @@ export default function TaskDetail({ task, onTaskChange, returnTo = null }: Prop
   const related = task.lead_id ? `Lead: ${task.lead_name || task.lead_id}` : task.contact_id ? `Contact: ${task.contact_name || task.contact_id}` : task.account_id ? `Company: ${task.account_name || task.account_id}` : "—";
 
   return (
-    <div className="mx-auto max-w-5xl">
+    <div className="lp-detail mx-auto max-w-5xl">
       <Link href={backHref} className="text-sm text-slate hover:text-fg">{backLabelFor(returnTo, "← Back to Tasks")}</Link>
       <div className="mt-3 flex items-center justify-between gap-4">
         <div>
           <h1 className="font-serif text-2xl text-fg">{task.subject || "Untitled Task"}</h1>
           <p className="mt-1 text-sm text-ink-soft">{related}</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="lp-actions flex items-center gap-2">
           <Link href={editHref} className="rounded-md border border-line px-4 py-2 text-sm font-medium text-fg hover:bg-paper">Edit</Link>
           <div className="relative">
             <button type="button" onClick={() => setMenu(v => !v)} className="rounded-md border border-line p-2 text-ink-soft hover:bg-paper" aria-label="Task actions"><MoreVertical size={16}/></button>

@@ -101,7 +101,7 @@ export default function MeetingDetail({ meeting, onMeetingChange, returnTo = nul
 
   return (
     <>
-      <div className="mx-auto max-w-5xl">
+      <div className="lp-detail mx-auto max-w-5xl">
         <Link
           href={backHref}
           className="text-sm text-slate hover:text-fg"
@@ -117,7 +117,7 @@ export default function MeetingDetail({ meeting, onMeetingChange, returnTo = nul
             <p className="mt-1 text-sm text-ink-soft">{relatedSummary}</p>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="lp-actions flex items-center gap-2">
             <button
               type="button"
               onClick={() => setEditing(true)}

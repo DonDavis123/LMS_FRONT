@@ -10,6 +10,8 @@ import ContactDetail from "@/features/contacts/components/ContactDetail";
 import ContactForm from "@/features/contacts/components/ContactForm";
 import { ContactService } from "@/features/contacts/services/ContactService";
 import type { Contact, CreateContactPayload } from "@/features/contacts/types/contact.types";
+import DetailLoader from "@/shared/components/DetailLoader";
+import DetailSkeleton from "@/shared/components/DetailSkeleton";
 
 function ContactDetailPageInner() {
   const params = useParams<{ id: string }>();
@@ -51,30 +53,23 @@ async function handleSubmit(payload: CreateContactPayload) {
 }
 
   if (error) return <p className="text-sm text-danger">{error}</p>;
-  if (!contact) {
-    return (
-      <div className="mx-auto max-w-5xl space-y-3">
-        {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="h-10 animate-shimmer rounded-md" />
+  return (
+    <DetailLoader ready={!!contact} skeleton={<DetailSkeleton summary cards={1} fields={6} />}>
+      {contact &&
+        (isEditing ? (
+          <div className={formCardClass}>
+            <ContactForm
+              mode="edit"
+              initialContact={contact}
+              onSubmit={handleSubmit}
+              onCancel={() => router.push(withReturnTo(`/dashboard/contacts/${params.id}`, returnTo))}
+            />
+          </div>
+        ) : (
+          <ContactDetail contact={contact} onContactChange={setContact} />
         ))}
-      </div>
-    );
-  }
-
-  if (isEditing) {
-    return (
-      <div className={formCardClass}>
-        <ContactForm
-          mode="edit"
-          initialContact={contact}
-          onSubmit={handleSubmit}
-          onCancel={() => router.push(withReturnTo(`/dashboard/contacts/${params.id}`, returnTo))}
-        />
-      </div>
-    );
-  }
-
-  return <ContactDetail contact={contact} onContactChange={setContact} />;
+    </DetailLoader>
+  );
 }
 
 export default function ContactDetailPage() {

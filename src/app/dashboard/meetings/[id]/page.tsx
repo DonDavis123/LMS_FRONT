@@ -5,6 +5,8 @@ import MeetingDetail from "@/features/meetings/components/MeetingDetail";
 import { MeetingService } from "@/features/meetings/services/MeetingService";
 import type { Meeting } from "@/features/meetings/types/meeting.types";
 import { getSafeReturnTo, RETURN_TO_PARAM } from "@/shared/utils/returnTo";
+import DetailLoader from "@/shared/components/DetailLoader";
+import DetailSkeleton from "@/shared/components/DetailSkeleton";
 
 function Inner() {
   const params = useParams<{ id: string }>();
@@ -18,14 +20,11 @@ function Inner() {
   }, [params.id]);
 
   if (error) return <p className="text-sm text-danger">{error}</p>;
-  if (!meeting) {
-    return (
-      <div className="mx-auto max-w-5xl space-y-3">
-        {Array.from({ length: 5 }).map((_, i) => <div key={i} className="h-10 animate-shimmer rounded-md" />)}
-      </div>
-    );
-  }
-  return <MeetingDetail meeting={meeting} onMeetingChange={setMeeting} returnTo={returnTo} />;
+  return (
+    <DetailLoader ready={!!meeting} skeleton={<DetailSkeleton avatar={false} actions={2} cards={2} fields={6} />}>
+      {meeting && <MeetingDetail meeting={meeting} onMeetingChange={setMeeting} returnTo={returnTo} />}
+    </DetailLoader>
+  );
 }
 
 export default function MeetingDetailPage() {

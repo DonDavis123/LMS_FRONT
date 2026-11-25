@@ -9,6 +9,7 @@ import Modal from "@/shared/components/Modal";
 import RecordTimeline from "@/shared/components/RecordTimeline";
 import { RecordSection } from "@/shared/components/RecordSection";
 import { Tabs } from "@/shared/components/Tabs";
+import { useCountUp } from "@/shared/hooks/useCountUp";
 import CreateTaskFromRecord from "@/shared/components/CreateTaskFromRecord";
 import { confirmDelete } from "@/shared/utils/confirmDelete";
 import { extractApiError } from "@/shared/utils/apiError";
@@ -34,6 +35,11 @@ interface DealDetailProps {
 type DetailTab = "overview" | "timeline";
 
 export default function DealDetail({ deal, onDealChange, returnTo = null, initialTab = "overview" }: DealDetailProps) {
+  // The amount counts up to its value when the page opens (and between edits).
+  const amountNumber = Number(deal.amount);
+  const amountIsNumber = String(deal.amount ?? "").trim() !== "" && Number.isFinite(amountNumber);
+  const countedAmount = useCountUp(amountIsNumber ? amountNumber : 0, 900);
+
   const router = useRouter();
   const backHref = returnTo ?? "/dashboard/deals";
   const [activeTab, setActiveTab] = useState<DetailTab>(initialTab);
@@ -124,7 +130,7 @@ export default function DealDetail({ deal, onDealChange, returnTo = null, initia
   }
 
   return (
-    <div className="mx-auto max-w-5xl">
+    <div className="lp-detail mx-auto max-w-5xl">
       <Link href={backHref} className="text-sm text-slate hover:text-fg">
         {backLabelFor(returnTo, "← Back to Deals")}
       </Link>
@@ -133,7 +139,7 @@ export default function DealDetail({ deal, onDealChange, returnTo = null, initia
         <div className="min-w-0">
           <h1 className="break-words font-serif text-2xl text-fg">{deal.name || "Untitled Deal"}</h1>
           <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1.5">
-            <span className="font-serif text-2xl text-fg">{formatCurrency(deal.amount)}</span>
+            <span className="font-serif text-2xl text-fg">{amountIsNumber ? formatCurrency(countedAmount) : formatCurrency(deal.amount)}</span>
             <DealStageBadge stage={deal.stage} />
             <span className="rounded-full bg-paper px-2.5 py-1 text-xs font-medium text-ink-soft ring-1 ring-inset ring-line">
               {deal.probability}% probability
@@ -147,7 +153,7 @@ export default function DealDetail({ deal, onDealChange, returnTo = null, initia
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="lp-actions flex flex-wrap items-center gap-2">
           {/* Tasks can only be linked to a contact (the task form drops a bare account). */}
           {deal.contact_id && (
             <CreateTaskFromRecord

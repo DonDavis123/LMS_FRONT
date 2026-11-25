@@ -6,6 +6,8 @@ import { useParams, useRouter } from "next/navigation";
 import LeadForm from "@/features/leads/components/LeadForm";
 import { LeadService } from "@/features/leads/services/LeadService";
 import type { CreateLeadPayload, Lead } from "@/features/leads/types/lead.types";
+import DetailLoader from "@/shared/components/DetailLoader";
+import DetailSkeleton from "@/shared/components/DetailSkeleton";
 
 export default function EditLeadPage() {
   const router = useRouter();
@@ -60,25 +62,19 @@ export default function EditLeadPage() {
     return <p className="text-sm text-danger">{error}</p>;
   }
 
-  if (!lead) {
-    return (
-      <div className="space-y-3">
-        {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="h-10 animate-shimmer rounded-md" />
-        ))}
-      </div>
-    );
-  }
-
   return (
-    <div className={formCardClass}>
-      <LeadForm
-        mode="edit"
-        initialLead={lead}
-        onSubmit={handleSubmit}
-        onSaveAndNext={handleSaveAndNext}
-        onCancel={() => router.back()}
-      />
-    </div>
+    <DetailLoader ready={!!lead} skeleton={<DetailSkeleton avatar={false} tabs={false} actions={0} cards={1} fields={8} className="max-w-5xl" />}>
+      {lead && (
+        <div className={formCardClass}>
+          <LeadForm
+            mode="edit"
+            initialLead={lead}
+            onSubmit={handleSubmit}
+            onSaveAndNext={handleSaveAndNext}
+            onCancel={() => router.back()}
+          />
+        </div>
+      )}
+    </DetailLoader>
   );
 }

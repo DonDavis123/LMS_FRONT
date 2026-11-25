@@ -5,6 +5,8 @@ import TaskForm from "@/features/tasks/components/TaskForm";
 import { TaskService } from "@/features/tasks/services/TaskService";
 import type { CreateTaskPayload, Task } from "@/features/tasks/types/task.types";
 import { getSafeReturnTo, RETURN_TO_PARAM, withReturnTo } from "@/shared/utils/returnTo";
+import DetailLoader from "@/shared/components/DetailLoader";
+import DetailSkeleton from "@/shared/components/DetailSkeleton";
 
 function Inner() {
   const params = useParams<{ id: string }>();
@@ -26,11 +28,14 @@ function Inner() {
   }
 
   if (error) return <p className="text-sm text-danger">{error}</p>;
-  if (!task) return <div className="h-40 animate-shimmer rounded-lg" />;
   return (
-    <div className="mx-auto max-w-4xl rounded-lg border border-line bg-surface">
-      <TaskForm mode="edit" initialTask={task} onSubmit={submit} onCancel={() => router.push(detailHref)} />
-    </div>
+    <DetailLoader ready={!!task} skeleton={<DetailSkeleton avatar={false} tabs={false} actions={0} cards={1} fields={8} className="max-w-4xl" />}>
+      {task && (
+        <div className="mx-auto max-w-4xl rounded-lg border border-line bg-surface">
+          <TaskForm mode="edit" initialTask={task} onSubmit={submit} onCancel={() => router.push(detailHref)} />
+        </div>
+      )}
+    </DetailLoader>
   );
 }
 

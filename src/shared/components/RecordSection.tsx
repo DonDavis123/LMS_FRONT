@@ -14,13 +14,13 @@ export const recordCardClass =
 
 /** The field grid inside a detail card (same gaps as the form `Section`). */
 export const recordGridClass =
-  "grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2 sm:gap-x-8 sm:gap-y-5";
+  "lp-fields grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2 sm:gap-x-8 sm:gap-y-5";
 
 /** Section heading with the brand amber bar — identical to the form `Section` title. */
 export function RecordSectionTitle({ children, className = "mb-4 sm:mb-5" }: { children: ReactNode; className?: string }) {
   return (
     <h3 className={`flex items-center gap-2.5 text-xs font-bold uppercase tracking-[0.12em] text-ink-soft ${className}`}>
-      <span aria-hidden="true" className="h-4 w-1 shrink-0 rounded-full bg-amber" />
+      <span aria-hidden="true" className="lp-bar h-4 w-1 shrink-0 rounded-full bg-amber" />
       {children}
     </h3>
   );
