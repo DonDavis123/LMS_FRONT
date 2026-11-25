@@ -6,6 +6,7 @@ import { authService } from "@/features/auth/services/authService";
 import { normalizeEnumValue } from "@/shared/utils/enumValue";
 import { extractApiError } from "@/shared/utils/apiError";
 import Spinner from "@/shared/components/Spinner";
+import SegmentedControl from "@/shared/components/SegmentedControl";
 import { CalendarService } from "@/features/calendar/services/CalendarService";
 import {
   CALENDAR_EVENT_TYPES,
@@ -55,6 +56,16 @@ function isSameMonth(a: Date, b: Date): boolean {
 
 const VIEW_MODES: ViewMode[] = ["month", "week", "day"];
 
+const VIEW_OPTIONS = VIEW_MODES.map((mode) => ({ value: mode, label: mode.charAt(0).toUpperCase() + mode.slice(1) }));
+const SCOPE_OPTIONS: { value: CalendarScope; label: string }[] = [
+  { value: "mine", label: "My calendar" },
+  { value: "team", label: "Team" },
+];
+
+/** Shared look for the toolbar's outline buttons: lift on hover, press-down on click. */
+const TOOLBAR_BTN =
+  "group inline-flex h-[38px] items-center justify-center gap-1.5 rounded-xl border border-line bg-surface text-fg shadow-sm outline-none transition-all duration-200 ease-out hover:-translate-y-px hover:border-slate/40 hover:bg-paper hover:shadow-md focus-visible:ring-2 focus-visible:ring-slate/60 active:translate-y-0 active:scale-95 active:shadow-sm";
+
 /** Remembers the view and day so "Back to Calendar" from a record reopens the same place. */
 const CALENDAR_STATE_KEY = "crm.calendar.state";
 
@@ -77,6 +88,9 @@ const VIEW_UNIT: Record<ViewMode, string> = { month: "month", week: "week", day:
 
 export default function CalendarView() {
   const [view, setView] = useState<ViewMode>("month");
+  // How the content area should enter: slide with the direction of travel when
+  // paging, or a soft rise when the view itself changes.
+  const [motion, setMotion] = useState<"view" | "next" | "prev">("view");
   const [anchor, setAnchor] = useState<Date>(() => startOfDay(new Date()));
   const [selectedDay, setSelectedDay] = useState<Date>(() => startOfDay(new Date()));
   const [scope, setScope] = useState<CalendarScope>("mine");
@@ -208,6 +222,7 @@ export default function CalendarView() {
   );
 
   function step(direction: -1 | 1) {
+    setMotion(direction === 1 ? "next" : "prev");
     if (view === "day") {
       const next = addDays(anchor, direction);
       setAnchor(next);
@@ -226,18 +241,21 @@ export default function CalendarView() {
 
   function changeView(mode: ViewMode) {
     if (mode === view) return;
+    setMotion("view");
     // Keep the user's place: the new view opens on the day they were looking at.
     setAnchor(selectedDay);
     setView(mode);
   }
 
   function openDay(day: Date) {
+    setMotion("view");
     setSelectedDay(day);
     setAnchor(day);
     setView("day");
   }
 
   function goToday() {
+    setMotion(startOfDay(new Date()).getTime() >= anchor.getTime() ? "next" : "prev");
     setAnchor(startOfDay(new Date()));
     setSelectedDay(startOfDay(new Date()));
   }
@@ -246,6 +264,7 @@ export default function CalendarView() {
     setSelectedDay(day);
     // Clicking a spill-over day of the neighbouring month moves the grid there.
     if (view === "month" && day.getMonth() !== anchor.getMonth()) {
+      setMotion(day.getTime() > anchor.getTime() ? "next" : "prev");
       setAnchor(new Date(day.getFullYear(), day.getMonth(), 1));
     }
   }
@@ -259,7 +278,6 @@ export default function CalendarView() {
     });
   }
 
-  const activeBtn = theme ? "bg-[var(--cal-accent)] text-white" : "bg-ink text-white";
   const lineCls = theme ? "border-[var(--cal-line)] dark:border-[var(--cal-line-dk)]" : "border-line";
   const selectedEvents = byDay.get(toDateKey(selectedDay)) ?? [];
   const selectedFestival = theme ? getFestival(view === "day" ? anchor : selectedDay) : null;
@@ -286,68 +304,55 @@ export default function CalendarView() {
       {/* Toolbar */}
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
         {!theme && (
-          <h1 className="mr-2 font-serif text-2xl text-fg" aria-live="polite">
+          <h1 className="mr-2 font-serif text-2xl text-fg sm:min-w-[21rem]" aria-live="polite">
             {title}
           </h1>
         )}
 
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1.5">
           <button
             type="button"
             onClick={() => step(-1)}
             aria-label={`Previous ${VIEW_UNIT[view]}`}
-            className="rounded-md border border-line p-1.5 text-fg hover:bg-paper"
+            className={`${TOOLBAR_BTN} w-[38px]`}
           >
-            <ChevronLeft size={16} />
+            <ChevronLeft size={16} className="transition-transform duration-200 group-hover:-translate-x-0.5" />
           </button>
-          <button
-            type="button"
-            onClick={goToday}
-            className="rounded-md border border-line px-3 py-1.5 text-sm font-medium text-fg hover:bg-paper"
-          >
+          <button type="button" onClick={goToday} className={`${TOOLBAR_BTN} px-4 text-sm font-medium`}>
             Today
           </button>
           <button
             type="button"
             onClick={() => step(1)}
             aria-label={`Next ${VIEW_UNIT[view]}`}
-            className="rounded-md border border-line p-1.5 text-fg hover:bg-paper"
+            className={`${TOOLBAR_BTN} w-[38px]`}
           >
-            <ChevronRight size={16} />
+            <ChevronRight size={16} className="transition-transform duration-200 group-hover:translate-x-0.5" />
           </button>
         </div>
 
-        <div role="group" aria-label="Calendar view" className="flex overflow-hidden rounded-md border border-line text-sm">
-          {VIEW_MODES.map((mode) => (
-            <button
-              key={mode}
-              type="button"
-              aria-pressed={view === mode}
-              onClick={() => changeView(mode)}
-              className={`px-3 py-1.5 font-medium capitalize ${view === mode ? activeBtn : "text-fg hover:bg-paper"}`}
-            >
-              {mode}
-            </button>
-          ))}
-        </div>
+        <SegmentedControl
+          mode="toggle"
+          size="xs"
+          variant="solid"
+          accent={theme ? "var(--cal-accent)" : undefined}
+          label="Calendar view"
+          value={view}
+          onChange={changeView}
+          options={VIEW_OPTIONS}
+        />
 
         {canViewTeam && (
-          <div role="group" aria-label="Whose calendar" className="flex overflow-hidden rounded-md border border-line text-sm">
-            {([
-              ["mine", "My calendar"],
-              ["team", "Team"],
-            ] as const).map(([value, label]) => (
-              <button
-                key={value}
-                type="button"
-                aria-pressed={scope === value}
-                onClick={() => setScope(value)}
-                className={`px-3 py-1.5 font-medium ${scope === value ? activeBtn : "text-fg hover:bg-paper"}`}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
+          <SegmentedControl
+            mode="toggle"
+            size="xs"
+            variant="solid"
+            accent={theme ? "var(--cal-accent)" : undefined}
+            label="Whose calendar"
+            value={scope}
+            onChange={setScope}
+            options={SCOPE_OPTIONS}
+          />
         )}
 
         <div className="ml-auto flex items-center gap-2">
@@ -356,9 +361,13 @@ export default function CalendarView() {
             onClick={toggleTheme}
             aria-pressed={themeOn}
             title={themeOn ? "Turn off the seasonal theme" : "Turn on the seasonal theme"}
-            className="inline-flex items-center gap-1.5 rounded-md border border-line px-2.5 py-1.5 text-xs font-medium text-ink-soft hover:bg-paper hover:text-fg"
+            className={`${TOOLBAR_BTN} px-3 text-xs font-medium ${themeOn ? "border-slate/50 bg-slate-light/60" : "text-ink-soft hover:text-fg"}`}
           >
-            <Sparkles size={14} aria-hidden="true" />
+            <Sparkles
+              size={14}
+              aria-hidden="true"
+              className={`transition-transform duration-300 group-hover:rotate-12 group-hover:scale-125 ${themeOn ? "text-amber-dark" : ""}`}
+            />
             <span className="hidden sm:inline">Theme: {themeOn ? "On" : "Off"}</span>
             <span className="sr-only sm:hidden">Seasonal theme {themeOn ? "on" : "off"}</span>
           </button>
@@ -366,16 +375,29 @@ export default function CalendarView() {
             type="button"
             onClick={() => void load()}
             aria-label="Refresh calendar"
-            className="rounded-md border border-line p-1.5 text-ink-soft hover:bg-paper hover:text-fg"
+            title="Refresh"
+            className={`${TOOLBAR_BTN} w-[38px] text-ink-soft hover:text-fg`}
           >
-            <RefreshCw size={16} className={isLoading ? "animate-spin" : ""} />
+            <RefreshCw
+              size={16}
+              className={isLoading ? "animate-spin" : "transition-transform duration-500 ease-out group-hover:rotate-180"}
+            />
           </button>
           <button
             type="button"
             onClick={() => setAddDay(toDateKey(selectedDay))}
-            className={`inline-flex items-center gap-1.5 rounded-md ${theme ? "bg-[var(--cal-accent)] hover:brightness-110" : "bg-ink hover:bg-ink-2"} px-3 py-2 text-sm font-semibold text-white transition active:scale-[0.98]`}
+            style={theme ? { background: "var(--cal-accent)" } : undefined}
+            className={`group relative inline-flex h-[38px] items-center gap-1.5 overflow-hidden rounded-xl ${
+              theme ? "" : "bg-ink hover:bg-ink-2"
+            } px-4 text-sm font-semibold text-white shadow-[0_1px_2px_rgba(18,33,58,0.25),0_6px_14px_-6px_rgba(18,33,58,0.55)] outline-none transition-all duration-200 ease-out hover:-translate-y-px hover:shadow-[0_2px_4px_rgba(18,33,58,0.25),0_10px_20px_-8px_rgba(18,33,58,0.65)] hover:brightness-110 focus-visible:ring-2 focus-visible:ring-slate/60 focus-visible:ring-offset-2 active:translate-y-0 active:scale-95`}
           >
-            <Plus size={16} aria-hidden="true" /> Add
+            {/* Light sweep across the button on hover. */}
+            <span
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-y-0 -left-full w-1/2 -skew-x-12 bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-700 ease-out group-hover:translate-x-[320%]"
+            />
+            <Plus size={16} aria-hidden="true" className="relative transition-transform duration-300 group-hover:rotate-90" />
+            <span className="relative">Add</span>
           </button>
         </div>
       </div>
@@ -392,11 +414,11 @@ export default function CalendarView() {
               type="button"
               aria-pressed={on}
               onClick={() => toggleType(type)}
-              className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition ${
-                on ? `border-transparent ${meta.tone}` : "border-line text-ink-soft line-through hover:bg-paper"
+              className={`group inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium outline-none transition-all duration-200 ease-out hover:-translate-y-px focus-visible:ring-2 focus-visible:ring-slate/60 active:translate-y-0 active:scale-95 ${
+                on ? `border-transparent shadow-sm hover:shadow-md ${meta.tone}` : "border-line text-ink-soft line-through hover:bg-paper"
               }`}
             >
-              <Icon size={13} aria-hidden="true" />
+              <Icon size={13} aria-hidden="true" className="transition-transform duration-200 group-hover:scale-125" />
               {meta.plural}
               <span className="tabular-nums opacity-70">{typeCounts[type]}</span>
             </button>
@@ -474,6 +496,13 @@ export default function CalendarView() {
         </section>
       )}
 
+      {/* Re-keyed per view/period so the content re-enters instead of snapping.
+          Only the content is wrapped: the toast and dialogs stay outside, since a
+          lingering transform here would trap `position: fixed` descendants. */}
+      <div
+        key={`${view}:${toDateKey(anchor)}`}
+        className={motion === "next" ? "animate-cal-next" : motion === "prev" ? "animate-cal-prev" : "animate-tab-panel"}
+      >
       {view === "day" ? (
         <div className="mt-4">
           {selectedFestival && (
@@ -673,6 +702,7 @@ export default function CalendarView() {
         </aside>
       </div>
       )}
+      </div>
 
       <QuickAddDialog
         day={addDay}

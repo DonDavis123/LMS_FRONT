@@ -16,6 +16,8 @@ import { useRef, useState, type KeyboardEvent, type ReactNode } from "react";
  *  - hover tint, press-down scale, keyboard-only focus ring.
  *  - `busy` makes the thumb breathe while data for the selection loads.
  *  - Reduced-motion is handled globally in globals.css.
+ *  - `variant="solid"` fills the thumb with the brand navy (or `accent`) and
+ *    flips the active label to white - used by the calendar toolbar.
  *
  * Two semantics:
  *  - mode="tabs"   -> role=tablist/tab, roving tabindex, Arrow/Home/End keys.
@@ -39,8 +41,12 @@ interface SegmentedControlProps<T extends string> {
   /** Accessible name for the whole control. */
   label: string;
   mode?: "tabs" | "toggle";
-  /** `md` = 40px touch targets (tabs). `sm` = 40px on mobile, 32px on desktop. */
-  size?: "sm" | "md";
+  /** `md` = 40px touch targets (tabs). `sm` = 40px on mobile, 32px on desktop. `xs` = compact 28px toolbar control. */
+  size?: "xs" | "sm" | "md";
+  /** `soft` = tinted thumb (default). `solid` = filled thumb with white active label. */
+  variant?: "soft" | "solid";
+  /** CSS color for the solid thumb (e.g. a seasonal accent). Defaults to brand navy. */
+  accent?: string;
   /** Required for mode="tabs": builds the tab / tabpanel ids. */
   idPrefix?: string;
   /** Thumb pulses while the selected option's data is loading. */
@@ -55,6 +61,8 @@ export default function SegmentedControl<T extends string>({
   label,
   mode = "toggle",
   size = "md",
+  variant = "soft",
+  accent,
   idPrefix,
   busy = false,
   className = "",
@@ -94,14 +102,18 @@ export default function SegmentedControl<T extends string>({
     buttonRefs.current[next]?.focus();
   }
 
-  const buttonSize = size === "md" ? "min-h-10 px-3 text-sm sm:px-4" : "h-10 px-3.5 text-xs sm:h-8 sm:px-3";
+  const solid = variant === "solid";
+  const buttonSize =
+    size === "md" ? "min-h-10 px-3 text-sm sm:px-4"
+    : size === "xs" ? "h-7 px-3.5 text-sm"
+    : "h-10 px-3.5 text-xs sm:h-8 sm:px-3";
 
   return (
     <div
       role={isTabs ? "tablist" : "group"}
       aria-label={label}
       onKeyDown={handleKeyDown}
-      className={`relative inline-grid max-w-full grid-flow-col auto-cols-fr rounded-full border border-line bg-paper p-1 shadow-[inset_0_1px_2px_rgba(18,33,58,0.07)] ${className}`}
+      className={`relative inline-grid max-w-full grid-flow-col auto-cols-fr rounded-full border border-line ${solid ? "bg-surface" : "bg-paper"} p-1 shadow-[inset_0_1px_2px_rgba(18,33,58,0.07)] ${className}`}
     >
       {/* Sliding thumb: one option wide, moved by whole-width steps. */}
       <span
@@ -115,13 +127,22 @@ export default function SegmentedControl<T extends string>({
         {/* Inner shape re-mounts on each change to replay the stretch. */}
         <span
           key={pulse}
-          className={`relative block h-full w-full overflow-hidden rounded-full border border-slate bg-slate-light shadow-[0_1px_2px_rgba(18,33,58,0.14),0_6px_12px_-6px_rgba(76,103,133,0.55)] ${
-            pulse > 0 ? "animate-tab-thumb" : ""
-          } ${busy ? "animate-pulse" : ""}`}
-          style={{ transformOrigin: movingRight ? "right center" : "left center" }}
+          className={`relative block h-full w-full overflow-hidden rounded-full border ${
+            solid
+              ? `border-transparent ${accent ? "" : "bg-ink"} shadow-[0_1px_2px_rgba(18,33,58,0.25),0_6px_14px_-6px_rgba(18,33,58,0.6)]`
+              : "border-slate bg-slate-light shadow-[0_1px_2px_rgba(18,33,58,0.14),0_6px_12px_-6px_rgba(76,103,133,0.55)]"
+          } ${pulse > 0 ? "animate-tab-thumb" : ""} ${busy ? "animate-pulse" : ""}`}
+          style={{
+            transformOrigin: movingRight ? "right center" : "left center",
+            ...(solid && accent ? { background: accent } : null),
+          }}
         >
           {/* Soft top sheen gives the thumb a little depth. */}
-          <span className="absolute inset-0 bg-gradient-to-b from-white/40 to-transparent dark:from-white/5" />
+          <span
+            className={`absolute inset-0 bg-gradient-to-b to-transparent ${
+              solid ? "from-white/20" : "from-white/40 dark:from-white/5"
+            }`}
+          />
         </span>
       </span>
 
@@ -149,7 +170,9 @@ export default function SegmentedControl<T extends string>({
             {...tabProps}
             onClick={() => onChange(option.value)}
             className={`group/seg relative z-10 inline-flex select-none items-center justify-center gap-1.5 whitespace-nowrap rounded-full font-medium tabular-nums outline-none transition-[color,background-color,transform] duration-200 ease-out focus-visible:ring-2 focus-visible:ring-slate/60 active:scale-[0.94] ${buttonSize} ${
-              isActive ? "text-fg" : "text-ink-soft hover:bg-slate/10 hover:text-fg"
+              isActive
+                ? solid ? "text-white" : "text-fg"
+                : solid ? "text-fg/70 hover:bg-slate/10 hover:text-fg" : "text-ink-soft hover:bg-slate/10 hover:text-fg"
             }`}
           >
             {option.label}
