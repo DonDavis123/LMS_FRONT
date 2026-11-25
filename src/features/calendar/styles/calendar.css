@@ -1,0 +1,67 @@
+/* Month / Week / Day switch (features/calendar/components/CalendarView.tsx).
+ *
+ * CalendarView names its content area `cal-content` for the length of the
+ * transition only (never permanently - a named element becomes a containing
+ * block for fixed-position descendants) and sets `data-cal-dir` on <html>:
+ *   deeper     Month -> Week -> Day  (zooming in on detail)
+ *   shallower  Day -> Week -> Month  (zooming back out)
+ *
+ * The old layout fades out while the new one eases in, so the page never
+ * hard-cuts between very different heights.
+ */
+
+/* Everything outside the calendar content is already live and correct: show it
+   as-is so the toolbar's sliding thumb isn't ghosted by a page-wide cross-fade. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+/* The group would otherwise morph its box between the two heights, stretching
+   both snapshots. Keep it still; the old/new layers animate themselves. */
+::view-transition-group(cal-content) {
+  animation: none;
+}
+
+::view-transition-old(cal-content),
+::view-transition-new(cal-content) {
+  height: auto;
+  inset-block-start: 0;
+  transform-origin: 50% 0;
+  mix-blend-mode: normal;
+}
+
+::view-transition-old(cal-content) {
+  animation: cal-vt-out 180ms cubic-bezier(0.4, 0, 1, 1) both;
+}
+::view-transition-new(cal-content) {
+  animation: cal-vt-in 340ms cubic-bezier(0.16, 1, 0.3, 1) 60ms both;
+}
+
+html[data-cal-dir="shallower"]::view-transition-old(cal-content) {
+  animation-name: cal-vt-out-back;
+}
+html[data-cal-dir="shallower"]::view-transition-new(cal-content) {
+  animation-name: cal-vt-in-back;
+}
+
+@keyframes cal-vt-out {
+  to { opacity: 0; transform: translateY(-6px) scale(1.015); }
+}
+@keyframes cal-vt-in {
+  from { opacity: 0; transform: translateY(12px) scale(0.985); }
+}
+@keyframes cal-vt-out-back {
+  to { opacity: 0; transform: translateY(6px) scale(0.985); }
+}
+@keyframes cal-vt-in-back {
+  from { opacity: 0; transform: translateY(-12px) scale(1.015); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(cal-content),
+  ::view-transition-new(cal-content) {
+    animation: none;
+  }
+}

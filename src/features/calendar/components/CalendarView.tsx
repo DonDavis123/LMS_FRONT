@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { flushSync } from "react-dom";
 import { AlertTriangle, BellRing, CalendarDays, ChevronLeft, ChevronRight, Plus, RefreshCw, Sparkles, X } from "lucide-react";
 import { authService } from "@/features/auth/services/authService";
 import { normalizeEnumValue } from "@/shared/utils/enumValue";
@@ -44,6 +45,7 @@ import { getFestival, themeCssVars } from "@/features/calendar/config/seasonalTh
 import { useSeasonalTheme } from "@/features/calendar/hooks/useSeasonalTheme";
 import QuickAddDialog from "@/features/calendar/components/QuickAddDialog";
 import DayTimeGrid from "@/features/calendar/components/DayTimeGrid";
+import "@/features/calendar/styles/calendar.css";
 
 /** Roles that may switch to the whole-company calendar (mirrors the backend). */
 const TEAM_VIEW_ROLES = new Set(["SUPERADMIN", "ADMIN", "SALESMANAGER", "SALES_MANAGER"]);
@@ -57,6 +59,10 @@ function isSameMonth(a: Date, b: Date): boolean {
 const VIEW_MODES: ViewMode[] = ["month", "week", "day"];
 
 const VIEW_OPTIONS = VIEW_MODES.map((mode) => ({ value: mode, label: mode.charAt(0).toUpperCase() + mode.slice(1) }));
+interface ViewTransitionLike {
+  finished: Promise<unknown>;
+}
+
 const SCOPE_OPTIONS: { value: CalendarScope; label: string }[] = [
   { value: "mine", label: "My calendar" },
   { value: "team", label: "Team" },
@@ -90,7 +96,8 @@ export default function CalendarView() {
   const [view, setView] = useState<ViewMode>("month");
   // How the content area should enter: slide with the direction of travel when
   // paging, or a soft rise when the view itself changes.
-  const [motion, setMotion] = useState<"view" | "next" | "prev">("view");
+  const [motion, setMotion] = useState<"view" | "next" | "prev" | "none">("view");
+  const contentRef = useRef<HTMLDivElement | null>(null);
   const [anchor, setAnchor] = useState<Date>(() => startOfDay(new Date()));
   const [selectedDay, setSelectedDay] = useState<Date>(() => startOfDay(new Date()));
   const [scope, setScope] = useState<CalendarScope>("mine");
@@ -239,19 +246,55 @@ export default function CalendarView() {
     setSelectedDay(view === "month" && isSameMonth(next, today) ? today : next);
   }
 
+  /**
+   * Swaps Month/Week/Day with a cross-fade between the old and new layout
+   * (View Transitions API, see calendar.css). Browsers without it, and users
+   * who prefer reduced motion, get the plain CSS fade-in instead.
+   */
+  function switchView(direction: "deeper" | "shallower", update: () => void) {
+    const start = (document as unknown as { startViewTransition?: (callback: () => void) => ViewTransitionLike })
+      .startViewTransition;
+    const element = contentRef.current;
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (!start || !element || reduceMotion) {
+      setMotion("view");
+      update();
+      return;
+    }
+
+    const root = document.documentElement;
+    root.dataset.calDir = direction;
+    // Named only while transitioning (a permanent name would trap fixed descendants).
+    element.style.setProperty("view-transition-name", "cal-content");
+    const transition = start.call(document, () => {
+      flushSync(() => {
+        setMotion("none");
+        update();
+      });
+      contentRef.current?.style.setProperty("view-transition-name", "cal-content");
+    });
+    void transition.finished.finally(() => {
+      delete root.dataset.calDir;
+      contentRef.current?.style.removeProperty("view-transition-name");
+    });
+  }
+
   function changeView(mode: ViewMode) {
     if (mode === view) return;
-    setMotion("view");
-    // Keep the user's place: the new view opens on the day they were looking at.
-    setAnchor(selectedDay);
-    setView(mode);
+    const direction = VIEW_MODES.indexOf(mode) > VIEW_MODES.indexOf(view) ? "deeper" : "shallower";
+    switchView(direction, () => {
+      // Keep the user's place: the new view opens on the day they were looking at.
+      setAnchor(selectedDay);
+      setView(mode);
+    });
   }
 
   function openDay(day: Date) {
-    setMotion("view");
-    setSelectedDay(day);
-    setAnchor(day);
-    setView("day");
+    switchView("deeper", () => {
+      setSelectedDay(day);
+      setAnchor(day);
+      setView("day");
+    });
   }
 
   function goToday() {
@@ -501,7 +544,13 @@ export default function CalendarView() {
           lingering transform here would trap `position: fixed` descendants. */}
       <div
         key={`${view}:${toDateKey(anchor)}`}
-        className={motion === "next" ? "animate-cal-next" : motion === "prev" ? "animate-cal-prev" : "animate-tab-panel"}
+        ref={contentRef}
+        className={
+          motion === "next" ? "animate-cal-next"
+          : motion === "prev" ? "animate-cal-prev"
+          : motion === "view" ? "animate-tab-panel"
+          : undefined
+        }
       >
       {view === "day" ? (
         <div className="mt-4">
