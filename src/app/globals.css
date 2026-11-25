@@ -1008,3 +1008,50 @@ table > tbody > tr > td:nth-child(n + 11) { --lp-col-i: 10; }
     animation: none !important;
   }
 }
+
+/* ── Status select (shared/components/ModernStatusSelect.tsx) ───────────
+   The menu scales/fades in from the trigger (origin + direction are set
+   inline so it also works when it opens upward), the rows cascade in, the
+   selected check pops, and closing plays a short exit before unmounting
+   (keep CLOSE_MS in the component in sync with the .11s below). */
+@keyframes lp-status-menu-in {
+  from { opacity: 0; transform: translateY(var(--lp-sm-shift, -6px)) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes lp-status-menu-out {
+  from { opacity: 1; transform: translateY(0) scale(1); }
+  to   { opacity: 0; transform: translateY(calc(var(--lp-sm-shift, -6px) * 0.6)) scale(0.97); }
+}
+@keyframes lp-status-opt-in {
+  from { opacity: 0; transform: translateX(-6px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes lp-status-check-in {
+  from { opacity: 0; transform: scale(0.4) rotate(-20deg); }
+  to   { opacity: 1; transform: scale(1) rotate(0); }
+}
+@keyframes lp-status-halo {
+  0%   { transform: scale(1);   opacity: 0.55; }
+  100% { transform: scale(2.6); opacity: 0; }
+}
+.lp-status-menu {
+  animation: lp-status-menu-in 0.2s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.lp-status-menu[data-closing] {
+  animation: lp-status-menu-out 0.11s ease-in both;
+  pointer-events: none;
+}
+.lp-status-opt {
+  animation: lp-status-opt-in 0.26s cubic-bezier(0.16, 1, 0.3, 1) calc(30ms + var(--lp-i, 0) * 18ms) backwards;
+}
+.lp-status-check {
+  animation: lp-status-check-in 0.32s cubic-bezier(0.34, 1.56, 0.64, 1) 80ms backwards;
+}
+.lp-status-halo {
+  animation: lp-status-halo 1.5s ease-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .lp-status-opt,
+  .lp-status-check,
+  .lp-status-halo { animation: none !important; }
+}
