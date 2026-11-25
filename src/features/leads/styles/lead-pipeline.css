@@ -1,0 +1,101 @@
+/* Lead status pipeline (features/leads/components/LeadStatusPipeline.tsx).
+   Fill-mode is `backwards` on one-shot animations so no transform/filter is
+   left behind (it would trap `position: fixed` descendants). The global
+   reduced-motion rule in globals.css shortens all of this to nothing. */
+
+/* Progress rail ------------------------------------------------------- */
+.lp-pipe-fill {
+  background: linear-gradient(90deg, var(--color-amber), var(--color-amber-dark));
+  transition: width 0.95s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.lp-pipe-fill[data-tone="danger"] {
+  background: linear-gradient(90deg, var(--color-danger), #d8624b);
+}
+
+@keyframes lp-pipe-shine {
+  0%   { translate: -120% 0; }
+  60%, 100% { translate: 360% 0; }
+}
+.lp-pipe-shine {
+  position: absolute;
+  inset-block: 0;
+  left: 0;
+  width: 34%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.55), transparent);
+  animation: lp-pipe-shine 3.2s ease-in-out 1s infinite;
+}
+
+.lp-pipe-knob {
+  transition: left 0.95s cubic-bezier(0.22, 1, 0.36, 1);
+}
+@keyframes lp-pipe-knob-ping {
+  0%   { scale: 1; opacity: 0.55; }
+  80%, 100% { scale: 2.6; opacity: 0; }
+}
+.lp-pipe-knob-ping {
+  animation: lp-pipe-knob-ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+/* Stage chips --------------------------------------------------------- */
+@keyframes lp-pipe-in {
+  from { opacity: 0; translate: 0 10px; scale: 0.94; }
+  to   { opacity: 1; translate: 0 0;    scale: 1; }
+}
+.lp-pipe-list > li {
+  animation: lp-pipe-in 0.55s var(--lp-detail-ease, cubic-bezier(0.22, 1, 0.36, 1))
+    calc(var(--lp-lead, 0s) + 0.18s + var(--lp-i, 0) * 45ms) backwards;
+}
+.lp-pipe-list > :nth-child(1) { --lp-i: 0; }
+.lp-pipe-list > :nth-child(2) { --lp-i: 1; }
+.lp-pipe-list > :nth-child(3) { --lp-i: 2; }
+.lp-pipe-list > :nth-child(4) { --lp-i: 3; }
+.lp-pipe-list > :nth-child(5) { --lp-i: 4; }
+.lp-pipe-list > :nth-child(6) { --lp-i: 5; }
+.lp-pipe-list > :nth-child(7) { --lp-i: 6; }
+.lp-pipe-list > :nth-child(8) { --lp-i: 7; }
+.lp-pipe-list > :nth-child(9) { --lp-i: 8; }
+.lp-pipe-list > :nth-child(10) { --lp-i: 9; }
+.lp-pipe-list > :nth-child(11) { --lp-i: 10; }
+.lp-pipe-list > :nth-child(n + 12) { --lp-i: 11; }
+
+/* Breathing halo around the current stage */
+@keyframes lp-chip-ring {
+  0%   { scale: 1;    opacity: 0.75; }
+  70%, 100% { scale: 1.07; opacity: 0; }
+}
+.lp-chip-ring {
+  animation: lp-chip-ring 2.4s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+/* One-off burst when a stage becomes the current one */
+@keyframes lp-chip-burst {
+  from { scale: 0.92; opacity: 0.7; }
+  to   { scale: 1.22; opacity: 0; }
+}
+.lp-chip-burst {
+  animation: lp-chip-burst 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Light sweeping across the current stage */
+@keyframes lp-chip-shine {
+  0%   { translate: -130% 0; }
+  55%, 100% { translate: 420% 0; }
+}
+.lp-chip-shine {
+  position: absolute;
+  inset-block: 0;
+  left: 0;
+  width: 30%;
+  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.28), transparent);
+  animation: lp-chip-shine 3.6s ease-in-out 1.2s infinite;
+}
+
+/* The tick/number badge pops when it appears */
+@keyframes lp-badge-pop {
+  0%   { scale: 0.4; opacity: 0; }
+  65%  { scale: 1.15; opacity: 1; }
+  100% { scale: 1; }
+}
+.lp-badge-pop {
+  animation: lp-badge-pop 0.45s cubic-bezier(0.34, 1.4, 0.64, 1) backwards;
+}
