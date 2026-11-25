@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { AlertCircle, Check, CheckCircle2 } from "lucide-react";
 import WidgetCard, { WidgetEmpty } from "@/features/dashboard/components/WidgetCard";
@@ -14,6 +14,7 @@ import {
   type PriorityTone,
 } from "@/features/dashboard/utils/dashboardMetrics";
 import type { Task } from "@/features/tasks/types/task.types";
+import SegmentedControl from "@/shared/components/SegmentedControl";
 import { extractApiError } from "@/shared/utils/apiError";
 
 type TaskTab = "overdue" | "today" | "upcoming";
@@ -60,7 +61,6 @@ export default function MyTasksPanel({ state, completingIds, onComplete, onRetry
   const [leaving, setLeaving] = useState<ReadonlySet<string>>(new Set());
   const [hidden, setHidden] = useState<ReadonlySet<string>>(new Set());
   const [toast, setToast] = useState<ToastState | null>(null);
-  const tabRefs = useRef<Record<TaskTab, HTMLButtonElement | null>>({ overdue: null, today: null, upcoming: null });
 
   const data = state.status === "ready" ? state.data : null;
   const now = useMemo(() => new Date(), [data]);
@@ -106,20 +106,6 @@ export default function MyTasksPanel({ state, completingIds, onComplete, onRetry
     }
   }
 
-  function handleTabKey(event: KeyboardEvent<HTMLButtonElement>, index: number) {
-    const last = TABS.length - 1;
-    const next =
-      event.key === "ArrowRight" ? (index === last ? 0 : index + 1)
-      : event.key === "ArrowLeft" ? (index === 0 ? last : index - 1)
-      : event.key === "Home" ? 0
-      : event.key === "End" ? last
-      : null;
-    if (next === null) return;
-    event.preventDefault();
-    setChosenTab(TABS[next].value);
-    tabRefs.current[TABS[next].value]?.focus();
-  }
-
   return (
     <>
       <WidgetCard
@@ -134,38 +120,19 @@ export default function MyTasksPanel({ state, completingIds, onComplete, onRetry
       >
         <div className="flex flex-col" style={{ height: BODY_HEIGHT }}>
         <div className="shrink-0 px-4 pt-3 sm:px-5">
-          <div role="tablist" aria-label="Task due date" className="inline-flex max-w-full rounded-full border border-line bg-paper p-1">
-            {TABS.map((item, index) => {
-              const isActive = item.value === tab;
-              return (
-                <button
-                  key={item.value}
-                  ref={(node) => {
-                    tabRefs.current[item.value] = node;
-                  }}
-                  type="button"
-                  role="tab"
-                  id={`my-tasks-tab-${item.value}`}
-                  aria-selected={isActive}
-                  aria-controls="my-tasks-panel"
-                  tabIndex={isActive ? 0 : -1}
-                  onClick={() => setChosenTab(item.value)}
-                  onKeyDown={(event) => handleTabKey(event, index)}
-                  className={`min-h-10 rounded-full border px-3 text-sm font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-slate sm:px-4 ${
-                    isActive ? "border-slate bg-slate-light text-fg" : "border-transparent text-ink-soft hover:text-fg"
-                  }`}
-                >
-                  {item.label}{" "}
-                  <span
-                    className="tabular-nums"
-                    style={item.value === "overdue" && counts.overdue > 0 ? { color: TONE_TEXT.danger } : undefined}
-                  >
-                    ({counts[item.value]})
-                  </span>
-                </button>
-              );
-            })}
-          </div>
+          <SegmentedControl
+            mode="tabs"
+            idPrefix="my-tasks"
+            label="Task due date"
+            value={tab}
+            onChange={setChosenTab}
+            options={TABS.map((item) => ({
+              value: item.value,
+              label: item.label,
+              badge: counts[item.value],
+              badgeTone: item.value === "overdue" ? "danger" : "neutral",
+            }))}
+          />
         </div>
 
         <div role="tabpanel" id="my-tasks-panel" aria-labelledby={`my-tasks-tab-${tab}`} className="mt-2 flex min-h-0 flex-1 flex-col">

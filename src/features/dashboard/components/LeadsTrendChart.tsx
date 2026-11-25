@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent, type PointerEvent } from "react";
 import WidgetCard from "@/features/dashboard/components/WidgetCard";
+import SegmentedControl from "@/shared/components/SegmentedControl";
 import {
   DASHBOARD_RANGES,
   type AsyncState,
@@ -63,7 +64,7 @@ export default function LeadsTrendChart({ state, range, onRangeChange, isFetchin
     <WidgetCard
       title="Leads over time"
       subtitle={stats ? `${total.toLocaleString()} new ${total === 1 ? "lead" : "leads"} · last ${stats.range_days} days` : undefined}
-      headerAside={<RangeToggle range={range} onChange={onRangeChange} />}
+      headerAside={<RangeToggle range={range} onChange={onRangeChange} busy={isFetching} />}
       status={state.status}
       error={state.status === "error" ? state.message : undefined}
       onRetry={onRetry}
@@ -80,26 +81,25 @@ export default function LeadsTrendChart({ state, range, onRangeChange, isFetchin
   );
 }
 
-export function RangeToggle({ range, onChange }: { range: DashboardRange; onChange: (range: DashboardRange) => void }) {
+export function RangeToggle({
+  range,
+  onChange,
+  busy = false,
+}: {
+  range: DashboardRange;
+  onChange: (range: DashboardRange) => void;
+  busy?: boolean;
+}) {
   return (
-    <div role="group" aria-label="Date range" className="inline-flex rounded-full border border-line bg-paper p-1">
-      {DASHBOARD_RANGES.map((option) => {
-        const isActive = option === range;
-        return (
-          <button
-            key={option}
-            type="button"
-            aria-pressed={isActive}
-            onClick={() => onChange(option)}
-            className={`h-10 rounded-full border px-3.5 text-xs font-medium tabular-nums outline-none transition-colors focus-visible:ring-2 focus-visible:ring-slate sm:h-8 sm:px-3 ${
-              isActive ? "border-slate bg-slate-light text-fg" : "border-transparent text-ink-soft hover:text-fg"
-            }`}
-          >
-            {option}d
-          </button>
-        );
-      })}
-    </div>
+    <SegmentedControl
+      mode="toggle"
+      size="sm"
+      label="Date range"
+      busy={busy}
+      value={String(range)}
+      onChange={(value) => onChange(Number(value) as DashboardRange)}
+      options={DASHBOARD_RANGES.map((option) => ({ value: String(option), label: `${option}d` }))}
+    />
   );
 }
 
