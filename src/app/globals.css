@@ -1055,3 +1055,144 @@ table > tbody > tr > td:nth-child(n + 11) { --lp-col-i: 10; }
   .lp-status-check,
   .lp-status-halo { animation: none !important; }
 }
+
+/* ── Table polish (all `.lp-table-scroll` lists) ───────────────────────
+   Visual refinement only — markup, columns and behaviour are untouched.
+   Unlayered rules here intentionally win over the Tailwind utilities on
+   the rows (hover:bg-paper, hover:shadow-[inset…], hover:underline). */
+:root {
+  --lp-row-hover: color-mix(in srgb, var(--color-amber) 7%, var(--color-surface));
+  --lp-head-bg: color-mix(in srgb, var(--color-paper) 60%, var(--color-surface));
+}
+
+/* Header: a quiet tinted band, tighter small-caps, brightens on hover. */
+.lp-table-scroll thead th,
+.lp-table-scroll thead th.lp-sticky-end {
+  background-color: var(--lp-head-bg);
+  color: var(--color-ink-soft);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  transition: color 0.18s ease;
+}
+.lp-table-scroll thead th:hover {
+  color: var(--color-fg);
+}
+
+/* Header lifts off the rows (soft shadow) once the list is scrolled.
+   Progressive enhancement: only where scroll-driven animations exist. */
+@keyframes lp-head-lift {
+  from { box-shadow: inset 0 -1px 0 var(--color-line); }
+  to   { box-shadow: inset 0 -1px 0 var(--color-line), 0 8px 14px -10px rgba(18, 33, 58, 0.35); }
+}
+@supports (animation-timeline: scroll()) {
+  .lp-table-scroll table:not(.sr-only) > thead > tr > th {
+    animation: lp-head-in 0.42s var(--lp-ease-out) backwards, lp-head-lift linear both;
+    animation-timeline: auto, scroll(nearest block);
+    animation-range: normal, 0px 32px;
+  }
+}
+
+/* Rows: lighter dividers, aligned numbers, smooth warm hover. */
+.lp-table-scroll tbody tr {
+  border-bottom-color: color-mix(in srgb, var(--color-line) 70%, transparent);
+}
+.lp-table-scroll tbody td {
+  font-variant-numeric: tabular-nums;
+}
+.lp-table-scroll tbody tr:hover {
+  background-color: var(--lp-row-hover);
+  box-shadow: none; /* replaces the static inset bar with the animated one below */
+}
+.lp-table-scroll tbody tr:hover td.lp-sticky-end {
+  background-color: var(--lp-row-hover);
+}
+
+/* Amber accent bar grows from the centre of the hovered row. */
+.lp-table-scroll tbody tr > td:first-child {
+  position: relative;
+}
+.lp-table-scroll tbody tr > td:first-child::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: linear-gradient(180deg, var(--color-amber), var(--color-amber-dark));
+  opacity: 0;
+  transform: scaleY(0.2);
+  transition: transform 0.26s var(--lp-ease-out), opacity 0.18s ease;
+  pointer-events: none;
+}
+.lp-table-scroll tbody tr:hover > td:first-child::before {
+  opacity: 1;
+  transform: scaleY(1);
+}
+
+/* Record links: the underline draws in from the left instead of snapping. */
+.lp-table-scroll tbody td > a:not([class*="rounded"]):not([class*="border"]) {
+  background: linear-gradient(currentColor, currentColor) 0 100% / 0 1.5px no-repeat;
+  text-decoration: none;
+  transition: background-size 0.28s var(--lp-ease-out), color 0.18s ease;
+}
+.lp-table-scroll tbody td > a:not([class*="rounded"]):not([class*="border"]):hover {
+  background-size: 100% 1.5px;
+  text-decoration: none;
+}
+.lp-table-scroll tbody tr:hover > td > a:not([class*="rounded"]):not([class*="border"]) {
+  color: var(--color-fg);
+}
+
+/* Chips (lead source etc.): a hairline ring in their own colour for definition. */
+.lp-table-scroll tbody td > span[class*="rounded-full"]:not([class*="h-"]) {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, currentColor 16%, transparent);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+/* Slim, themed scrollbars instead of the chunky OS ones with arrow buttons. */
+.lp-table-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--color-slate) 38%, transparent) transparent;
+}
+
+/* Footer: same tint as the header, friendlier pager buttons. */
+.lp-list-foot {
+  background-color: var(--lp-head-bg);
+}
+.lp-list-foot button[aria-label$="page"] {
+  min-width: 1.75rem;
+  border-radius: 0.5rem;
+  background-color: var(--color-surface);
+  color: var(--color-fg);
+  transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+}
+.lp-list-foot button[aria-label$="page"]:not(:disabled):hover {
+  background-color: var(--color-paper);
+  border-color: color-mix(in srgb, var(--color-slate) 45%, var(--color-line));
+  box-shadow: 0 1px 3px rgba(18, 33, 58, 0.1);
+}
+.lp-list-foot button[aria-label$="page"]:not(:disabled):active {
+  background-color: var(--color-slate-light);
+}
+
+/* Skeleton shimmer: the old colours matched the page background, so the
+   placeholder bars were nearly invisible. Now a visible base with a soft
+   moving highlight, in both themes. */
+.animate-shimmer {
+  background: linear-gradient(
+    100deg,
+    color-mix(in srgb, var(--color-line) 55%, var(--color-surface)) 30%,
+    color-mix(in srgb, var(--color-line) 15%, var(--color-surface)) 50%,
+    color-mix(in srgb, var(--color-line) 55%, var(--color-surface)) 70%
+  );
+  background-size: 250% 100%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lp-table-scroll tbody tr > td:first-child::before,
+  .lp-table-scroll tbody td > a { transition: none !important; }
+  .lp-table-scroll thead th { animation-timeline: auto !important; }
+}
