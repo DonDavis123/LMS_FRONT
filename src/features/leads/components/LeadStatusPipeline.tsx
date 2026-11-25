@@ -20,11 +20,78 @@ const NEGATIVE_STATUSES: readonly LeadStatus[] = ["Junk Lead", "Not Qualified"];
 /** Beyond this many stages a single overlapping row gets too cramped, so they wrap into a grid. */
 const MAX_CHEVRON_ROW = 9;
 
-// Arrow-shaped step: a point on the right, a matching notch on the left.
-// The first step keeps a flat left edge.
-const NOTCH = "12px";
-const STEP_SHAPE = `polygon(0 0, calc(100% - ${NOTCH}) 0, 100% 50%, calc(100% - ${NOTCH}) 100%, 0 100%, ${NOTCH} 50%)`;
-const FIRST_STEP_SHAPE = `polygon(0 0, calc(100% - ${NOTCH}) 0, 100% 50%, calc(100% - ${NOTCH}) 100%, 0 100%)`;
+// Arrow-shaped step: a point on the right, a matching notch on the left, with
+// every corner softly rounded. The first step keeps a flat (rounded) left edge.
+const NOTCH = 12;
+const OUTER_HEIGHT = 48; // h-12
+const INNER_HEIGHT = OUTER_HEIGHT - 2; // the fill layer is inset by 1px all round
+
+/** A point measured from the left edge (`l`) or the right edge (`r`, so x <= 0 is inside). */
+interface ShapePoint {
+  a: "l" | "r";
+  x: number;
+  y: number;
+  /** Corner radius in px. */
+  radius: number;
+}
+
+function cssX(point: { a: "l" | "r"; x: number }): string {
+  if (point.a === "l") return `${point.x.toFixed(2)}px`;
+  return point.x === 0 ? "100%" : `calc(100% - ${(-point.x).toFixed(2)}px)`;
+}
+
+/**
+ * Builds a `clip-path: polygon()` for an arrow whose corners are rounded.
+ * Widths are fluid, so points are anchored to the left or right edge; rounding
+ * is done by replacing each corner with a few points along a curve.
+ */
+function roundedArrow(height: number, withNotch: boolean): string {
+  const mid = height / 2;
+  const points: ShapePoint[] = [
+    { a: "l", x: 0, y: 0, radius: 7 },
+    { a: "r", x: -NOTCH, y: 0, radius: 6 },
+    { a: "r", x: 0, y: mid, radius: 4.5 },
+    { a: "r", x: -NOTCH, y: height, radius: 6 },
+    { a: "l", x: 0, y: height, radius: 7 },
+  ];
+  if (withNotch) points.push({ a: "l", x: NOTCH, y: mid, radius: 4.5 });
+
+  // Unit direction from one corner towards another. Edges between a left-
+  // and a right-anchored point are always horizontal.
+  const direction = (from: ShapePoint, to: ShapePoint): [number, number] => {
+    if (from.a !== to.a) return [to.a === "r" ? 1 : -1, 0];
+    const dx = to.x - from.x;
+    const dy = to.y - from.y;
+    const length = Math.hypot(dx, dy) || 1;
+    return [dx / length, dy / length];
+  };
+
+  const out: string[] = [];
+  const STEPS = 5;
+  points.forEach((corner, index) => {
+    const previous = points[(index + points.length - 1) % points.length];
+    const next = points[(index + 1) % points.length];
+    const [px, py] = direction(corner, previous);
+    const [nx, ny] = direction(corner, next);
+    const r = corner.radius;
+    const start = { x: corner.x + px * r, y: corner.y + py * r };
+    const end = { x: corner.x + nx * r, y: corner.y + ny * r };
+    for (let i = 0; i <= STEPS; i += 1) {
+      const t = i / STEPS;
+      const u = 1 - t;
+      // Quadratic curve through the corner gives a smooth round-off.
+      const x = u * u * start.x + 2 * u * t * corner.x + t * t * end.x;
+      const y = u * u * start.y + 2 * u * t * corner.y + t * t * end.y;
+      out.push(`${cssX({ a: corner.a, x })} ${y.toFixed(2)}px`);
+    }
+  });
+  return `polygon(${out.join(", ")})`;
+}
+
+const STEP_OUTER = roundedArrow(OUTER_HEIGHT, true);
+const FIRST_STEP_OUTER = roundedArrow(OUTER_HEIGHT, false);
+const STEP_INNER = roundedArrow(INNER_HEIGHT, true);
+const FIRST_STEP_INNER = roundedArrow(INNER_HEIGHT, false);
 
 /**
  * Chevron-style lead status bar. Every status is always visible — no
@@ -58,7 +125,9 @@ export default function LeadStatusPipeline({ statuses, current, pending, onSelec
         const isPending = status === pending;
         const isPassed = currentIndex >= 0 && index < currentIndex && !isNegative && !NEGATIVE_STATUSES.includes(current);
         const state = isCurrent ? "current" : isPassed ? "passed" : "upcoming";
-        const shape: CSSProperties = { clipPath: index === 0 || wraps ? FIRST_STEP_SHAPE : STEP_SHAPE };
+        const isFlat = index === 0 || wraps;
+        const outerShape: CSSProperties = { clipPath: isFlat ? FIRST_STEP_OUTER : STEP_OUTER };
+        const innerShape: CSSProperties = { clipPath: isFlat ? FIRST_STEP_INNER : STEP_INNER };
 
         // Outer layer paints the 1px outline, inner layer the fill.
         const outline = isCurrent
@@ -87,18 +156,18 @@ export default function LeadStatusPipeline({ statuses, current, pending, onSelec
               className={`group block h-12 w-full outline-none transition-transform duration-200 hover:-translate-y-0.5 focus-visible:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] ${outline} ${
                 isPending ? "animate-stage-pulse" : ""
               }`}
-              style={shape}
+              style={outerShape}
             >
               <span
                 data-state={state}
                 data-tone={isCurrent && isNegative ? "danger" : undefined}
-                className="lp-chev-fill flex h-[calc(100%-2px)] w-[calc(100%-2px)] translate-x-px translate-y-px items-center justify-center gap-1.5 px-5 text-center text-xs leading-tight"
-                style={shape}
+                className="lp-chev-fill flex h-[calc(100%-2px)] w-[calc(100%-2px)] translate-x-px translate-y-px items-center justify-center gap-1.5 pl-6 pr-7 text-center text-[12.5px] font-medium leading-tight tracking-[0.01em]"
+                style={innerShape}
               >
                 {/* Re-mounts when this stage becomes current, replaying the wipe. */}
                 {isCurrent && <span key={`wipe-${status}`} aria-hidden="true" className="lp-chev-wipe" />}
                 <span
-                  className={`relative z-10 flex items-center justify-center gap-1.5 ${isCurrent ? "font-semibold" : ""} ${
+                  className={`relative z-10 flex min-w-0 items-center justify-center gap-1.5 ${isCurrent ? "font-semibold tracking-[0.015em]" : ""} ${
                     isNegative && !isCurrent ? "group-hover:text-danger" : ""
                   }`}
                 >
@@ -107,7 +176,7 @@ export default function LeadStatusPipeline({ statuses, current, pending, onSelec
                   ) : (
                     isNegative && <ThumbsDown size={13} aria-hidden="true" />
                   )}
-                  {status}
+                  <span className="line-clamp-2 min-w-0">{status}</span>
                 </span>
               </span>
             </button>
