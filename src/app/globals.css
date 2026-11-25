@@ -887,3 +887,119 @@ button, a, input, select, textarea {
 .animate-timeline-ping {
   animation: timeline-ping 2.2s cubic-bezier(0, 0, 0.2, 1) infinite;
 }
+
+/* ── Table entrance motion ─────────────────────────────────────────────
+   Every list table (`.lp-table-scroll`) and the lead-import preview tables
+   reveal themselves once data has loaded:
+     1. the header row settles in from slightly above,
+     2. body rows rise + fade in a quick top-to-bottom cascade,
+     3. inside each row the cells fade in left-to-right (a soft "wave"),
+     4. the pagination footer fades in last.
+   Notes
+   - Rows animate on mount only, so sorting / paging / filtering (which
+     remount rows) re-plays it, while hover, polling and edits do not.
+   - The independent `translate` property is used instead of `transform`
+     because rows are pinned with `transform: none !important` above
+     (anti-shake). `backwards` fill (never `forwards`) means nothing is
+     left on the element afterwards, so no stacking context / containing
+     block lingers to trap dropdowns or the sticky columns.
+   - Rows already animating via .animate-row-highlight / -remove keep
+     their own animation. Delay is capped, so long pages never feel slow.
+   - Reduced-motion users get the final state immediately. */
+:root {
+  --lp-row-step: 34ms;
+  --lp-row-base: 90ms;
+  --lp-cell-step: 22ms;
+  --lp-ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes lp-row-in {
+  from { opacity: 0; translate: 0 12px; }
+  to   { opacity: 1; translate: 0 0; }
+}
+@keyframes lp-cell-in {
+  from { opacity: 0; translate: -8px 0; }
+  to   { opacity: 1; translate: 0 0; }
+}
+@keyframes lp-cell-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes lp-head-in {
+  from { opacity: 0; translate: 0 -6px; }
+  to   { opacity: 1; translate: 0 0; }
+}
+@keyframes lp-foot-in {
+  from { opacity: 0; translate: 0 6px; }
+  to   { opacity: 1; translate: 0 0; }
+}
+
+/* Header */
+table:not(.sr-only) > thead > tr > th {
+  animation: lp-head-in 0.42s var(--lp-ease-out) backwards;
+}
+
+/* Rows (tables and the reminder <ul> list) */
+table:not(.sr-only) > tbody > tr:not(.animate-row-remove):not(.animate-row-highlight),
+ul.lp-table-scroll > li {
+  --lp-row-delay: calc(var(--lp-row-base) + var(--lp-row-i, 0) * var(--lp-row-step));
+  animation: lp-row-in 0.55s var(--lp-ease-out) var(--lp-row-delay) backwards;
+}
+
+/* Cells: left-to-right wave, offset from the row's own delay */
+table:not(.sr-only) > tbody > tr:not(.animate-row-remove):not(.animate-row-highlight) > td {
+  animation: lp-cell-in 0.5s var(--lp-ease-out)
+    calc(var(--lp-row-delay) + var(--lp-col-i, 0) * var(--lp-cell-step)) backwards;
+}
+/* Pinned column: opacity only, so `position: sticky` is never fought. */
+table:not(.sr-only) > tbody > tr:not(.animate-row-remove):not(.animate-row-highlight) > td.lp-sticky-end {
+  animation-name: lp-cell-fade;
+}
+
+/* Footer (pagination) arrives after the rows */
+.lp-table-scroll + * {
+  animation: lp-foot-in 0.45s var(--lp-ease-out) 260ms backwards;
+}
+
+/* Smooth row hover (background + the amber edge marker) */
+.lp-table-scroll tbody tr {
+  transition: background-color 0.18s ease, box-shadow 0.22s ease;
+}
+
+/* Stagger indices (rows 1–14, columns 1–10; beyond that the cap is reused) */
+table > tbody > tr:nth-child(1), ul.lp-table-scroll > li:nth-child(1) { --lp-row-i: 0; }
+table > tbody > tr:nth-child(2), ul.lp-table-scroll > li:nth-child(2) { --lp-row-i: 1; }
+table > tbody > tr:nth-child(3), ul.lp-table-scroll > li:nth-child(3) { --lp-row-i: 2; }
+table > tbody > tr:nth-child(4), ul.lp-table-scroll > li:nth-child(4) { --lp-row-i: 3; }
+table > tbody > tr:nth-child(5), ul.lp-table-scroll > li:nth-child(5) { --lp-row-i: 4; }
+table > tbody > tr:nth-child(6), ul.lp-table-scroll > li:nth-child(6) { --lp-row-i: 5; }
+table > tbody > tr:nth-child(7), ul.lp-table-scroll > li:nth-child(7) { --lp-row-i: 6; }
+table > tbody > tr:nth-child(8), ul.lp-table-scroll > li:nth-child(8) { --lp-row-i: 7; }
+table > tbody > tr:nth-child(9), ul.lp-table-scroll > li:nth-child(9) { --lp-row-i: 8; }
+table > tbody > tr:nth-child(10), ul.lp-table-scroll > li:nth-child(10) { --lp-row-i: 9; }
+table > tbody > tr:nth-child(11), ul.lp-table-scroll > li:nth-child(11) { --lp-row-i: 10; }
+table > tbody > tr:nth-child(12), ul.lp-table-scroll > li:nth-child(12) { --lp-row-i: 11; }
+table > tbody > tr:nth-child(13), ul.lp-table-scroll > li:nth-child(13) { --lp-row-i: 12; }
+table > tbody > tr:nth-child(14), ul.lp-table-scroll > li:nth-child(14) { --lp-row-i: 13; }
+table > tbody > tr:nth-child(n + 15), ul.lp-table-scroll > li:nth-child(n + 15) { --lp-row-i: 14; }
+table > tbody > tr > td:nth-child(1) { --lp-col-i: 0; }
+table > tbody > tr > td:nth-child(2) { --lp-col-i: 1; }
+table > tbody > tr > td:nth-child(3) { --lp-col-i: 2; }
+table > tbody > tr > td:nth-child(4) { --lp-col-i: 3; }
+table > tbody > tr > td:nth-child(5) { --lp-col-i: 4; }
+table > tbody > tr > td:nth-child(6) { --lp-col-i: 5; }
+table > tbody > tr > td:nth-child(7) { --lp-col-i: 6; }
+table > tbody > tr > td:nth-child(8) { --lp-col-i: 7; }
+table > tbody > tr > td:nth-child(9) { --lp-col-i: 8; }
+table > tbody > tr > td:nth-child(10) { --lp-col-i: 9; }
+table > tbody > tr > td:nth-child(n + 11) { --lp-col-i: 10; }
+
+@media (prefers-reduced-motion: reduce) {
+  table > thead > tr > th,
+  table > tbody > tr,
+  table > tbody > tr > td,
+  ul.lp-table-scroll > li,
+  .lp-table-scroll + * {
+    animation: none !important;
+  }
+}
