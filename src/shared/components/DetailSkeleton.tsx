@@ -75,7 +75,7 @@ export default function DetailSkeleton({
 
       {pipeline && (
         <div className="mt-4">
-          <div className="h-[172px] w-full animate-shimmer rounded-xl" />
+          <div className="h-12 w-full animate-shimmer rounded-md" />
         </div>
       )}
 
