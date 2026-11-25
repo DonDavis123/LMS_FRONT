@@ -903,6 +903,10 @@ button, a, input, select, textarea {
      (anti-shake). `backwards` fill (never `forwards`) means nothing is
      left on the element afterwards, so no stacking context / containing
      block lingers to trap dropdowns or the sticky columns.
+   - Motion only ever goes UP or LEFT (negative offsets). A positive
+     offset (e.g. rows rising from below) enlarges the scroll container's
+     scrollable area while it plays, which flashes a scrollbar under the
+     table. Negative offsets are never scrollable, so no scrollbar flicker.
    - Rows already animating via .animate-row-highlight / -remove keep
      their own animation. Delay is capped, so long pages never feel slow.
    - Reduced-motion users get the final state immediately. */
@@ -914,7 +918,7 @@ button, a, input, select, textarea {
 }
 
 @keyframes lp-row-in {
-  from { opacity: 0; translate: 0 12px; }
+  from { opacity: 0; translate: 0 -10px; }
   to   { opacity: 1; translate: 0 0; }
 }
 @keyframes lp-cell-in {
@@ -930,8 +934,8 @@ button, a, input, select, textarea {
   to   { opacity: 1; translate: 0 0; }
 }
 @keyframes lp-foot-in {
-  from { opacity: 0; translate: 0 6px; }
-  to   { opacity: 1; translate: 0 0; }
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 
 /* Header */
