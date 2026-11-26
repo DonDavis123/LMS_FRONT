@@ -11,6 +11,7 @@ import { LeadService } from "@/features/leads/services/LeadService";
 import type { Lead } from "@/features/leads/types/lead.types";
 import DetailLoader from "@/shared/components/DetailLoader";
 import DetailSkeleton from "@/shared/components/DetailSkeleton";
+import { useLeadPicklists } from "@/features/picklists/hooks/useLeadPicklists";
 
 function LeadDetailPageInner() {
   const params = useParams<{ id: string }>();
@@ -19,6 +20,10 @@ function LeadDetailPageInner() {
   const [lead, setLead] = useState<Lead | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+  // Warms the shared picklist cache so LeadDetail mounts with the company's own
+  // status list. Without this the status bar first paints the built-in statuses
+  // and then re-renders (and re-animates) when the custom list arrives.
+  const { isLoading: picklistsLoading } = useLeadPicklists();
 
   useEffect(() => {
     let cancelled = false;
@@ -62,9 +67,12 @@ function LeadDetailPageInner() {
     return <p className="text-sm text-danger">{error}</p>;
   }
 
+  // Converted leads show history only (no status bar), so they needn't wait.
+  const ready = !!lead && (lead.is_converted || !picklistsLoading);
+
   return (
     <>
-      <DetailLoader ready={!!lead} skeleton={<DetailSkeleton summary pipeline avatar actions={5} />}>
+      <DetailLoader ready={ready} skeleton={<DetailSkeleton summary pipeline avatar actions={5} />}>
         {/* Converted leads are history only — never render the editable view. */}
         {lead &&
           (lead.is_converted ? (
