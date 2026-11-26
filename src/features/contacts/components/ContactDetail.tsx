@@ -19,6 +19,7 @@ import { toSelectOptions } from "@/features/picklists/utils/optionHelpers";
 import CreateTaskFromRecord from "@/shared/components/CreateTaskFromRecord";
 import SendMailButton from "@/features/mailing/components/SendMailButton";
 import { confirmDelete } from "@/shared/utils/confirmDelete";
+import { notifyError } from "@/shared/utils/notify";
 import { CALLS_ENABLED } from "@/features/calls/config";
 import LogCallFromRecord from "@/features/calls/components/LogCallFromRecord";
 import RecordCalls from "@/features/calls/components/RecordCalls";
@@ -58,7 +59,7 @@ export default function ContactDetail({ contact, onContactChange }: ContactDetai
       await ContactService.deleteContact(contact.id);
       router.push("/dashboard/contacts");
     } catch {
-      window.alert("Couldn't delete this contact. Try again.");
+      notifyError("Couldn't delete this contact. Try again.");
     }
   }
 

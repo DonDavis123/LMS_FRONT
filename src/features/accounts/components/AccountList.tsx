@@ -19,6 +19,8 @@ import type { LeadOwnerOption } from "@/features/auth/types/auth.types";
 import ExportMenu from "@/features/exports/components/ExportMenu";
 
 import { confirmDelete } from "@/shared/utils/confirmDelete";
+import { openRowOnClick, openRowOnKey, rowFocusClass } from "@/shared/utils/rowOpen";
+import { notifyError } from "@/shared/utils/notify";
 import { useSelectionKeyboard } from "@/shared/hooks/useSelectionKeyboard";
 import { useBulkMail } from "@/features/mailing/hooks/useBulkMail";
 import RowCallButton from "@/features/calls/components/RowCallButton";
@@ -141,7 +143,7 @@ export default function AccountList({
       });
       setSelectedIds(new Set());
       setSelectionMode(false);
-      if (deleted < ids.length) window.alert(`${deleted} deleted. ${ids.length - deleted} could not be deleted.`);
+      if (deleted < ids.length) notifyError(`${deleted} deleted. ${ids.length - deleted} could not be deleted.`);
     } finally {
       setBulkDeleting(false);
     }
@@ -157,7 +159,7 @@ export default function AccountList({
         setRemovingId(null);
       }, ROW_REMOVE_MS);
     } catch {
-      window.alert("Couldn't delete this company. Try again.");
+      notifyError("Couldn't delete this company. Try again.");
     }
   }
 
@@ -260,7 +262,7 @@ export default function AccountList({
                     key={account.id}
                     data-record-row={account.id}
                     onClick={(event) => {
-                      if (!selectionMode) return;
+                      if (!selectionMode) { openRowOnClick(event, () => router.push(`/dashboard/accounts/${account.id}`)); return; }
                       const target = event.target as HTMLElement;
                       if (target.closest('button[aria-label="Record actions"]')) return;
                       event.preventDefault();
@@ -270,9 +272,9 @@ export default function AccountList({
                         return next;
                       });
                     }}
-                    onDoubleClick={() => { if (!selectionMode) router.push(`/dashboard/accounts/${account.id}`); }}
-                    title="Double-click to open company details"
-                    className={`group cursor-pointer border-b border-line last:border-0 hover:bg-paper hover:shadow-[inset_2px_0_0_var(--color-amber)] ${
+                    tabIndex={0}
+                    onKeyDown={(event) => { if (!selectionMode) openRowOnKey(event, () => router.push(`/dashboard/accounts/${account.id}`)); }}
+                    className={`group cursor-pointer ${rowFocusClass} border-b border-line last:border-0 hover:bg-paper hover:shadow-[inset_2px_0_0_var(--color-amber)] ${
                       removingId === account.id ? "animate-row-remove" : ""
                     } ${highlightId === account.id ? "animate-row-highlight" : ""}`}
                   >

@@ -26,6 +26,8 @@ import { authStorage } from "@/infrastructure/auth/tokenStorage";
 import ExportMenu from "@/features/exports/components/ExportMenu";
 
 import { confirmDelete } from "@/shared/utils/confirmDelete";
+import { openRowOnClick, openRowOnKey, rowFocusClass } from "@/shared/utils/rowOpen";
+import { notifyError } from "@/shared/utils/notify";
 import { formatDateTime } from "@/shared/utils/formatDate";
 import { useSelectionKeyboard } from "@/shared/hooks/useSelectionKeyboard";
 import { useBulkMail } from "@/features/mailing/hooks/useBulkMail";
@@ -164,7 +166,7 @@ export default function LeadList({
       });
       setSelectedIds(new Set());
       setSelectionMode(false);
-      if (deleted < ids.length) window.alert(`${deleted} deleted. ${ids.length - deleted} could not be deleted.`);
+      if (deleted < ids.length) notifyError(`${deleted} deleted. ${ids.length - deleted} could not be deleted.`);
     } finally {
       setBulkDeleting(false);
     }
@@ -183,7 +185,7 @@ export default function LeadList({
         setRemovingId(null);
       }, ROW_REMOVE_MS);
     } catch {
-      window.alert("Couldn't delete this lead. Try again.");
+      notifyError("Couldn't delete this lead. Try again.");
     } finally {
       setDeletingId(null);
     }
@@ -199,7 +201,7 @@ export default function LeadList({
       onLeadUpdated(updated);
     } catch (error) {
       console.error("Failed to update lead status:", error);
-      window.alert("Couldn't update the lead status. Try again.");
+      notifyError("Couldn't update the lead status. Try again.");
     } finally {
       setUpdatingStatusId(null);
     }
@@ -296,7 +298,7 @@ export default function LeadList({
                     key={lead.id}
                     data-record-row={lead.id}
                     onClick={(event) => {
-                      if (!selectionMode) return;
+                      if (!selectionMode) { openRowOnClick(event, () => router.push(`/dashboard/leads/${lead.id}`)); return; }
                       const target = event.target as HTMLElement;
                       if (target.closest('button[aria-label="Record actions"]')) return;
                       event.preventDefault();
@@ -306,9 +308,9 @@ export default function LeadList({
                         return next;
                       });
                     }}
-                    onDoubleClick={() => { if (!selectionMode) router.push(`/dashboard/leads/${lead.id}`); }}
-                    title="Double-click to open lead details"
-                    className={`group cursor-pointer border-b border-line last:border-0 hover:bg-paper hover:shadow-[inset_2px_0_0_var(--color-amber)] ${
+                    tabIndex={0}
+                    onKeyDown={(event) => { if (!selectionMode) openRowOnKey(event, () => router.push(`/dashboard/leads/${lead.id}`)); }}
+                    className={`group cursor-pointer ${rowFocusClass} border-b border-line last:border-0 hover:bg-paper hover:shadow-[inset_2px_0_0_var(--color-amber)] ${
                       removingId === lead.id ? "animate-row-remove" : ""
                     } ${highlightId === lead.id ? "animate-row-highlight" : ""}`}
                   >

@@ -20,7 +20,8 @@ interface SortableHeaderProps {
  *  - Devices with a mouse: a menu icon fades in when the header is hovered.
  *  - Touch devices (phones/tablets): no icon; tapping the column name
  *    opens the same menu.
- *  - A star after the column name marks the column the list is sorted by.
+ *  - An up/down arrow after the column name marks the sorted column and its
+ *    direction (the <th> also carries aria-sort for screen readers).
  *
  * It only reports the chosen sort — the page sends it to the backend,
  * which orders the full result set before paginating.
@@ -72,8 +73,12 @@ export default function SortableHeader({
         >
           <span className="truncate">{label}</span>
           {activeDirection && (
-            <span aria-hidden="true" className="text-sm font-bold leading-none text-fg">
-              *
+            <span
+              aria-hidden="true"
+              title={activeDirection === "asc" ? "Sorted ascending" : "Sorted descending"}
+              className="flex shrink-0 text-fg"
+            >
+              {activeDirection === "asc" ? <ArrowUp size={12} strokeWidth={2.5} /> : <ArrowDown size={12} strokeWidth={2.5} />}
             </span>
           )}
         </button>

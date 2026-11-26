@@ -22,6 +22,7 @@ import {
 import { formatCallDateTime, recordHref, recordLabel } from "@/features/calls/utils/callFormat";
 import type { RelatedToValue } from "@/shared/components/RelatedToPicker";
 import { confirmDelete } from "@/shared/utils/confirmDelete";
+import { notifyError } from "@/shared/utils/notify";
 import { formatDateTime } from "@/shared/utils/formatDate";
 import { withReturnTo } from "@/shared/utils/returnTo";
 import { RecordSectionTitle, recordCardClass, recordGridClass } from "@/shared/components/RecordSection";
@@ -98,7 +99,7 @@ export default function CallDetail({ call, onCallChange, returnTo = null, onNoti
       await CallService.deleteCall(call.id);
       router.push(backHref);
     } catch {
-      window.alert("Couldn't delete this call. Try again.");
+      notifyError("Couldn't delete this call. Try again.");
     }
   }
 

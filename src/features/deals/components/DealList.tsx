@@ -10,6 +10,7 @@ import SortableHeader from "@/shared/components/SortableHeader";
 import FilterBar, { type FilterCondition, type FilterFieldConfig } from "@/shared/components/FilterBar";
 import ServerPagination from "@/shared/components/ServerPagination";
 import { confirmDelete } from "@/shared/utils/confirmDelete";
+import { openRowOnClick, openRowOnKey, rowFocusClass } from "@/shared/utils/rowOpen";
 import { extractApiError } from "@/shared/utils/apiError";
 import { useSelectionKeyboard } from "@/shared/hooks/useSelectionKeyboard";
 import type { PaginationMeta } from "@/shared/types/pagination";
@@ -226,17 +227,15 @@ export default function DealList({
                       key={deal.id}
                       data-record-row={deal.id}
                       onClick={(event) => {
-                        if (!selectionMode) return;
+                        if (!selectionMode) { openRowOnClick(event, () => onOpenClick(deal)); return; }
                         const target = event.target as HTMLElement;
                         if (target.closest('button[aria-label="Record actions"]')) return;
                         event.preventDefault();
                         toggleSelected(deal.id);
                       }}
-                      onDoubleClick={() => {
-                        if (!selectionMode) onOpenClick(deal);
-                      }}
-                      title="Double-click to open deal details"
-                      className="group cursor-pointer hover:bg-paper hover:shadow-[inset_2px_0_0_var(--color-amber)]"
+                      tabIndex={0}
+                      onKeyDown={(event) => { if (!selectionMode) openRowOnKey(event, () => onOpenClick(deal)); }}
+                      className={`group cursor-pointer ${rowFocusClass} hover:bg-paper hover:shadow-[inset_2px_0_0_var(--color-amber)]`}
                     >
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">

@@ -12,6 +12,8 @@ import type { MeetingListItem } from "@/features/meetings/types/meeting.types";
 import { MeetingService } from "@/features/meetings/services/MeetingService";
 import { RecordChip } from "@/features/meetings/components/SelectedRecordsField";
 import { confirmDelete } from "@/shared/utils/confirmDelete";
+import { openRowOnClick, openRowOnKey, rowFocusClass } from "@/shared/utils/rowOpen";
+import { notifyError } from "@/shared/utils/notify";
 import { useSelectionKeyboard } from "@/shared/hooks/useSelectionKeyboard";
 import { CreateButtonLabel, createButtonClass } from "@/shared/components/FormLayout";
 
@@ -115,7 +117,7 @@ export default function MeetingList({
       setSelectionMode(false);
 
       if (deleted < ids.length) {
-        window.alert(
+        notifyError(
           `${deleted} deleted. ${ids.length - deleted} could not be deleted.`,
         );
       }
@@ -124,6 +126,11 @@ export default function MeetingList({
     } finally {
       setBulkDeleting(false);
     }
+  }
+
+  function openMeeting(meeting: MeetingListItem) {
+    if (onOpenClick) onOpenClick(meeting);
+    else onEditClick(meeting);
   }
 
   async function handleDelete(meeting: MeetingListItem) {
@@ -146,7 +153,7 @@ export default function MeetingList({
       });
       await onRefresh();
     } catch {
-      window.alert("Couldn't delete this meeting. Try again.");
+      notifyError("Couldn't delete this meeting. Try again.");
     } finally {
       setDeletingId(null);
     }
@@ -260,7 +267,10 @@ export default function MeetingList({
                     key={meeting.id}
                     data-record-row={meeting.id}
                     onClick={(event) => {
-                      if (!selectionMode) return;
+                      if (!selectionMode) {
+                        openRowOnClick(event, () => openMeeting(meeting));
+                        return;
+                      }
 
                       const target = event.target as HTMLElement;
                       if (
@@ -287,7 +297,7 @@ export default function MeetingList({
                       }
                     }}
                     title="Double-click to open meeting details"
-                    className="group cursor-pointer hover:bg-paper hover:shadow-[inset_2px_0_0_var(--color-amber)]"
+                    className={`group cursor-pointer ${rowFocusClass} hover:bg-paper hover:shadow-[inset_2px_0_0_var(--color-amber)]`}
                   >
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
@@ -323,8 +333,7 @@ export default function MeetingList({
                               return next;
                             });
                           } else {
-                            if (onOpenClick) onOpenClick(meeting);
-                            else onEditClick(meeting);
+                            openMeeting(meeting);
                           }
                         }}
                         className="text-left font-medium text-slate hover:underline"

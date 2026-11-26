@@ -19,6 +19,7 @@ import type { Lead, LeadStatus } from "@/features/leads/types/lead.types";
 import CreateTaskFromRecord from "@/shared/components/CreateTaskFromRecord";
 import SendMailButton from "@/features/mailing/components/SendMailButton";
 import { confirmDelete } from "@/shared/utils/confirmDelete";
+import { notifyError } from "@/shared/utils/notify";
 import { CALLS_ENABLED } from "@/features/calls/config";
 import LogCallFromRecord from "@/features/calls/components/LogCallFromRecord";
 import RecordCalls from "@/features/calls/components/RecordCalls";
@@ -67,7 +68,7 @@ async function handleStatusClick(status: LeadStatus) {
     onLeadChange(updatedLead);
   } catch (error) {
     console.error("Failed to update lead status:", error);
-    window.alert("Couldn't update the lead status. Try again.");
+    notifyError("Couldn't update the lead status. Try again.");
   } finally {
     setIsUpdatingStatus(false);
     setPendingStatus(null);
@@ -90,7 +91,7 @@ async function handleStatusClick(status: LeadStatus) {
       const message = await LeadService.deleteLead(lead.id);
       router.push(`/dashboard/leads?deletedMessage=${encodeURIComponent(message)}`);
     } catch {
-      window.alert("Couldn't delete this lead. Try again.");
+      notifyError("Couldn't delete this lead. Try again.");
     }
   }
 

@@ -9,6 +9,7 @@ import { TaskService } from "@/features/tasks/services/TaskService";
 import { TASK_PRIORITIES, TASK_STATUSES, type Task, type TaskPriority, type TaskStatus } from "@/features/tasks/types/task.types";
 
 import { confirmDelete } from "@/shared/utils/confirmDelete";
+import { notifyError } from "@/shared/utils/notify";
 import { formatDateTime } from "@/shared/utils/formatDate";
 import RecordTimeline from "@/shared/components/RecordTimeline";
 import { Tabs } from "@/shared/components/Tabs";
@@ -58,7 +59,7 @@ export default function TaskDetail({ task, onTaskChange, returnTo = null }: Prop
     setMenu(false);
     if (!await confirmDelete(`Delete "${task.subject}"? This can't be undone.`)) return;
     try { await TaskService.deleteTask(task.id); router.push(backHref); }
-    catch { window.alert("Couldn't delete this task. Try again."); }
+    catch { notifyError("Couldn't delete this task. Try again."); }
   }
 
   const related = task.lead_id ? `Lead: ${task.lead_name || task.lead_id}` : task.contact_id ? `Contact: ${task.contact_name || task.contact_id}` : task.account_id ? `Company: ${task.account_name || task.account_id}` : "—";

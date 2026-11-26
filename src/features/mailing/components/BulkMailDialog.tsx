@@ -1,5 +1,6 @@
 "use client";
 
+import { notifyError } from "@/shared/utils/notify";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Check, Copy, ExternalLink, Mail } from "lucide-react";
 import Modal from "@/shared/components/Modal";
@@ -201,7 +202,7 @@ export default function BulkMailDialog({ entity, selection, mailer, onClose }: B
       setCopiedKey(key);
       window.setTimeout(() => setCopiedKey((current) => (current === key ? null : current)), 1500);
     } catch {
-      window.alert("Couldn't copy the addresses. Select and copy them manually.");
+      notifyError("Couldn't copy the addresses. Select and copy them manually.");
     }
   }
 

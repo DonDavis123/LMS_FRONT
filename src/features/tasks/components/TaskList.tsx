@@ -14,6 +14,8 @@ import FilterBar, { type FilterCondition, type FilterFieldConfig } from "@/share
 import type { LeadOwnerOption } from "@/features/auth/types/auth.types";
 
 import { confirmDelete } from "@/shared/utils/confirmDelete";
+import { openRowOnClick, openRowOnKey, rowFocusClass } from "@/shared/utils/rowOpen";
+import { notifyError } from "@/shared/utils/notify";
 import { useSelectionKeyboard } from "@/shared/hooks/useSelectionKeyboard";
 import ServerPagination from "@/shared/components/ServerPagination";
 import ModernStatusSelect from "@/shared/components/ModernStatusSelect";
@@ -150,7 +152,7 @@ export default function TaskList({
       });
       setSelectedIds(new Set());
       setSelectionMode(false);
-      if (deleted < ids.length) window.alert(`${deleted} deleted. ${ids.length - deleted} could not be deleted.`);
+      if (deleted < ids.length) notifyError(`${deleted} deleted. ${ids.length - deleted} could not be deleted.`);
     } finally {
       setBulkDeleting(false);
     }
@@ -163,7 +165,7 @@ export default function TaskList({
       const message = await TaskService.deleteTask(task.id);
       onTaskDeleted(task.id, message);
     } catch {
-      window.alert("Couldn't delete this task. Try again.");
+      notifyError("Couldn't delete this task. Try again.");
     } finally {
       setDeletingId(null);
     }
@@ -177,7 +179,7 @@ export default function TaskList({
       onTaskUpdated(updated);
     } catch (error) {
       console.error("Failed to update task status:", error);
-      window.alert("Couldn't update the task status. Try again.");
+      notifyError("Couldn't update the task status. Try again.");
     } finally {
       setUpdatingStatusId(null);
     }
@@ -279,7 +281,7 @@ export default function TaskList({
                     key={task.id}
                     data-record-row={task.id}
                     onClick={(event) => {
-                      if (!selectionMode) return;
+                      if (!selectionMode) { openRowOnClick(event, () => onOpenClick(task)); return; }
                       const target = event.target as HTMLElement;
                       if (target.closest('button[aria-label="Record actions"]')) return;
                       event.preventDefault();
@@ -289,9 +291,9 @@ export default function TaskList({
                         return next;
                       });
                     }}
-                    onDoubleClick={() => { if (!selectionMode) onOpenClick(task); }}
-                    title="Double-click to open task details"
-                    className="group cursor-pointer hover:bg-paper hover:shadow-[inset_2px_0_0_var(--color-amber)]"
+                    tabIndex={0}
+                    onKeyDown={(event) => { if (!selectionMode) openRowOnKey(event, () => onOpenClick(task)); }}
+                    className={`group cursor-pointer ${rowFocusClass} hover:bg-paper hover:shadow-[inset_2px_0_0_var(--color-amber)]`}
                   >
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">

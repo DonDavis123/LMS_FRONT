@@ -17,6 +17,8 @@ import CallOutcomeBadge from "@/features/calls/components/CallOutcomeBadge";
 import CallDirectionIcon from "@/features/calls/components/CallDirectionIcon";
 import { formatCallDateTime, recordLabel, summarizeLatestUpdate } from "@/features/calls/utils/callFormat";
 import { confirmDelete } from "@/shared/utils/confirmDelete";
+import { openRowOnClick, openRowOnKey, rowFocusClass } from "@/shared/utils/rowOpen";
+import { notifyError } from "@/shared/utils/notify";
 import { formatDateTime, formatRelativeTime } from "@/shared/utils/formatDate";
 
 interface CallListProps {
@@ -118,7 +120,7 @@ export default function CallList({
       await CallService.deleteCall(call.id);
       await onRefresh();
     } catch {
-      window.alert("Couldn't delete this call. Try again.");
+      notifyError("Couldn't delete this call. Try again.");
     } finally {
       setDeletingId(null);
     }
@@ -208,9 +210,10 @@ export default function CallList({
                     <tr
                       key={`${row.record_type}:${row.record_id}`}
                       data-record-row={call.id}
-                      onDoubleClick={() => open(row)}
-                      title="Double-click to open call details and history"
-                      className="group cursor-pointer hover:bg-paper hover:shadow-[inset_2px_0_0_var(--color-amber)]"
+                      onClick={(event) => openRowOnClick(event, () => open(row))}
+                      tabIndex={0}
+                      onKeyDown={(event) => openRowOnKey(event, () => open(row))}
+                      className={`group cursor-pointer ${rowFocusClass} hover:bg-paper hover:shadow-[inset_2px_0_0_var(--color-amber)]`}
                     >
                       <td className="px-4 py-3">
                         <RecordActionsMenu

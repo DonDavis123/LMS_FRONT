@@ -16,6 +16,7 @@ import type {
   UpdateMeetingPayload,
 } from "@/features/meetings/types/meeting.types";
 import { confirmDelete } from "@/shared/utils/confirmDelete";
+import { notifyError } from "@/shared/utils/notify";
 import { formatDateTime } from "@/shared/utils/formatDate";
 import RecordTimeline from "@/shared/components/RecordTimeline";
 import { Tabs } from "@/shared/components/Tabs";
@@ -43,7 +44,7 @@ export default function MeetingDetail({ meeting, onMeetingChange, returnTo = nul
 
   async function updateField(field: EditableField, raw: string) {
     if (field === "title" && !raw.trim()) {
-      window.alert("Title is required.");
+      notifyError("Title is required.");
       return;
     }
 
@@ -78,7 +79,7 @@ export default function MeetingDetail({ meeting, onMeetingChange, returnTo = nul
       await MeetingService.deleteMeeting(meeting.id);
       router.push(backHref);
     } catch {
-      window.alert("Couldn't delete this meeting. Try again.");
+      notifyError("Couldn't delete this meeting. Try again.");
     }
   }
 

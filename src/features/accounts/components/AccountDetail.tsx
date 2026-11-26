@@ -23,6 +23,7 @@ import AccountDocuments from "@/features/accounts/components/AccountDocuments";
 import RecordDeals from "@/features/deals/components/RecordDeals";
 
 import { confirmDelete } from "@/shared/utils/confirmDelete";
+import { notifyError } from "@/shared/utils/notify";
 
 interface AccountDetailProps {
   account: Account;
@@ -102,7 +103,7 @@ export default function AccountDetail({ account, onAccountChange }: AccountDetai
       await AccountService.deleteAccount(account.id);
       router.push("/dashboard/accounts");
     } catch {
-      window.alert("Couldn't delete this company. Try again.");
+      notifyError("Couldn't delete this company. Try again.");
     }
   }
 
