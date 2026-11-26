@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { authService } from "@/features/auth/services/authService";
 import Spinner from "@/shared/components/Spinner";
+import { extractApiError } from "@/shared/utils/apiError";
 
 export default function ResetPasswordForm() {
   const router = useRouter();
@@ -143,7 +144,9 @@ function resolveErrorMessage(err: unknown): string {
     const response = (err as { response?: { status?: number; data?: { detail?: string } } })
       .response;
     if (response?.status === 400 || response?.status === 404) {
-      return response.data?.detail ?? "This reset link is invalid or has expired.";
+      // 400 is either a bad / expired link (`detail`) or a password the
+      // backend rejects as too weak (`new_password`: [...]); both are readable.
+      return extractApiError(err, "This reset link is invalid or has expired.");
     }
     if (response?.status === 429) {
       return response.data?.detail ?? "Too many attempts. Please try again later.";
