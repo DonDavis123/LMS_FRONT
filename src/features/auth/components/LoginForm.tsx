@@ -284,6 +284,10 @@ function resolveErrorMessage(err: unknown): string {
   if (status === 400 || status === 401 || status === 403) {
     return extractApiError(err, "Incorrect email or password.");
   }
+  // 429: too many sign-in attempts. The backend message says how long to wait.
+  if (status === 429) {
+    return extractApiError(err, "Too many sign-in attempts. Please try again later.");
+  }
   if (typeof status === "number" && status >= 500) {
     return "The server ran into a problem. Try again shortly.";
   }

@@ -145,6 +145,9 @@ function resolveErrorMessage(err: unknown): string {
     if (response?.status === 400 || response?.status === 404) {
       return response.data?.detail ?? "This reset link is invalid or has expired.";
     }
+    if (response?.status === 429) {
+      return response.data?.detail ?? "Too many attempts. Please try again later.";
+    }
     if (response?.status && response.status >= 500) {
       return "The server ran into a problem. Try again shortly.";
     }
