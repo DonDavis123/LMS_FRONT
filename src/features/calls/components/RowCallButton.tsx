@@ -30,7 +30,7 @@ export default function RowCallButton({ kind, recordId, recordName, related }: R
         onDoubleClick={(event) => event.stopPropagation()}
         title="Log a call and view call history"
         aria-label={`Call log for ${recordName}`}
-        className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-md border border-line px-2.5 py-1.5 text-xs font-medium md:py-1 text-fg transition hover:bg-paper"
+        className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-md border border-line px-2.5 py-1.5 text-xs font-medium text-fg transition hover:bg-paper"
       >
         <PhoneCall size={13} />
         Call Log

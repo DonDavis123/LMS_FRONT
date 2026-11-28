@@ -641,8 +641,8 @@ button, a, input, select, textarea {
 }
 /* Denser rows so more records fit on screen. */
 .lp-table-scroll thead th {
-  padding-top: 0.4375rem;
-  padding-bottom: 0.4375rem;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
 }
 .lp-table-scroll tbody td {
   padding-top: 0.5625rem;
@@ -653,10 +653,6 @@ button, a, input, select, textarea {
    Header strip, date strip and rows are tightened on md+ screens so more
    records fit without scrolling. Phones keep their larger touch targets. */
 @media (min-width: 768px) {
-  .lp-table-scroll tbody td {
-    padding-top: 0.375rem;
-    padding-bottom: 0.375rem;
-  }
   .lp-list-head input[type="search"] {
     height: 2rem;
   }
