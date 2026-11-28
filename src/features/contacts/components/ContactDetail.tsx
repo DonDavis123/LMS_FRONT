@@ -69,7 +69,7 @@ export default function ContactDetail({ contact, onContactChange }: ContactDetai
     <div className="lp-detail mx-auto max-w-5xl">
       <Link href={returnTo ?? "/dashboard/contacts"} className="text-sm text-slate hover:text-fg">{returnTo ? "← Back to Lead Conversion" : "← Back to Contacts"}</Link>
 
-      <div className="mt-3 flex items-center justify-between gap-4">
+      <div className="lp-detail-head mt-3 flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <div className="lp-pop flex h-11 w-11 items-center justify-center rounded-full bg-slate-light text-lg font-semibold text-slate">
             {(contact.name || contact.email || "?").slice(0, 1).toUpperCase()}
@@ -85,7 +85,7 @@ export default function ContactDetail({ contact, onContactChange }: ContactDetai
           <CreateTaskFromRecord related={{ personType: "contact", personId: contact.id, personLabel: contact.name || contact.email || "Contact", accountId: contact.account_id || "", accountLabel: contact.account_name || "" }} />
           <SendMailButton entity="contacts" recordId={contact.id} recordName={contact.name || contact.email || "Contact"} email={contact.email} emailOptOut={contact.email_opt_out} />
           <Link href={`/dashboard/contacts/${contact.id}?edit=1`} className="rounded-md border border-line px-4 py-2 text-sm font-medium text-fg hover:bg-paper">Edit</Link>
-          <div className="relative">
+          <div className="lp-detail-menu relative">
             <button type="button" onClick={() => setIsMenuOpen((v) => !v)} className="rounded-md border border-line p-2 text-ink-soft hover:bg-paper" aria-label="Contact actions">
               <MoreVertical size={16} />
             </button>

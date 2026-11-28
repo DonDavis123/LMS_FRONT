@@ -113,7 +113,7 @@ export default function AccountDetail({ account, onAccountChange }: AccountDetai
         {returnTo ? "← Back to Lead Conversion" : "← Back to Companies"}
       </Link>
 
-      <div className="mt-3 flex items-center justify-between gap-4">
+      <div className="lp-detail-head mt-3 flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <div className="lp-pop flex h-11 w-11 items-center justify-center rounded-full bg-slate-light text-lg font-semibold text-slate">
             {account.account_name?.trim()?.charAt(0).toUpperCase() || "?"}
@@ -133,7 +133,7 @@ export default function AccountDetail({ account, onAccountChange }: AccountDetai
           >
             Edit
           </Link>
-          <div className="relative">
+          <div className="lp-detail-menu relative">
             <button
               type="button"
               onClick={() => setIsMenuOpen((v) => !v)}

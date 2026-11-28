@@ -113,7 +113,7 @@ export default function CallDetail({ call, onCallChange, returnTo = null, onNoti
           {backLabel(returnTo)}
         </Link>
 
-        <div className="mt-3 flex items-start justify-between gap-4">
+        <div className="lp-detail-head mt-3 flex items-start justify-between gap-4">
           <div className="flex min-w-0 items-center gap-3">
             <CallDirectionIcon callType={call.call_type} size={20} className="h-11 w-11" />
             <div className="min-w-0">
@@ -145,7 +145,7 @@ export default function CallDetail({ call, onCallChange, returnTo = null, onNoti
             >
               Edit
             </button>
-            <div className="relative">
+            <div className="lp-detail-menu relative">
               <button
                 type="button"
                 onClick={() => setMenu((value) => !value)}

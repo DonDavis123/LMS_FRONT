@@ -135,7 +135,7 @@ export default function DealDetail({ deal, onDealChange, returnTo = null, initia
         {backLabelFor(returnTo, "← Back to Deals")}
       </Link>
 
-      <div className="mt-3 flex flex-wrap items-start justify-between gap-4">
+      <div className="lp-detail-head mt-3 flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0">
           <h1 className="break-words font-serif text-2xl text-fg">{deal.name || "Untitled Deal"}</h1>
           <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1.5">
@@ -173,7 +173,7 @@ export default function DealDetail({ deal, onDealChange, returnTo = null, initia
           >
             Edit
           </button>
-          <div className="relative">
+          <div className="lp-detail-menu relative">
             <button
               type="button"
               onClick={() => setMenuOpen((open) => !open)}

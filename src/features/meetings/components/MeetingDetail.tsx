@@ -110,7 +110,7 @@ export default function MeetingDetail({ meeting, onMeetingChange, returnTo = nul
           {backLabelFor(returnTo, "← Back to Meetings")}
         </Link>
 
-        <div className="mt-3 flex items-center justify-between gap-4">
+        <div className="lp-detail-head mt-3 flex items-center justify-between gap-4">
           <div>
             <h1 className="font-serif text-2xl text-fg">
               {meeting.title || "Untitled Meeting"}
@@ -127,7 +127,7 @@ export default function MeetingDetail({ meeting, onMeetingChange, returnTo = nul
               Edit
             </button>
 
-            <div className="relative">
+            <div className="lp-detail-menu relative">
               <button
                 type="button"
                 onClick={() => setMenu((value) => !value)}

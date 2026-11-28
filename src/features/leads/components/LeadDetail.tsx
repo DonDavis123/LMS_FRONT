@@ -103,7 +103,7 @@ async function handleStatusClick(status: LeadStatus) {
         ← Back to Leads
       </Link>
 
-      <div className="mt-3 flex items-center justify-between">
+      <div className="lp-detail-head mt-3 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="lp-pop flex h-11 w-11 items-center justify-center rounded-full bg-slate-light text-lg font-semibold text-slate">
             {(lead.name || lead.email || "?").slice(0, 1).toUpperCase()}
@@ -121,7 +121,7 @@ async function handleStatusClick(status: LeadStatus) {
         <div className="lp-actions flex flex-wrap items-center justify-end gap-2">
           <Link
             href={`/dashboard/leads/${lead.id}/convert`}
-            className="rounded-md bg-ink px-4 py-2 text-sm font-semibold text-white hover:bg-ink-2"
+            className="lp-action-primary rounded-md bg-ink px-4 py-2 text-sm font-semibold text-white hover:bg-ink-2"
           >
             Convert
           </Link>
@@ -134,7 +134,7 @@ async function handleStatusClick(status: LeadStatus) {
           >
             Edit
           </Link>
-          <div className="relative">
+          <div className="lp-detail-menu relative">
             <button
               onClick={() => setIsMenuOpen((v) => !v)}
               className="rounded-md border border-line p-2 text-ink-soft hover:bg-paper"
