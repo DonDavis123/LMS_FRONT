@@ -59,19 +59,27 @@ export default function DashboardHeader({
 
   return (
     <header className="sticky top-0 z-40 flex items-center justify-between gap-2 border-b border-line bg-surface/85 px-2.5 py-2 shadow-[0_6px_25px_rgba(18,33,58,0.035)] backdrop-blur-xl sm:gap-4 sm:px-4 sm:py-3">
-      <div className="flex flex-1 items-center gap-3">
+      <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
         <button
           onClick={onToggleSidebar}
           aria-label={isSidebarCollapsed ? "Open sidebar" : "Close sidebar"}
           title={isSidebarCollapsed ? "Open sidebar" : "Close sidebar"}
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-transparent text-ink-soft transition hover:border-line hover:bg-paper hover:text-fg active:scale-90"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-transparent text-ink-soft transition hover:border-line hover:bg-paper hover:text-fg active:scale-90 md:h-9 md:w-9"
         >
           {isSidebarCollapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
         </button>
 
+        {/* Phones only: brand mark (the sidebar, which carries it, is hidden). */}
+        <div className="flex min-w-0 items-center gap-2 md:hidden">
+          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-[0.6rem] bg-ink text-sm font-black text-white shadow-sm">
+            L
+          </span>
+          <span className="hidden truncate font-serif text-lg leading-none text-fg min-[380px]:inline">LeadPulse</span>
+        </div>
+
       </div>
 
-      <div className="flex items-center gap-1 sm:gap-2">
+      <div className="flex shrink-0 items-center gap-0.5 sm:gap-2">
         <CalendarHeaderButton />
         <NotificationBell />
         <ThemeToggle />

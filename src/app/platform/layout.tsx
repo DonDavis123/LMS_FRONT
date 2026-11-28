@@ -8,6 +8,7 @@ import { authService } from "@/features/auth/services/authService";
 import { authStorage } from "@/infrastructure/auth/tokenStorage";
 import { isPlatformAdmin, type AuthUser } from "@/features/auth/types/auth.types";
 import LoadingScreen from "@/shared/components/LoadingScreen";
+import MobileTableLabels from "@/shared/components/MobileTableLabels";
 import { useMediaQuery } from "@/shared/hooks/useMediaQuery";
 
 // Shared with the company dashboard so the preference follows the person.
@@ -107,6 +108,7 @@ export default function PlatformLayout({ children }: { children: React.ReactNode
 
   return (
     <div className="lp-app-shell fixed inset-0 flex overflow-hidden bg-paper">
+      <MobileTableLabels />
       <PlatformSidebar
         isCollapsed={isDesktop && isSidebarCollapsed}
         isDesktop={isDesktop}

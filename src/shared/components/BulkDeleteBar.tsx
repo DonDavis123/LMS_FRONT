@@ -38,7 +38,7 @@ export default function BulkDeleteBar({
   if (!count) return null;
   const allMatchingActive = Boolean(selectAllMatching?.active);
   return (
-    <div className="lp-list-head flex flex-wrap items-center justify-between gap-x-3 gap-y-2 border-b border-line bg-paper px-4 py-2">
+    <div className="lp-list-head lp-bulk flex flex-wrap items-center justify-between gap-x-3 gap-y-2 border-b border-line bg-paper px-4 py-2">
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
         <span className="text-sm font-medium text-fg">
           {allMatchingActive && selectAllMatching

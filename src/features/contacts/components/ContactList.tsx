@@ -169,13 +169,13 @@ export default function ContactList({
   return (
     <div className="lp-card lp-list-page">
       <div className="lp-list-head flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-line bg-surface px-3 py-2.5 sm:px-4">
-        <div className="order-1 min-w-0">
+        <div className="lp-head-title order-1 min-w-0">
           <h1 className="font-serif text-lg leading-tight text-fg">Contacts</h1>
           <p className="text-xs text-ink-soft">
             {pagination.total} total {contacts.length === 1 ? "contact" : "contacts"}
           </p>
         </div>
-        <div className="order-3 flex w-full min-w-0 flex-wrap items-center gap-2 sm:order-2 sm:w-auto sm:flex-1 sm:px-2">
+        <div className="lp-head-tools order-3 flex w-full min-w-0 flex-wrap items-center gap-2 sm:order-2 sm:w-auto sm:flex-1 sm:px-2">
           <SearchBox value={search} onSearchChange={onSearchChange} placeholder="Search name or email" ariaLabel="Search contacts" />
           <FilterBar
             fields={fields}
@@ -183,7 +183,7 @@ export default function ContactList({
             onChange={onFiltersChange}
           />
         </div>
-        <div className="order-2 ml-auto flex gap-2 sm:order-3">
+        <div className="lp-head-actions order-2 ml-auto flex gap-2 sm:order-3">
           <ExportMenu entity="contacts" noun="contacts" query={exportQuery} total={pagination.total} disabled={isLoading} />
           <Link
             href="/dashboard/contacts/new"

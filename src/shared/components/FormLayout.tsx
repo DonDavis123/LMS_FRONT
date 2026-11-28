@@ -25,10 +25,10 @@ export const formCardClass =
   "mx-auto max-w-4xl rounded-xl border border-line bg-surface p-4 shadow-[var(--lp-shadow)] sm:p-6";
 
 export const secondaryButtonClass =
-  "inline-flex items-center justify-center gap-2 rounded-lg border border-line bg-surface px-3.5 py-2 text-sm font-semibold text-fg shadow-sm transition hover:border-slate/50 hover:bg-paper active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 sm:px-4";
+  "inline-flex items-center justify-center gap-2 rounded-lg border border-line bg-surface px-3.5 py-2 text-sm font-semibold text-fg shadow-sm transition hover:border-slate/50 hover:bg-paper active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 max-sm:min-h-11 sm:px-4";
 
 export const primaryButtonClass =
-  "inline-flex items-center justify-center gap-2 rounded-lg bg-ink px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-ink-2 hover:shadow-md active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 sm:px-5";
+  "inline-flex items-center justify-center gap-2 rounded-lg bg-ink px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-ink-2 hover:shadow-md active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 max-sm:min-h-11 sm:px-5";
 
 /**
  * Primary "+ Create ..." call-to-action used in every list header and empty
@@ -120,7 +120,7 @@ export function FormHeader({ title, subtitle, icon, tone, children }: FormHeader
           {subtitle && <p className="mt-0.5 text-xs text-ink-soft sm:text-sm">{subtitle}</p>}
         </div>
       </div>
-      <div className="flex shrink-0 flex-wrap gap-2 sm:gap-3">{children}</div>
+      <div className="flex w-full shrink-0 gap-2 max-sm:[&>*]:flex-1 sm:w-auto sm:flex-wrap sm:gap-3">{children}</div>
     </div>
   );
 }

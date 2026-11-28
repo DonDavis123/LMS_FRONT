@@ -174,7 +174,7 @@ export default function MeetingList({
   return (
     <div className="lp-card lp-list-page">
       <div className="lp-list-head flex items-center justify-between gap-3 border-b border-line bg-surface px-3 py-2.5 sm:px-4">
-        <div className="min-w-0">
+        <div className="lp-head-title min-w-0">
           <h1 className="font-serif text-lg leading-tight text-fg">Meetings</h1>
           <p className="text-xs text-ink-soft">
             {pagination.total}{" "}
@@ -182,7 +182,7 @@ export default function MeetingList({
           </p>
         </div>
 
-        <div className="flex min-w-0 flex-wrap items-center justify-end gap-x-3 gap-y-2">
+        <div className="lp-head-actions flex min-w-0 flex-wrap items-center justify-end gap-x-3 gap-y-2">
           {headerExtra}
           <button
             type="button"

@@ -45,30 +45,30 @@ export default function DateRangeFilter({ value, onChange, label = "Created" }: 
     <div
       role="group"
       aria-label={`${label} date range`}
-      className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-line bg-paper/60 px-3 py-2 sm:px-4"
+      className="lp-date-strip flex flex-col gap-3 border-b border-line bg-paper/60 px-3 py-2 md:flex-row md:flex-wrap md:items-center md:gap-x-4 md:gap-y-2 sm:px-4"
     >
-      <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-ink-soft">
+      <span className="hidden items-center gap-1.5 md:flex text-xs font-semibold uppercase tracking-wide text-ink-soft">
         <CalendarRange size={14} aria-hidden="true" />
         {label}
       </span>
 
-      <div className="flex min-w-0 flex-wrap items-center gap-2">
-        <div className="flex items-center gap-2">
+      <div className="grid min-w-0 grid-cols-2 gap-2.5 md:flex md:flex-wrap md:items-center md:gap-2">
+        <div className="flex min-w-0 flex-col gap-1 md:flex-row md:items-center md:gap-2">
           <span className="text-xs font-medium text-ink-soft">From</span>
-          <div className="w-[9.75rem]">
+          <div className="w-full md:w-[9.75rem]">
             <DateInput value={value.from} onChange={setFrom} ariaLabel="From date" placeholder="Any date" />
           </div>
         </div>
-        <ArrowRight size={14} className="text-ink-soft" aria-hidden="true" />
-        <div className="flex items-center gap-2">
+        <ArrowRight size={14} className="hidden text-ink-soft md:block" aria-hidden="true" />
+        <div className="flex min-w-0 flex-col gap-1 md:flex-row md:items-center md:gap-2">
           <span className="text-xs font-medium text-ink-soft">To</span>
-          <div className="w-[9.75rem]">
+          <div className="w-full md:w-[9.75rem]">
             <DateInput value={value.to} onChange={setTo} ariaLabel="To date" placeholder="Any date" />
           </div>
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center gap-1.5" role="radiogroup" aria-label="Quick date ranges">
+      <div className="-mx-1 flex items-center gap-1.5 overflow-x-auto px-1 pb-0.5 [scrollbar-width:none] md:mx-0 md:flex-wrap md:overflow-visible md:px-0 md:pb-0 [&::-webkit-scrollbar]:hidden" role="radiogroup" aria-label="Quick date ranges">
         {PRESETS.map((preset) => {
           const selected = active === preset.id;
           return (
@@ -78,7 +78,7 @@ export default function DateRangeFilter({ value, onChange, label = "Created" }: 
               role="radio"
               aria-checked={selected}
               onClick={() => onChange(presetRange(preset.id))}
-              className={`rounded-full border px-3 py-1.5 text-xs font-medium transition active:scale-[0.97] ${
+              className={`shrink-0 rounded-full border px-3.5 py-2 text-xs font-medium transition active:scale-[0.97] md:px-3 md:py-1.5 ${
                 selected
                   ? "border-ink bg-ink text-white shadow-sm"
                   : "border-line bg-surface text-fg hover:border-slate hover:bg-paper"

@@ -23,15 +23,20 @@ export default function ServerPagination({
   const end = Math.min(safePage * pageSize, total);
 
   return (
-    <div className="lp-list-foot flex flex-wrap items-center justify-between gap-2 border-t border-line px-3 py-2 text-sm text-ink-soft sm:gap-3 sm:px-4">
-      <span>
-        {start} to {end} of {total}
-      </span>
+    <div className="lp-list-foot flex flex-col gap-3 border-t border-line px-3 py-2 text-sm text-ink-soft md:flex-row md:flex-wrap md:items-center md:justify-between md:gap-3 sm:px-4">
+      <div className="flex items-center justify-between gap-3 md:contents">
+        <span className="font-medium text-fg md:font-normal md:text-inherit">
+          {start} to {end} of {total}
+        </span>
+        <span className="md:hidden">
+          Page {safePage} of {safeTotalPages}
+        </span>
+      </div>
 
-      <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-        <label className="flex items-center gap-2">
+      <div className="flex items-center gap-2 md:flex-wrap md:gap-3">
+        <label className="flex min-w-0 flex-1 items-center gap-2 md:flex-none">
           <span className="sr-only">Rows per page</span>
-          <div className="w-28 sm:w-32">
+          <div className="w-full md:w-32">
             <Select
               size="sm"
               value={String(pageSize)}
@@ -42,7 +47,7 @@ export default function ServerPagination({
           </div>
         </label>
 
-        <span>
+        <span className="hidden md:inline">
           Page {safePage} of {safeTotalPages}
         </span>
 
@@ -50,7 +55,7 @@ export default function ServerPagination({
           type="button"
           onClick={() => onPageChange(safePage - 1)}
           disabled={safePage <= 1 || total === 0}
-          className="rounded border border-line px-2 py-1 disabled:opacity-40"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-line bg-surface text-lg leading-none transition active:scale-95 disabled:opacity-40 md:h-auto md:w-auto md:rounded md:bg-transparent md:px-2 md:py-1 md:text-sm"
           aria-label="Previous page"
         >
           ‹
@@ -60,7 +65,7 @@ export default function ServerPagination({
           type="button"
           onClick={() => onPageChange(safePage + 1)}
           disabled={safePage >= safeTotalPages || total === 0}
-          className="rounded border border-line px-2 py-1 disabled:opacity-40"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-line bg-surface text-lg leading-none transition active:scale-95 disabled:opacity-40 md:h-auto md:w-auto md:rounded md:bg-transparent md:px-2 md:py-1 md:text-sm"
           aria-label="Next page"
         >
           ›

@@ -152,7 +152,7 @@ export default function DealList({
         <p className="order-1 min-w-0 text-xs text-ink-soft">
           {pagination.total} total {pagination.total === 1 ? "deal" : "deals"}
         </p>
-        <div className="order-2 w-full min-w-0 sm:flex-1 sm:px-2">
+        <div className="lp-head-tools order-2 w-full min-w-0 sm:flex-1 sm:px-2">
           <FilterBar fields={fields} filters={filters} onChange={onFiltersChange} />
         </div>
       </div>

@@ -1,6 +1,8 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Manrope, Newsreader } from "next/font/google";
 import "./globals.css";
+// Phone-only layer. Must come after globals.css so it wins at equal specificity.
+import "./mobile.css";
 
 const manrope = Manrope({
   variable: "--font-manrope",
@@ -18,6 +20,18 @@ const newsreader = Newsreader({
 export const metadata: Metadata = {
   title: "LeadPulse CRM",
   description: "Lead management for growing sales teams.",
+};
+
+// `viewport-fit=cover` lets the bottom tab bar respect the iPhone home-indicator
+// safe area; the theme colour tints the browser chrome on Android.
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f6f7f9" },
+    { media: "(prefers-color-scheme: dark)", color: "#12141a" },
+  ],
 };
 
 // Runs before paint so the correct theme class is on <html> before React

@@ -7,6 +7,8 @@ import DashboardHeader from "@/features/dashboard/components/DashboardHeader";
 import { authService } from "@/features/auth/services/authService";
 import { isPlatformAdmin, type AuthUser } from "@/features/auth/types/auth.types";
 import LoadingScreen from "@/shared/components/LoadingScreen";
+import MobileBottomNav from "@/features/dashboard/components/MobileBottomNav";
+import MobileTableLabels from "@/shared/components/MobileTableLabels";
 import { useMediaQuery } from "@/shared/hooks/useMediaQuery";
 
 const SIDEBAR_COLLAPSED_KEY = "crm.sidebar_collapsed";
@@ -78,7 +80,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }
 
   return (
-    <div className="lp-app-shell fixed inset-0 flex overflow-hidden bg-paper">
+    <div className="lp-app-shell lp-has-nav fixed inset-0 flex overflow-hidden bg-paper">
+      <MobileTableLabels />
       <Sidebar
         user={user}
         isCollapsed={isDesktop && isSidebarCollapsed}
@@ -98,6 +101,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <main className="lp-page-bg min-h-0 flex-1 overflow-y-auto overscroll-contain">
           <div className="px-2.5 py-3 sm:px-5 sm:py-4">{children}</div>
         </main>
+        {!isDesktop && (
+          <MobileBottomNav
+            isMenuOpen={isMobileNavOpen}
+            onOpenMenu={() => setIsMobileNavOpen((prev) => !prev)}
+          />
+        )}
       </div>
     </div>
   );

@@ -109,7 +109,7 @@ export default function DashboardHero({ user, tasks, schedule, completingIds }: 
           )}
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-wrap sm:items-center">
           {user && (
             <button
               type="button"
@@ -118,7 +118,7 @@ export default function DashboardHero({ user, tasks, schedule, completingIds }: 
               aria-expanded={briefingOpen}
               aria-controls={briefingPanelId}
               title="Let AI sort today's tasks and meetings by what to do first."
-              className="inline-flex h-10 items-center gap-2 rounded-xl border border-line bg-surface px-4 text-sm font-medium text-fg outline-none transition hover:bg-paper focus-visible:ring-2 focus-visible:ring-slate focus-visible:ring-offset-2 focus-visible:ring-offset-surface active:scale-[0.98] disabled:opacity-60"
+              className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-line bg-surface px-4 sm:h-10 text-sm font-medium text-fg outline-none transition hover:bg-paper focus-visible:ring-2 focus-visible:ring-slate focus-visible:ring-offset-2 focus-visible:ring-offset-surface active:scale-[0.98] disabled:opacity-60"
             >
               {briefingLoading ? <Spinner size="sm" /> : <Sparkles size={15} aria-hidden="true" />}
               {planLabel}
@@ -127,7 +127,7 @@ export default function DashboardHero({ user, tasks, schedule, completingIds }: 
 
           <Link
             href="/dashboard/leads/new"
-            className="inline-flex h-10 items-center gap-2 rounded-xl bg-ink px-4 text-sm font-medium text-white outline-none transition hover:bg-ink-2 focus-visible:ring-2 focus-visible:ring-slate focus-visible:ring-offset-2 focus-visible:ring-offset-surface active:scale-[0.98] dark:bg-slate"
+            className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-ink px-4 sm:h-10 text-sm font-medium text-white outline-none transition hover:bg-ink-2 focus-visible:ring-2 focus-visible:ring-slate focus-visible:ring-offset-2 focus-visible:ring-offset-surface active:scale-[0.98] dark:bg-slate"
           >
             <UserPlus size={15} aria-hidden="true" />
             New lead

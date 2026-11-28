@@ -210,13 +210,13 @@ export default function LeadList({
   return (
     <div className="lp-card lp-list-page">
       <div className="lp-list-head flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-line bg-surface px-3 py-2.5 sm:px-4">
-        <div className="order-1 min-w-0">
+        <div className="lp-head-title order-1 min-w-0">
           <h1 className="font-serif text-lg leading-tight text-fg">Leads</h1>
           <p className="text-xs text-ink-soft">
             {pagination.total} total {leads.length === 1 ? "lead" : "leads"}
           </p>
         </div>
-        <div className="order-3 flex w-full min-w-0 flex-wrap items-center gap-2 sm:order-2 sm:w-auto sm:flex-1 sm:px-2">
+        <div className="lp-head-tools order-3 flex w-full min-w-0 flex-wrap items-center gap-2 sm:order-2 sm:w-auto sm:flex-1 sm:px-2">
           <SearchBox value={search} onSearchChange={onSearchChange} placeholder="Search name, email or company" ariaLabel="Search leads" />
           <FilterBar
             fields={fields}
@@ -224,7 +224,7 @@ export default function LeadList({
             onChange={onFiltersChange}
           />
         </div>
-        <div className="order-2 ml-auto flex gap-2 sm:order-3">
+        <div className="lp-head-actions order-2 ml-auto flex gap-2 sm:order-3">
           {isAdminUser && (
             <Link
               href="/dashboard/leads/import"
