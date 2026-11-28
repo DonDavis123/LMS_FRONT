@@ -675,8 +675,30 @@
     border-left: 1px solid var(--color-line);
     border-radius: 0 0.8125rem 0.8125rem 0;
   }
+  /* Mail-options popup (Gmail / Mail app). It used to hang off the button's
+     right edge and ran off the left side of the screen. The wrapper stops
+     being the positioning anchor, so the popup anchors to the full-width
+     header instead: it opens directly under the Send Mail button, spanning
+     the same width as the button grid. */
+  .lp-actions > .relative.inline-flex {
+    position: static;
+  }
   .lp-actions > .relative.inline-flex > div.absolute {
-    max-width: calc(100vw - 2.5rem);
+    top: auto;
+    right: 0;
+    left: 0;
+    width: auto;
+    max-width: none;
+    margin-top: 3.25rem;
+    padding: 1rem;
+    border-radius: 0.875rem;
+    box-shadow: var(--lp-shadow-hover);
+  }
+  .lp-actions > .relative.inline-flex > div.absolute button {
+    min-height: 2.5rem;
+  }
+  .lp-actions > .relative.inline-flex > div.absolute [role="group"] button {
+    padding: 0 1.25rem;
   }
 
   /* ⋮ menu: square button in the header's top-right corner */
