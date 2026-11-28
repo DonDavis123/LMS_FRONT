@@ -1,0 +1,524 @@
+/*
+ * Mobile layer — phones only (below 768px, the same breakpoint the dashboard
+ * uses to switch the sidebar into a drawer).
+ *
+ * Everything here is wrapped in `@media (max-width: 767px)`, so tablets and
+ * laptops are untouched. It is imported AFTER globals.css (see app/layout.tsx)
+ * so that, at equal specificity, these rules win.
+ *
+ * Animations are NOT redefined here: the row / cell / header / footer entrance
+ * animations from globals.css keep running on the new card layout.
+ *
+ * What this file changes on phones:
+ *   1. List pages scroll as ONE page (no tiny inner scroll box).
+ *   2. Table rows become cards; column headings become "Sort" chips.
+ *   3. List header → title, full-width search, evenly sized action buttons,
+ *      with "Create" turned into a floating button above the bottom bar.
+ *   4. Date-range strip, pagination, bulk bar and empty states become cards.
+ *   5. Bottom tab bar (see MobileBottomNav) + safe-area handling.
+ *   6. Modals become bottom sheets; forms get larger tap targets.
+ */
+
+:root {
+  --lp-nav-h: 0px;
+}
+
+@media (max-width: 767px) {
+  /* ── Shell ─────────────────────────────────────────────────────────── */
+  .lp-app-shell.lp-has-nav {
+    --lp-nav-h: calc(3.75rem + env(safe-area-inset-bottom, 0px));
+  }
+
+  /* iOS zooms into any input under 16px — keep every field at 16px. */
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  select,
+  textarea {
+    font-size: 1rem;
+  }
+
+  /* Comfortable minimum tap size for icon buttons in the top bar. */
+  .lp-app-shell header button,
+  .lp-app-shell header a {
+    min-height: 2.5rem;
+  }
+
+  /* ── List pages: one scrolling page, header and rows scroll together ── */
+  .lp-app-shell main:has(.lp-list-page) {
+    overflow-y: auto;
+  }
+  .lp-app-shell main:has(.lp-list-page) > div,
+  .lp-app-shell main:has(.lp-list-page) > div > div {
+    display: block;
+    height: auto;
+    min-height: 0;
+  }
+  .lp-app-shell main:has(.lp-list-page) > div {
+    padding: 0.75rem 0.75rem 1rem;
+  }
+
+  /* The outer card dissolves: the header, filters, rows and footer each
+     become their own card on the page background. */
+  .lp-list-page,
+  .lp-list-page.lp-card {
+    display: block;
+    overflow: visible;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    /* room for the floating Create button */
+    margin-bottom: 5.25rem;
+  }
+  .lp-list-page.lp-list-wrap {
+    margin-bottom: 0;
+  }
+
+  .lp-table-scroll {
+    overflow: visible;
+    scrollbar-gutter: auto;
+  }
+
+  /* ── List header ───────────────────────────────────────────────────── */
+  .lp-list-head:not(.lp-bulk) {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: center;
+    gap: 0.75rem 0.625rem;
+    padding: 1rem;
+    border: 1px solid var(--color-line);
+    border-radius: 1.25rem;
+    background: var(--color-surface);
+    box-shadow: var(--lp-shadow);
+  }
+  .lp-list-head:not(.lp-bulk) > :first-child,
+  .lp-head-title {
+    grid-column: 1 / -1;
+    grid-row: 1;
+  }
+  .lp-head-title h1,
+  .lp-list-head:not(.lp-bulk) > :first-child h1 {
+    font-size: 1.625rem;
+    line-height: 1.1;
+    letter-spacing: -0.01em;
+  }
+  .lp-head-title p,
+  .lp-list-head:not(.lp-bulk) > :first-child p {
+    margin-top: 0.25rem;
+    font-size: 0.8125rem;
+  }
+
+  /* Search + "Add filter" */
+  .lp-head-tools {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.625rem;
+  }
+  .lp-head-tools input[type="search"] {
+    height: 2.875rem;
+    padding-left: 2.5rem;
+    border-radius: 0.875rem;
+    background: var(--color-paper);
+  }
+  .lp-head-tools > div:first-child > span:first-child {
+    left: 0.875rem;
+  }
+
+  /* Secondary actions (Import / Export …): two equal buttons, same height,
+     same gap — they were three different sizes before. */
+  .lp-head-actions {
+    display: contents;
+  }
+  .lp-head-actions > a:not(.group\/create),
+  .lp-head-actions > button:not(.group\/create) {
+    grid-row: 3;
+    display: inline-flex;
+    width: 100%;
+    min-height: 2.75rem;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border-radius: 0.875rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+  }
+  /* A lone secondary action (e.g. Meetings' Google chip) takes the full row. */
+  .lp-head-actions > :first-child:not(.group\/create):nth-last-child(2) {
+    grid-column: 1 / -1;
+    grid-row: 3;
+  }
+
+  /* "Create …" → floating action button above the bottom bar. */
+  .lp-head-actions > .group\/create,
+  .lp-list-head > .group\/create {
+    position: fixed;
+    z-index: 35;
+    right: 1rem;
+    bottom: calc(var(--lp-nav-h) + 0.875rem);
+    height: 3.25rem;
+    padding: 0 1.25rem 0 1.0625rem;
+    border-radius: 999px;
+    font-size: 0.9375rem;
+    box-shadow:
+      0 12px 26px -8px rgba(201, 136, 38, 0.75),
+      0 3px 8px rgba(18, 33, 58, 0.28),
+      inset 0 1px 0 rgba(255, 255, 255, 0.45);
+  }
+
+  /* ── Date-range strip ──────────────────────────────────────────────── */
+  .lp-date-strip {
+    margin-top: 0.625rem;
+    padding: 0.875rem 1rem 0.875rem;
+    border: 1px solid var(--color-line);
+    border-radius: 1.25rem;
+    background: var(--color-surface);
+    box-shadow: var(--lp-shadow);
+  }
+
+  /* ── Bulk-selection bar: pinned to the top while you select ─────────── */
+  .lp-list-head.lp-bulk {
+    position: sticky;
+    top: 0.25rem;
+    z-index: 30;
+    margin-top: 0.625rem;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--color-line);
+    border-radius: 1rem;
+    background: var(--color-surface);
+    box-shadow: var(--lp-shadow-hover);
+  }
+  .lp-list-head.lp-bulk button {
+    min-height: 2.5rem;
+  }
+
+  /* ── Sort chips (replace the table's column headings) ──────────────── */
+  .lp-table-scroll {
+    margin-top: 0.625rem;
+  }
+  .lp-table-scroll table {
+    display: block;
+    width: 100%;
+    min-width: 0;
+  }
+  .lp-table-scroll thead {
+    display: block;
+    margin-bottom: 0.25rem;
+  }
+  .lp-table-scroll thead tr {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    overflow-x: auto;
+    padding: 0.125rem 0.125rem 0.5rem;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .lp-table-scroll thead tr::-webkit-scrollbar {
+    display: none;
+  }
+  .lp-table-scroll thead tr::before {
+    content: "Sort";
+    flex: none;
+    padding: 0 0.125rem 0 0.25rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--color-ink-soft);
+  }
+  .lp-table-scroll thead th {
+    display: none;
+    position: static;
+    padding: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+  .lp-table-scroll thead th[aria-sort] {
+    display: block;
+    flex: none;
+  }
+  .lp-table-scroll thead th[aria-sort] > div > button[aria-hidden="true"] {
+    display: none;
+  }
+  .lp-table-scroll thead th[aria-sort] > div > button {
+    min-height: 2.125rem;
+    padding: 0 0.875rem;
+    border: 1px solid var(--color-line);
+    border-radius: 999px;
+    background: var(--color-surface);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0;
+    text-transform: none;
+    color: var(--color-fg);
+    white-space: nowrap;
+  }
+  .lp-table-scroll thead th[aria-sort="ascending"] > div > button,
+  .lp-table-scroll thead th[aria-sort="descending"] > div > button {
+    border-color: var(--color-ink);
+    background: var(--color-ink);
+    color: #fff;
+  }
+  .lp-table-scroll thead th[aria-sort="ascending"] > div > button span,
+  .lp-table-scroll thead th[aria-sort="descending"] > div > button span {
+    color: inherit;
+  }
+
+  /* ── Rows → cards ──────────────────────────────────────────────────── */
+  .lp-table-scroll tbody {
+    display: grid;
+    gap: 0.75rem;
+  }
+  .lp-table-scroll tbody tr {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.875rem 1rem;
+    padding: 1rem;
+    border: 1px solid var(--color-line);
+    border-radius: 1.125rem;
+    background: var(--color-surface);
+    box-shadow: var(--lp-shadow);
+    -webkit-tap-highlight-color: transparent;
+  }
+  .lp-table-scroll tbody tr:active {
+    background: var(--color-paper);
+  }
+  .lp-table-scroll tbody tr:focus-visible {
+    outline: 2px solid var(--color-amber);
+    outline-offset: 2px;
+  }
+
+  .lp-table-scroll tbody td {
+    display: block;
+    min-width: 0;
+    padding: 0;
+    font-size: 0.875rem;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+  }
+  /* Label above each value (set by MobileTableLabels from the table headings). */
+  .lp-table-scroll tbody td[data-label]:not([data-role])::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 0.25rem;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: var(--color-ink-soft);
+  }
+  /* Long values (emails, subjects, notes) use the full card width. */
+  .lp-table-scroll tbody td[data-wide] {
+    grid-column: 1 / -1;
+  }
+  .lp-table-scroll tbody td[colspan] {
+    grid-column: 1 / -1;
+  }
+
+  /* Title of the card */
+  .lp-table-scroll tbody td[data-role="primary"] {
+    grid-column: 1 / -1;
+    padding-right: 2.75rem;
+    font-size: 1.0625rem;
+    font-weight: 700;
+    line-height: 1.3;
+  }
+  .lp-table-scroll tbody td[data-role="primary"] a {
+    font-size: 1.0625rem;
+    font-weight: 700;
+    color: var(--color-fg);
+    text-decoration: none;
+  }
+
+  /* Row menu (⋮) pinned to the card's top-right corner */
+  .lp-table-scroll tbody td[data-role="actions"] {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    z-index: 2;
+  }
+  .lp-table-scroll tbody td[data-role="actions"] button {
+    display: inline-flex;
+    min-width: 2.5rem;
+    min-height: 2.5rem;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.75rem;
+  }
+
+  /* Pinned "Call Log" column → full-width button at the bottom of the card */
+  .lp-table-scroll tbody td.lp-sticky-end,
+  .lp-table-scroll tbody tr:hover td.lp-sticky-end {
+    position: static;
+    grid-column: 1 / -1;
+    padding-top: 0.875rem;
+    border-top: 1px solid var(--color-line);
+    background-color: transparent;
+  }
+  .lp-table-scroll tbody td.lp-sticky-end::before {
+    display: none;
+  }
+  .lp-table-scroll tbody td.lp-sticky-end button {
+    display: inline-flex;
+    width: 100%;
+    min-height: 2.75rem;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border-radius: 0.875rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+  }
+
+  /* Reminders are a <ul> rather than a table */
+  ul.lp-table-scroll {
+    overflow: hidden;
+    border: 1px solid var(--color-line);
+    border-radius: 1.25rem;
+    background: var(--color-surface);
+    box-shadow: var(--lp-shadow);
+  }
+  ul.lp-table-scroll > li {
+    padding: 0.5rem 0.75rem;
+  }
+
+  /* ── Footer / pagination, errors, empty and loading states ─────────── */
+  .lp-list-foot {
+    margin-top: 0.875rem;
+    padding: 0.875rem 1rem;
+    border: 1px solid var(--color-line);
+    border-radius: 1.25rem;
+    background: var(--color-surface);
+    box-shadow: var(--lp-shadow);
+  }
+  .lp-list-page > p[role="alert"],
+  .lp-list-page > p.bg-danger-soft {
+    margin-top: 0.625rem;
+    border: 1px solid var(--color-line);
+    border-radius: 1rem;
+  }
+  .lp-list-page > .animate-scale-in,
+  .lp-list-page > div.space-y-3 {
+    margin-top: 0.625rem;
+    border: 1px solid var(--color-line);
+    border-radius: 1.25rem;
+    background: var(--color-surface);
+    box-shadow: var(--lp-shadow);
+  }
+
+  /* ── Detail pages & forms ──────────────────────────────────────────── */
+  .lp-app-shell main > div {
+    padding-bottom: 1.5rem;
+  }
+  .lp-card {
+    border-radius: 1.25rem;
+  }
+
+  /* Tabs / chip rows that overflow scroll sideways instead of wrapping oddly */
+  [role="tablist"] {
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  [role="tablist"]::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* ── Modals → bottom sheets ────────────────────────────────────────── */
+  .lp-modal-backdrop {
+    align-items: flex-end;
+    padding: 0;
+    padding-top: 2.5rem;
+  }
+  .lp-modal-sheet {
+    max-width: none;
+    max-height: calc(100dvh - 2.5rem);
+    border-radius: 1.5rem 1.5rem 0 0;
+    border-bottom: 0;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  .lp-modal-sheet::before {
+    content: "";
+    position: absolute;
+    top: 0.5rem;
+    left: 50%;
+    z-index: 11;
+    width: 2.25rem;
+    height: 0.25rem;
+    border-radius: 999px;
+    background: var(--color-line);
+    transform: translateX(-50%);
+  }
+  .lp-modal-sheet > button[aria-label="Close"] {
+    top: 0.875rem;
+    right: 0.875rem;
+    min-width: 2.25rem;
+    min-height: 2.25rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Tap-friendly controls inside forms and dialogs */
+  .lp-modal-sheet input:not([type="checkbox"]):not([type="radio"]),
+  .lp-modal-sheet select {
+    min-height: 2.75rem;
+  }
+}
+
+/* ── Bottom tab bar ──────────────────────────────────────────────────── */
+.lp-bottom-nav {
+  display: none;
+}
+@media (max-width: 767px) {
+  .lp-bottom-nav {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    flex-shrink: 0;
+    height: var(--lp-nav-h);
+    padding: 0.375rem 0.5rem env(safe-area-inset-bottom, 0px);
+    border-top: 1px solid var(--color-line);
+    background: color-mix(in srgb, var(--color-surface) 92%, transparent);
+    box-shadow: 0 -10px 30px rgba(18, 33, 58, 0.06);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+  }
+  .dark .lp-bottom-nav {
+    box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.35);
+  }
+  .lp-bottom-nav__item {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.1875rem;
+    border-radius: 0.875rem;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    color: var(--color-ink-soft);
+    transition: color 0.2s ease, transform 0.15s ease;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .lp-bottom-nav__item:active {
+    transform: scale(0.94);
+  }
+  .lp-bottom-nav__icon {
+    display: grid;
+    place-items: center;
+    width: 3.25rem;
+    height: 1.875rem;
+    border-radius: 999px;
+    transition: background-color 0.25s ease, color 0.25s ease;
+  }
+  .lp-bottom-nav__item[aria-current="page"] {
+    color: var(--color-fg);
+  }
+  .lp-bottom-nav__item[aria-current="page"] .lp-bottom-nav__icon {
+    background: var(--color-ink);
+    color: #fff;
+  }
+  .lp-bottom-nav__item:focus-visible {
+    outline: 2px solid var(--color-amber);
+    outline-offset: -2px;
+  }
+}
