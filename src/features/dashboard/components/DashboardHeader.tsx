@@ -58,7 +58,7 @@ export default function DashboardHeader({
   }, [isMenuOpen]);
 
   return (
-    <header className="sticky top-0 z-40 flex items-center justify-between gap-2 border-b border-line bg-surface/85 px-2.5 py-2 shadow-[0_6px_25px_rgba(18,33,58,0.035)] backdrop-blur-xl sm:gap-4 sm:px-4 sm:py-2">
+    <header className="sticky top-0 z-40 flex items-center justify-between gap-2 border-b border-line bg-surface/85 px-2.5 py-2 shadow-[0_6px_25px_rgba(18,33,58,0.035)] backdrop-blur-xl sm:gap-4 sm:px-4 sm:py-1.5">
       <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
         <button
           onClick={onToggleSidebar}
