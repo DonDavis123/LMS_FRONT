@@ -522,3 +522,123 @@
     outline-offset: -2px;
   }
 }
+
+/* ════════════════════════════════════════════════════════════════════════
+   Record detail pages (Lead, Contact, Company, Deal, Task, Meeting, Call)
+   Every one shares: back link → header (identity + `.lp-actions`) → tabs.
+   Animations (`lp-detail-rise`, `lp-title-in`, `lp-action-in` …) are untouched.
+   ════════════════════════════════════════════════════════════════════════ */
+@media (max-width: 767px) {
+  /* Back link: a real tap target */
+  .lp-detail > a:first-child {
+    display: inline-flex;
+    min-height: 2.5rem;
+    align-items: center;
+    font-size: 0.9375rem;
+    font-weight: 500;
+  }
+
+  /* Header: identity on top, actions underneath (they were squeezed beside it) */
+  .lp-detail div:has(> .lp-actions) {
+    flex-direction: column;
+    flex-wrap: nowrap;
+    align-items: stretch;
+    justify-content: flex-start;
+    gap: 1rem;
+    margin-top: 0.25rem;
+  }
+
+  /* Name: may wrap; company goes on its own line instead of a ragged "- Co." */
+  .lp-detail h1 {
+    overflow: visible;
+    text-overflow: clip;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    font-size: 1.75rem;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+  }
+  .lp-detail h1 > span {
+    display: block;
+    margin: 0.125rem 0 0;
+    font-size: 1rem;
+    font-weight: 400;
+  }
+  .lp-detail div:has(> .lp-actions) > :first-child:not(.lp-actions) {
+    min-width: 0;
+  }
+
+  /* Action buttons: an even two-column grid, one height, one gap.
+     The ⋮ menu stays a small square at the end of the last row. */
+  .lp-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: stretch;
+    justify-content: stretch;
+    gap: 0.5rem;
+    width: 100%;
+  }
+  .lp-actions > * {
+    flex: 1 1 calc(50% - 0.25rem);
+    min-width: 0;
+    min-height: 2.75rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border-radius: 0.75rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .lp-actions > a.bg-ink {
+    box-shadow: 0 6px 14px -8px rgba(18, 33, 58, 0.6);
+  }
+
+  /* "Send Mail ▾" split button: label grows, chevron stays compact */
+  .lp-actions > .relative.inline-flex {
+    display: flex;
+  }
+  .lp-actions > .relative.inline-flex > button:first-child {
+    flex: 1;
+    min-height: 2.75rem;
+    justify-content: center;
+    border-radius: 0.75rem 0 0 0.75rem;
+  }
+  .lp-actions > .relative.inline-flex > button:nth-child(2) {
+    min-width: 2.5rem;
+    justify-content: center;
+    border-radius: 0 0.75rem 0.75rem 0;
+  }
+  .lp-actions > .relative.inline-flex:nth-child(odd) > div.absolute {
+    left: 0;
+    right: auto;
+    max-width: calc(100vw - 2.5rem);
+  }
+
+  /* ⋮ menu: square button, not a wide empty pill */
+  .lp-actions > div.relative:not(.inline-flex) {
+    flex: 0 0 2.75rem;
+  }
+  .lp-actions > div.relative:not(.inline-flex) > button {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    min-height: 2.75rem;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.75rem;
+  }
+
+  /* Tabs: full-width segmented control */
+  .lp-detail [role="tablist"] {
+    display: grid;
+    width: 100%;
+    overflow: visible;
+  }
+  .lp-detail [role="tablist"] > button {
+    min-height: 2.5rem;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+}
