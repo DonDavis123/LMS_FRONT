@@ -11,7 +11,7 @@ import type { PaginationMeta } from "@/shared/types/pagination";
 import type { SortState } from "@/shared/types/sort";
 import { EMPTY_DATE_RANGE, withDateRange, type DateRange } from "@/shared/utils/dateRangeFilter";
 
-const DEFAULT_PAGE_SIZE = 10;
+const DEFAULT_PAGE_SIZE = 20;
 const EMPTY_PAGINATION: PaginationMeta = {
   page: 1,
   page_size: DEFAULT_PAGE_SIZE,

@@ -45,7 +45,7 @@ export default function DateRangeFilter({ value, onChange, label = "Created" }: 
     <div
       role="group"
       aria-label={`${label} date range`}
-      className="lp-date-strip flex flex-col gap-3 border-b border-line bg-paper/60 px-3 py-2 md:flex-row md:flex-wrap md:items-center md:gap-x-4 md:gap-y-2 sm:px-4"
+      className="lp-date-strip flex flex-col gap-3 border-b border-line bg-paper/60 px-3 py-2 md:flex-row md:flex-wrap md:items-center md:gap-x-3 md:gap-y-1.5 md:py-1.5 sm:px-4"
     >
       <span className="hidden items-center gap-1.5 md:flex text-xs font-semibold uppercase tracking-wide text-ink-soft">
         <CalendarRange size={14} aria-hidden="true" />
@@ -78,7 +78,7 @@ export default function DateRangeFilter({ value, onChange, label = "Created" }: 
               role="radio"
               aria-checked={selected}
               onClick={() => onChange(presetRange(preset.id))}
-              className={`shrink-0 rounded-full border px-3.5 py-2 text-xs font-medium transition active:scale-[0.97] md:px-3 md:py-1.5 ${
+              className={`shrink-0 rounded-full border px-3.5 py-2 text-xs font-medium transition active:scale-[0.97] md:px-3 md:py-1 ${
                 selected
                   ? "border-ink bg-ink text-white shadow-sm"
                   : "border-line bg-surface text-fg hover:border-slate hover:bg-paper"

@@ -23,7 +23,7 @@ export default function ServerPagination({
   const end = Math.min(safePage * pageSize, total);
 
   return (
-    <div className="lp-list-foot flex flex-col gap-3 border-t border-line px-3 py-2 text-sm text-ink-soft md:flex-row md:flex-wrap md:items-center md:justify-between md:gap-3 sm:px-4">
+    <div className="lp-list-foot flex flex-col gap-3 border-t border-line px-3 py-1.5 text-sm text-ink-soft md:flex-row md:flex-wrap md:items-center md:justify-between md:gap-3 sm:px-4">
       <div className="flex items-center justify-between gap-3 md:contents">
         <span className="font-medium text-fg md:font-normal md:text-inherit">
           {start} to {end} of {total}
